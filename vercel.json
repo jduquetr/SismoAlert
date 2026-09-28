@@ -1,0 +1,4 @@
+{
+  "buildCommand": "echo Sin compilación: se publica la copia estática de docs/",
+  "outputDirectory": "docs"
+}

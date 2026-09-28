@@ -1,0 +1,444 @@
+"""Alertas de sismos para Medellín.
+
+Escucha estaciones del SGC por el SeedLink público de IRIS, detecta sismos con STA/LTA,
+busca el evento en los catálogos del SGC, USGS y EMSC, y envía las alertas a una página
+web local con notificaciones del navegador.
+
+Uso: python server.py   y abrir http://127.0.0.1:8765
+"""
+import json
+import logging
+import queue
+import re
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+from obspy import UTCDateTime
+
+import config
+import sources
+import store
+import traveltime
+from detector import Associator, StationTrigger
+from emsc import EmscStream
+from seedlink import SeedLinkClient
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("sismos")
+STATIC = Path(__file__).parent / "static"
+
+
+def to_json(obj):
+    if isinstance(obj, UTCDateTime):
+        return obj.isoformat() + "Z"
+    raise TypeError(type(obj))
+
+
+class Hub:
+    """Estado compartido y difusión de eventos a los navegadores conectados (SSE)."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.clients = []
+        self.detections = {}  # id -> detección
+        self.log = []
+
+    def subscribe(self):
+        q = queue.Queue(maxsize=100)
+        with self.lock:
+            self.clients.append(q)
+        return q
+
+    def unsubscribe(self, q):
+        with self.lock:
+            if q in self.clients:
+                self.clients.remove(q)
+
+    def publish(self, kind, data):
+        msg = f"event: {kind}\ndata: {json.dumps(data, default=to_json, ensure_ascii=False)}\n\n"
+        with self.lock:
+            for q in list(self.clients):
+                try:
+                    q.put_nowait(msg)
+                except queue.Full:
+                    self.clients.remove(q)
+
+    def note(self, text):
+        log.info(text)
+        entry = {"t": UTCDateTime(), "text": text}
+        with self.lock:
+            self.log = (self.log + [entry])[-100:]
+        self.publish("log", entry)
+
+    def upsert_detection(self, det, kind):
+        with self.lock:
+            self.detections[det["id"]] = det
+            if len(self.detections) > 30:
+                self.detections.pop(next(iter(self.detections)))
+        try:
+            store.save(det)
+        except Exception:
+            log.exception("No se pudo guardar %s", det["id"])
+        self.publish(kind, det)
+
+    def snapshot(self):
+        with self.lock:
+            return {"detections": list(self.detections.values())[::-1], "log": self.log[-30:]}
+
+
+hub = Hub()
+triggers = {s: StationTrigger(s) for s in config.STATIONS}
+
+
+# ---------------------------------------------------------------- búsqueda en catálogos
+PRIORITY_ORDER = ["silenciosa", "informativa", "crítica"]
+catalog_lock = threading.Lock()
+active = {}  # detecciones con búsqueda en curso: id -> detección
+
+
+def emsc_search(start, end):
+    """EMSC desde el caché del websocket; si no está ahí, se consulta su servicio web."""
+    return emsc_stream.search(start, end) or sources.emsc(start, end)
+
+
+def catalog_sources():
+    srcs = [("SGC", sources.sgc_biweekly), ("USGS", sources.usgs), ("EMSC", emsc_search)]
+    if config.USE_SGC_ARCHIVE_FEED:
+        srcs.insert(0, ("SGC-feed", sources.sgc_archive))
+    return srcs
+
+
+def in_window(det, ev):
+    start, end = detection_window(det)
+    return start <= ev["time"] <= end
+
+
+def max_detection_km(mag):
+    """Distancia máxima a la que un sismo de esa magnitud puede dar un disparo fuerte.
+
+    Regla generosa ajustada a lo observado: M2 ~100 km, M3 ~250, M4 ~625, M4.8 ~1300
+    (el M4.8 de República Dominicana disparó URI a ~1000 km).
+    """
+    return 100 * 2.5 ** ((mag or 0) - 2)
+
+
+def detection_window(det):
+    """Ventana de origen posible: desde antes del primer disparo hasta el último.
+
+    El final va hasta el último disparo porque el primero puede ser ruido de otra estación
+    segundos antes del sismo; arrival_misfit descarta luego los eventos que no encajan.
+    """
+    onsets = [UTCDateTime(v["onset"]) for v in det.get("stations", {}).values()]
+    first = det["first_onset"]
+    last = max(onsets + [first])
+    return first - config.MATCH_BEFORE_S, last + config.MATCH_AFTER_S
+
+
+def arrival_misfit(det, ev):
+    """Qué tan bien explica el evento los disparos fuertes (segundos), o None si no puede.
+
+    Para cada estación con disparo fuerte, las ondas del evento deben llegar entre la P
+    (menos un margen) y la S (más un margen). Basta con que una estación encaje: así un
+    disparo de ruido en otra estación, que a veces es el primero de la detección, no hace
+    rechazar el sismo real. Y no se empareja un sismo pequeño y lejano de minutos antes.
+    Sin disparos fuertes (alerta solo de catálogo) no hay nada que comprobar y devuelve 0.
+    """
+    strong = [(v["onset"], s) for s, v in det.get("stations", {}).items()
+              if v["ratio"] >= config.MIN_RATIO and s in config.STATIONS]
+    if not strong:
+        return 0.0
+    depth = ev.get("depth") or 0
+    max_km = max_detection_km(ev.get("mag"))
+    misfits = []
+    for onset, sta in strong:
+        lat, lon = config.STATIONS[sta][3:5]
+        d = sources.distance_km(ev["lat"], ev["lon"], lat, lon)
+        if d > max_km:
+            continue  # un sismo de esa magnitud no dispara con fuerza a esa distancia
+        obs = UTCDateTime(onset) - ev["time"]
+        tp, ts = traveltime.p_time(d, depth), traveltime.s_time(d, depth)
+        if tp - config.MATCH_TOLERANCE_S <= obs <= ts + config.MATCH_TOLERANCE_S:
+            misfits.append(abs(obs - tp))
+    return min(misfits) if misfits else None
+
+
+def best_match(det, evs):
+    scored = [(arrival_misfit(det, e), e) for e in evs]
+    scored = [(m, e) for m, e in scored if m is not None]
+    if not scored:
+        return None
+    # El que mejor explica los tiempos; a igualdad, el de mayor magnitud
+    return min(scored, key=lambda x: (round(x[0] / 5), -(x[1]["mag"] or 0)))[1]
+
+
+def attach(det, name, ev):
+    """Asocia un evento de catálogo a una detección y avisa si es nuevo o cambió."""
+    level, dist, hyp = sources.priority(ev)
+    ev = dict(ev, priority=level, distance_km=dist, hypo_km=hyp)
+    with catalog_lock:
+        cat = det.setdefault("catalog", {})
+        prev = cat.get(name)
+        if (prev and prev["id"] == ev["id"] and prev["mag"] == ev["mag"]
+                and prev["status"] == ev["status"]):
+            return
+        if prev and prev["id"] == ev["id"]:
+            ev["felt_reports"] = prev.get("felt_reports")
+        cat[name] = ev
+        det["priority"] = max((e["priority"] for e in cat.values()), key=PRIORITY_ORDER.index)
+    verb = "actualiza" if prev else "confirma"
+    hub.note(f"{name} {verb} {det['id']}: M{ev['mag']} {ev['place']}, "
+             f"a {dist} km de Medellín ({level})")
+    hub.upsert_detection(det, "catalog")
+
+
+def refresh_felt_reports(det):
+    ev = det.get("catalog", {}).get("EMSC")
+    if not ev:
+        return
+    try:
+        n = sources.emsc_felt_reports(ev["id"])
+    except Exception as e:
+        log.warning("Error consultando reportes de EMSC: %s", e)
+        return
+    if n != ev.get("felt_reports"):
+        ev["felt_reports"] = n
+        det["felt_reports"] = n
+        if n:
+            hub.note(f"{det['id']}: {n} personas reportaron en EMSC haberlo sentido")
+        hub.upsert_detection(det, "catalog")
+
+
+def search_catalogs(det):
+    """Consulta los catálogos periódicamente hasta encontrar el sismo en todos."""
+    deadline = time.time() + config.SEARCH_DURATION_S
+    det.setdefault("catalog", {})
+    active[det["id"]] = det
+    try:
+        while time.time() < deadline:
+            # Se recalcula en cada vuelta porque pueden sumarse estaciones a la detección
+            start, end = detection_window(det)
+            for name, fn in catalog_sources():
+                try:
+                    evs = fn(start, end)
+                except Exception as e:
+                    log.warning("Error consultando %s: %s", name, e)
+                    continue
+                ev = best_match(det, evs)
+                if ev:
+                    attach(det, name, ev)
+            refresh_felt_reports(det)
+            if all(n in det["catalog"] for n, _ in catalog_sources()):
+                # Seguir un rato más por si cambian magnitudes, pero con menos frecuencia
+                time.sleep(config.SEARCH_INTERVAL_S * 5)
+            else:
+                time.sleep(config.SEARCH_INTERVAL_S)
+    finally:
+        active.pop(det["id"], None)
+    hub.note(f"Fin de la búsqueda en catálogos para {det['id']}")
+
+
+def on_detection(det):
+    hub.note(f"DETECCIÓN {det['id']} [{det['level']}]: {det['message']}")
+    hub.upsert_detection(det, "detection")
+    threading.Thread(target=search_catalogs, args=(det,), daemon=True).start()
+
+
+def on_update(det):
+    hub.note(f"{det['id']} [{det['level']}]: estaciones {', '.join(det['stations'])}")
+    hub.upsert_detection(det, "update")
+
+
+def on_emsc_event(ev, action):
+    """Evento empujado por el websocket de EMSC."""
+    matched = False
+    for det in list(active.values()):
+        if in_window(det, ev) and arrival_misfit(det, ev) is not None:
+            attach(det, "EMSC", ev)
+            matched = True
+    if matched or action != "create":
+        return
+    level, dist, _ = sources.priority(ev)
+    if level == "silenciosa":
+        return
+    # Sismo relevante que las estaciones no detectaron: alertar igual
+    det = {
+        "id": f"EMSC-{ev['id']}",
+        "first_onset": ev["time"],
+        "detected_at": UTCDateTime(),
+        "stations": {},
+        "level": "catálogo",
+        "message": (f"Reportado por EMSC sin detección de las estaciones: M{ev['mag']} "
+                    f"{ev['place']}, a {dist} km de Medellín"),
+    }
+    on_detection(det)
+
+
+emsc_stream = EmscStream(on_emsc_event, note=hub.note)
+assoc = Associator(on_detection, on_update)
+
+
+# ---------------------------------------------------------------------------- SeedLink
+def on_trace(trace):
+    sta = trace.stats.station
+    trig = triggers.get(sta)
+    if not trig:
+        return
+    try:
+        onset = trig.add(trace)
+    except Exception:
+        log.exception("Error procesando %s", sta)
+        return
+    if onset:
+        log.info("Disparo %s %s (STA/LTA %.1f)", sta, onset, trig.peak_ratio)
+        assoc.trigger(sta, onset, trig.peak_ratio)
+    elif trig.triggered:
+        assoc.peak(sta, trig.peak_ratio)
+
+
+def seedlink_loop():
+    delay = 5
+    streams = [(net, sta, loc + cha) for sta, (net, loc, cha, *_) in config.STATIONS.items()]
+    while True:
+        hub.note(f"Conectando a {config.SEEDLINK_SERVER}")
+        connected_at = time.time()
+        try:
+            SeedLinkClient(config.SEEDLINK_SERVER, streams, on_trace).run()
+        except Exception as e:
+            hub.note(f"SeedLink desconectado: {e}. Reintento en {delay} s")
+        # Si la conexión duró, volver a empezar con espera corta
+        delay = 5 if time.time() - connected_at > 300 else min(delay * 2, 300)
+        time.sleep(delay)
+
+
+def station_info():
+    """Estado de cada estación junto con su red y ubicación (para la lista y el mapa)."""
+    out = []
+    for sta, (net, loc, cha, lat, lon) in config.STATIONS.items():
+        out.append(dict(triggers[sta].status(), network=net, channel=f"{loc}.{cha}".lstrip("."),
+                        lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta)))
+    return out
+
+
+def status_loop():
+    while True:
+        hub.publish("stations", station_info())
+        time.sleep(5)
+
+
+# ------------------------------------------------------------------------------ HTTP
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, *args):
+        pass
+
+    def _send(self, code, body, ctype="application/json; charset=utf-8", cors=False):
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        if cors:
+            self._cors_headers()
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _cors_headers(self):
+        """Deja leer el GeoJSON solo a las páginas del visor (config.VISOR_ORIGINS)."""
+        origin = self.headers.get("Origin") or ""
+        if re.match(config.VISOR_ORIGINS, origin):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+            # Chrome pide este permiso cuando una página pública llama a 127.0.0.1
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._cors_headers()
+        self.send_header("Access-Control-Allow-Methods", "GET")
+        self.end_headers()
+
+    def do_GET(self):
+        path = urlparse(self.path).path
+        if path == "/":
+            self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif path == "/sismos-detectados.geojson":
+            # Antes de la primera detección real el archivo no existe: colección vacía.
+            body = (store.GEOJSON.read_bytes() if store.GEOJSON.exists()
+                    else '{"type": "FeatureCollection", "features": []}')
+            self._send(200, body, "application/geo+json; charset=utf-8", cors=True)
+        elif path == "/state":
+            snap = hub.snapshot()
+            snap["stations"] = station_info()
+            snap["medellin"] = config.MEDELLIN
+            self._send(200, json.dumps(snap, default=to_json, ensure_ascii=False))
+        elif path == "/events":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            q = hub.subscribe()
+            try:
+                self.wfile.write(b": conectado\n\n")
+                self.wfile.flush()
+                while True:
+                    try:
+                        msg = q.get(timeout=15)
+                    except queue.Empty:
+                        msg = ": ping\n\n"
+                    self.wfile.write(msg.encode("utf-8"))
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                pass
+            finally:
+                hub.unsubscribe(q)
+        else:
+            self._send(404, '{"error": "no encontrado"}')
+
+    def do_POST(self):
+        url = urlparse(self.path)
+        if url.path == "/test":
+            # Simula una detección. Con ?t=<hora UTC> busca un sismo pasado en los catálogos.
+            # El cuerpo puede traer las estaciones: {"HEL": {"onset": ..., "ratio": ...}, ...}
+            qs = parse_qs(url.query)
+            t = UTCDateTime(qs["t"][0]) if "t" in qs else UTCDateTime()
+            length = int(self.headers.get("Content-Length") or 0)
+            body = json.loads(self.rfile.read(length) or b"{}") if length else {}
+            det = {
+                "id": f"PRUEBA{t.strftime('%Y%m%d%H%M%S')}-{UTCDateTime().strftime('%H%M%S')}",
+                "first_onset": t,
+                "detected_at": UTCDateTime(),
+                "test": True,
+                "stations": body.get("stations") or {
+                    "HEL": {"onset": str(t), "ratio": 20.0},
+                    "RUS": {"onset": str(t + 20), "ratio": 12.0}},
+            }
+            assoc._set_level(det)
+            on_detection(det)
+            self._send(200, json.dumps({"ok": True, "id": det["id"]}))
+        else:
+            self._send(404, '{"error": "no encontrado"}')
+
+
+def main():
+    # Recuperar las detecciones guardadas para que la lista no se pierda al reiniciar
+    saved = store.load_recent()
+    with hub.lock:
+        hub.detections = {d["id"]: d for d in saved}
+    if saved:
+        log.info("Cargadas %d detecciones guardadas en %s", len(saved), store.GEOJSON)
+    threading.Thread(target=seedlink_loop, daemon=True).start()
+    emsc_stream.start()
+    threading.Thread(target=status_loop, daemon=True).start()
+    server = ThreadingHTTPServer((config.HTTP_HOST, config.HTTP_PORT), Handler)
+    server.daemon_threads = True
+    hub.note(f"Página de alertas en http://{config.HTTP_HOST}:{config.HTTP_PORT}")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

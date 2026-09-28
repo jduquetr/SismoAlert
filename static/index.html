@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alertas de sismos</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
+    --alta: #c62828; --media: #d97706; --baja: #2563eb; --ok: #15803d; --off: #9ca3af;
+    --critica: #c62828; --informativa: #d97706; --silenciosa: #6b7280;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1f1d; --text: #ecebe8; --muted: #a09e99; --line: #34332f;
+      --alta: #ef5350; --media: #f59e0b; --baja: #60a5fa; --ok: #4ade80; --off: #6b7280;
+      --critica: #ef5350; --informativa: #f59e0b; --silenciosa: #9ca3af;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 10px; }
+  .conn { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--off); display: inline-block; }
+  .dot.ok { background: var(--ok); }
+  .dot.trig { background: var(--alta); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stations { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .st { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .st b { display: flex; align-items: center; gap: 6px; }
+  .st small { color: var(--muted); display: block; }
+  .det { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--off);
+         border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .det.alta { border-left-color: var(--alta); } .det.media { border-left-color: var(--media); }
+  .det.baja { border-left-color: var(--baja); } .det.catálogo { border-left-color: var(--informativa); }
+  .det .top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; color: #fff; background: var(--off); }
+  .tag.alta, .tag.crítica { background: var(--alta); } .tag.media, .tag.informativa { background: var(--media); }
+  .tag.baja { background: var(--baja); } .tag.catálogo { background: var(--informativa); } .tag.silenciosa { background: var(--silenciosa); }
+  .muted { color: var(--muted); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+  td, th { text-align: left; padding: 6px 8px 6px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; }
+  a { color: inherit; }
+  .table-wrap { overflow-x: auto; }
+  #log { font: 12px/1.5 ui-monospace, Consolas, monospace; background: var(--panel); border: 1px solid var(--line);
+         border-radius: 10px; padding: 10px 12px; max-height: 240px; overflow: auto; white-space: pre-wrap; }
+  .empty { color: var(--muted); padding: 12px 0; }
+  #map { height: 520px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+  @media (max-width: 600px) { #map { height: 380px; } }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 2px solid #fff; box-shadow: 0 0 0 1px #0004; }
+  .sw.tri { border-radius: 2px; }
+  .ring-label { background: transparent; border: 0; box-shadow: none; color: #555; font-size: 11px; font-weight: 600; }
+  .ring-label::before { display: none; }
+  .det { cursor: pointer; }
+  .det.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+  .leaflet-popup-content { font: 13px/1.4 system-ui, sans-serif; }
+  .qinfo { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+  .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 16px; }
+  .qgrid .k { display: block; font-size: 12px; color: var(--muted); }
+  .qgrid .v { font-size: 14px; }
+  .anim-clock { font: 600 12px ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Alertas de sismos · Medellín</h1>
+      <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn">Conectando…</span></div>
+    </div>
+    <div class="actions">
+      <button id="enable" class="primary">Activar notificaciones y sonido</button>
+      <button id="test">Probar con el sismo de Istmina</button>
+    </div>
+  </header>
+
+  <h2>Mapa</h2>
+  <div id="map"></div>
+  <div class="legend">
+    <span><i class="sw tri" style="background:#15803d"></i>Estación recibiendo datos</span>
+    <span><i class="sw tri" style="background:#c62828"></i>Estación disparada</span>
+    <span><i class="sw tri" style="background:#9ca3af"></i>Sin datos</span>
+    <span><i class="sw" style="background:#c62828"></i>Epicentro revisado por el SGC</span>
+    <span><i class="sw" style="background:#fff;border-color:#d97706;border-style:dashed"></i>Epicentro preliminar u otra agencia</span>
+    <span>Círculos: distancia a Medellín</span>
+    <span><i class="sw" style="background:transparent;border-color:#2563eb"></i>Onda P</span>
+    <span><i class="sw" style="background:transparent;border-color:#dc2626"></i>Onda S</span>
+  </div>
+  <div id="qinfo" class="qinfo" hidden></div>
+
+  <h2>Estaciones (SeedLink IRIS: red CM del SGC, IU y EC de Ecuador)</h2>
+  <div id="stations" class="stations"></div>
+
+  <h2>Detecciones · toca una para verla en el mapa</h2>
+  <div id="dets"><div class="empty">Sin detecciones todavía.</div></div>
+
+  <h2>Registro</h2>
+  <div id="log"></div>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const dets = new Map();
+let audio = null;
+const notified = new Set();
+
+const fmtTime = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleString("es-CO", { timeZone: "America/Bogota", hour12: false }) + " (Bogotá)";
+};
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function beep(level) {
+  if (!audio) return;
+  const pattern = level === "alta" || level === "crítica" ? [0, .35, .7] : [0];
+  pattern.forEach((t) => {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = level === "alta" || level === "crítica" ? 880 : 660;
+    g.gain.setValueAtTime(.25, audio.currentTime + t);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + t + .3);
+    o.connect(g).connect(audio.destination);
+    o.start(audio.currentTime + t); o.stop(audio.currentTime + t + .3);
+  });
+}
+
+function notify(key, title, body, level) {
+  if (notified.has(key)) return;
+  notified.add(key);
+  beep(level);
+  document.title = "⚠ " + title;
+  if ("Notification" in window && Notification.permission === "granted") {
+    const n = new Notification(title, { body, tag: key, requireInteraction: level === "alta" || level === "crítica" });
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+}
+
+
+// ------------------------------------------------------------------------ mapa
+const MEDELLIN = [6.2476, -75.5658];
+const RINGS_KM = [100, 200, 300, 500];
+const PRIORITY_COLOR = { "crítica": "#c62828", "informativa": "#d97706", "silenciosa": "#6b7280" };
+let map, quakeLayer, selectedId = null, lastStations = [];
+const stMarkers = {};
+
+function initMap() {
+  map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 12, attribution: "&copy; OpenStreetMap",
+  }).addTo(map);
+  // Círculos concéntricos de distancia a Medellín
+  RINGS_KM.forEach((km) => {
+    L.circle(MEDELLIN, { radius: km * 1000, color: "#1d4ed8", weight: 1, dashArray: "4 6", fill: false, interactive: false }).addTo(map);
+    const north = [MEDELLIN[0] + km / 111.2, MEDELLIN[1]];
+    L.tooltip({ permanent: true, direction: "center", className: "ring-label" }).setLatLng(north).setContent(`${km} km`).addTo(map);
+  });
+  L.circleMarker(MEDELLIN, { radius: 6, color: "#fff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1 })
+    .addTo(map).bindTooltip("Medellín", { permanent: true, direction: "right", offset: [8, 0] });
+  quakeLayer = L.layerGroup().addTo(map);
+}
+
+// Modelo regional de tiempos de viaje (mismas constantes que traveltime.py): la primera
+// onda es la más rápida entre la que va por la corteza (Pg/Sg) y la que viaja por el techo
+// del manto (Pn/Sn, ~8 y ~4.6 km/s), que gana a más de ~150-200 km del epicentro.
+const VP_CRUST = 6.1, VP_MANTLE = 8.0, TAU_P = 5.0;
+const VS_CRUST = 3.5, VS_MANTLE = 4.6, TAU_S = 9.0;
+const pTime = (d, h) => Math.min(Math.hypot(d, h) / VP_CRUST, d / VP_MANTLE + TAU_P);
+const sTime = (d, h) => Math.min(Math.hypot(d, h) / VS_CRUST, d / VS_MANTLE + TAU_S);
+// Distancia en superficie alcanzada por el frente de onda en el instante t (inversa de lo anterior)
+const pFront = (t, h) => Math.max(Math.sqrt(Math.max(0, (VP_CRUST * t) ** 2 - h * h)), VP_MANTLE * (t - TAU_P));
+const sFront = (t, h) => Math.max(Math.sqrt(Math.max(0, (VS_CRUST * t) ** 2 - h * h)), VS_MANTLE * (t - TAU_S));
+const ANIM_SPEED = 10;
+const TYPICAL_LATENCY_S = 12;  // retraso típico de SeedLink, para las detecciones de prueba
+let anim = null;  // animación en curso
+
+function distKm(a, b) {
+  const r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+const secs = (iso) => new Date(iso).getTime() / 1000;
+const fmtS = (s) => Math.abs(s) >= 90 ? `${(s / 60).toFixed(1)} min` : `${Math.round(s)} s`;
+
+// Triángulo SVG para las estaciones (símbolo sismológico habitual); lleva el número de
+// orden cuando la estación se ilumina en la animación
+function stationIcon(color, highlight, order) {
+  const size = order ? 26 : highlight ? 22 : 16;
+  const stroke = highlight || order ? "#111" : "#fff";
+  const num = order ? `<text x="10" y="16" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="system-ui">${order}</text>` : "";
+  return L.divIcon({
+    className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${color}" stroke="${stroke}" stroke-width="1.5"/>${num}</svg>`,
+  });
+}
+
+function mapStations(list) {
+  if (!map) return;
+  lastStations = list;
+  const sel = selectedId && dets.get(selectedId);
+  list.forEach((s) => {
+    const alive = s.last_packet_age_s !== null && s.last_packet_age_s < 120;
+    const order = anim && anim.lit.get(s.station);
+    const color = order ? "#e11d48" : s.triggered ? "#c62828" : alive ? "#15803d" : "#9ca3af";
+    const inDet = sel && sel.stations && s.station in sel.stations;
+    const lat = s.latency_s === null ? "sin datos" : `retraso ${Math.round(s.latency_s)} s`;
+    const popup = `<b>${s.network}.${s.station}</b> · ${s.channel}<br>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}<br>
+      ${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}${s.group ? `<br>Grupo: ${s.group}` : ""}
+      ${inDet ? `<br><b>Disparó en esta detección</b> (STA/LTA ${sel.stations[s.station].ratio})` : ""}`;
+    let m = stMarkers[s.station];
+    if (!m) {
+      m = L.marker([s.lat, s.lon], { icon: stationIcon(color, inDet, order) }).addTo(map)
+        .bindTooltip(s.station, { direction: "top", offset: [0, -8] }).bindPopup(popup);
+      stMarkers[s.station] = m;
+    } else {
+      m.setIcon(stationIcon(color, inDet, order));
+      m.setPopupContent(popup);
+    }
+    m.setZIndexOffset(order ? 1000 : 0);
+  });
+}
+
+// Ubicación a mostrar: la del SGC si existe (revisada o preliminar); si no, USGS o EMSC
+function epicenter(d) {
+  const c = d.catalog || {};
+  const sgc = c["SGC-feed"] && c["SGC-feed"].status === "manual" ? c["SGC-feed"] : c.SGC || c["SGC-feed"];
+  if (sgc) return { ev: sgc, src: "SGC", reviewed: sgc.status === "manual" };
+  for (const src of ["USGS", "EMSC"]) if (c[src]) return { ev: c[src], src, reviewed: false };
+  return null;
+}
+
+// Estaciones de la detección con coordenadas, ordenadas por hora de disparo
+function detStations(d) {
+  const coords = Object.fromEntries(lastStations.map((s) => [s.station, [s.lat, s.lon]]));
+  return Object.entries(d.stations || {})
+    .filter(([s]) => coords[s])
+    .map(([s, v]) => ({ station: s, onset: secs(v.onset), ratio: v.ratio, pos: coords[s] }))
+    .sort((a, b) => a.onset - b.onset);
+}
+
+// Zona de origen probable. Con catálogo se usa esa ubicación; si no, se estima con los
+// tiempos de llegada de la onda P (búsqueda en grilla con profundidad fija de 30 km).
+function sourceZone(d) {
+  const e = epicenter(d);
+  if (e) {
+    return { lat: e.ev.lat, lon: e.ev.lon, depth: e.ev.depth ?? 30, origin: secs(e.ev.time), radiusKm: 0,
+             method: e.reviewed ? "ubicación revisada por el SGC"
+               : e.src === "SGC" ? "ubicación preliminar del SGC" : `ubicación de ${e.src}` };
+  }
+  const depth = 30;
+  const sts = detStations(d).filter((s) => s.ratio >= 8);
+  if (sts.length >= 3) {
+    let best = null;
+    for (let lat = -6; lat <= 16; lat += 0.1) {
+      for (let lon = -86; lon <= -64; lon += 0.1) {
+        const tt = sts.map((s) => pTime(distKm([lat, lon], s.pos), depth));
+        const t0 = sts.reduce((acc, s, i) => acc + s.onset - tt[i], 0) / sts.length;
+        const rms = Math.sqrt(sts.reduce((acc, s, i) => acc + (s.onset - t0 - tt[i]) ** 2, 0) / sts.length);
+        if (!best || rms < best.rms) best = { lat, lon, t0, rms };
+      }
+    }
+    const err = Math.round(Math.max(40, best.rms * VP_MANTLE * 2));
+    return { lat: best.lat, lon: best.lon, depth, origin: best.t0, radiusKm: err,
+             method: `estimada con ${sts.length} estaciones (±${err} km)` };
+  }
+  const first = detStations(d)[0];
+  if (!first) return null;
+  // Con 1 o 2 estaciones solo se sabe que el origen está cerca de la primera que lo sintió
+  return { lat: first.pos[0], lon: first.pos[1], depth, origin: first.onset - pTime(50, depth),
+           radiusKm: 150, method: `zona aproximada cerca de ${first.station} (pocas estaciones)` };
+}
+
+function waveInfo(d, z) {
+  const epiKm = distKm([z.lat, z.lon], MEDELLIN);
+  const hypoKm = Math.hypot(epiKm, z.depth);
+  const tP = pTime(epiKm, z.depth), tS = sTime(epiKm, z.depth);
+  const alertAt = d.test ? secs(d.first_onset) + TYPICAL_LATENCY_S : secs(d.detected_at || d.first_onset);
+  const alertRel = alertAt - z.origin;
+  return { epiKm, hypoKm, tP, tS, alertRel, margin: tS - alertRel };
+}
+
+function renderInfo(d, z) {
+  const box = document.getElementById("qinfo");
+  if (!z) { box.hidden = true; return; }
+  const w = waveInfo(d, z);
+  const sts = detStations(d);
+  const rows = sts.map((s, i) => {
+    const d = distKm([z.lat, z.lon], s.pos), obs = s.onset - z.origin;
+    const tp = pTime(d, z.depth), ts = sTime(d, z.depth), res = obs - tp;
+    // Si el disparo queda más cerca de la S que de la P, probablemente disparó con la S
+    const phase = Math.abs(obs - ts) < Math.abs(res) ? " <span class='muted'>(¿onda S?)</span>" : "";
+    const color = Math.abs(res) <= 5 ? "var(--ok)" : Math.abs(res) <= 15 ? "var(--media)" : "var(--alta)";
+    return `<tr><td><b>${i + 1}</b></td><td>${s.station}</td>
+      <td>+${obs.toFixed(1)} s</td><td>+${tp.toFixed(1)} s</td>
+      <td style="color:${color}">${res >= 0 ? "+" : ""}${res.toFixed(1)} s${phase}</td>
+      <td>${i ? `+${(s.onset - sts[0].onset).toFixed(1)} s` : "—"}</td>
+      <td>${Math.round(d)} km</td><td>${s.ratio}</td></tr>`;
+  }).join("");
+  const result = w.margin >= 0
+    ? `<b style="color:var(--ok)">La alerta llegó ~${fmtS(w.margin)} antes que la onda S a Medellín</b>`
+    : `<b style="color:var(--alta)">La alerta llegó ~${fmtS(-w.margin)} después de la onda S en Medellín</b>`;
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="qgrid">
+      <div><span class="k">Origen</span><span class="v">${esc(z.method)}</span></div>
+      <div><span class="k">Distancia a Medellín</span><span class="v">${Math.round(w.epiKm)} km (hipocentral ${Math.round(w.hypoKm)} km, prof. ${Math.round(z.depth)} km)</span></div>
+      <div><span class="k">Onda P llega a Medellín</span><span class="v">${fmtS(w.tP)} después del origen</span></div>
+      <div><span class="k">Onda S llega a Medellín</span><span class="v">${fmtS(w.tS)} después del origen</span></div>
+      <div><span class="k">Nuestra alerta</span><span class="v">${fmtS(w.alertRel)} después del origen${d.test ? " (estimado)" : ""}</span></div>
+      <div><span class="k">Resultado</span><span class="v">${result}</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>#</th><th>Estación</th><th>Disparo (desde el origen)</th><th>P esperada</th><th>Diferencia</th><th>Después de la 1.ª</th><th>Dist. al epicentro</th><th>STA/LTA</th></tr>${rows}
+    </table></div>
+    <div class="muted" style="margin-top:6px">Modelo regional: P por la corteza ${VP_CRUST} km/s o por el manto (Pn) ${VP_MANTLE} km/s + ${TAU_P} s;
+      S ${VS_CRUST} km/s o Sn ${VS_MANTLE} km/s + ${TAU_S} s. Diferencia = disparo observado − P esperada (el detector suele marcar 0,5–3 s tarde).
+      La animación va ${ANIM_SPEED} veces más rápido que la realidad.
+      <button id="replay" style="margin-left:8px;padding:3px 10px">▶ Repetir</button></div>`;
+  document.getElementById("replay").onclick = () => startAnimation(d);
+}
+
+function mapQuakes(list) {
+  if (!map) return;
+  quakeLayer.clearLayers();
+  list.forEach((d) => {
+    const e = epicenter(d);
+    const selected = d.id === selectedId;
+    if (!e) {
+      // Sin catálogo todavía: dibujar la zona estimada de la detección seleccionada
+      const z = selected && sourceZone(d);
+      if (z) L.circle([z.lat, z.lon], { radius: z.radiusKm * 1000, color: "#d97706", weight: 2, dashArray: "5 5", fillOpacity: .08 })
+        .addTo(quakeLayer).bindTooltip(`Zona probable: ${z.method}`);
+      return;
+    }
+    const { ev } = e;
+    const color = PRIORITY_COLOR[ev.priority] || "#6b7280";
+    const label = e.reviewed ? "Ubicación revisada por el SGC"
+      : e.src === "SGC" ? "Ubicación preliminar (automática) del SGC" : `Ubicación de ${e.src}; el SGC aún no la publica`;
+    L.polyline([MEDELLIN, [ev.lat, ev.lon]], { color, weight: selected ? 2 : 1, dashArray: "2 6", opacity: selected ? .9 : .5, interactive: false }).addTo(quakeLayer);
+    const m = L.circleMarker([ev.lat, ev.lon], {
+      radius: 5 + Math.max(0, (ev.mag || 0) - 2) * 4,
+      color: e.reviewed ? "#fff" : color, weight: selected ? 3 : 2, dashArray: e.reviewed ? null : "3 3",
+      fillColor: e.reviewed ? color : "#fff", fillOpacity: e.reviewed ? .85 : .6,
+    }).addTo(quakeLayer);
+    m.bindPopup(`<b>M${esc(ev.mag)} ${esc(ev.magtype || "")}</b> · ${esc(ev.place)}<br>${fmtTime(ev.time)}<br>
+      Profundidad ${Math.round(ev.depth ?? 0)} km · a ${ev.distance_km} km de Medellín<br>
+      <b>${label}</b>${d.test ? "<br><i>Detección de prueba</i>" : ""}
+      <br><a href="${esc(ev.url)}" target="_blank" rel="noopener">Ver en ${e.src}</a>`);
+    m.on("click", () => selectDet(d.id, false));
+  });
+}
+
+// Animación: frentes de onda P y S que salen del origen; las estaciones se iluminan en el
+// orden real en que registraron el sismo, y Medellín se marca cuando llega la onda S.
+function startAnimation(d) {
+  stopAnimation();
+  const z = sourceZone(d);
+  renderInfo(d, z);
+  if (!z) return;
+  const sts = detStations(d);
+  const w = waveInfo(d, z);
+  const layer = L.layerGroup().addTo(map);
+  const pCirc = L.circle([z.lat, z.lon], { radius: 1, color: "#2563eb", weight: 2, fill: false, interactive: false }).addTo(layer);
+  const sCirc = L.circle([z.lat, z.lon], { radius: 1, color: "#dc2626", weight: 2, fill: false, interactive: false }).addTo(layer);
+  const clock = L.tooltip({ permanent: true, direction: "right", offset: [10, 0], className: "anim-clock" })
+    .setLatLng([z.lat, z.lon]).setContent("0 s").addTo(layer);
+  const end = Math.max(w.tS, ...sts.map((s) => s.onset - z.origin)) + 8;
+  anim = { layer, lit: new Map(), start: performance.now(), raf: 0, medDone: false };
+  const frame = (now) => {
+    if (!anim) return;
+    const t = (now - anim.start) / 1000 * ANIM_SPEED;
+    pCirc.setRadius(Math.max(1, pFront(t, z.depth) * 1000));
+    sCirc.setRadius(Math.max(1, sFront(t, z.depth) * 1000));
+    clock.setContent(`${Math.round(Math.min(t, end))} s`);
+    let changed = false;
+    sts.forEach((s, i) => {
+      if (!anim.lit.has(s.station) && t >= s.onset - z.origin) { anim.lit.set(s.station, i + 1); changed = true; }
+    });
+    if (changed) mapStations(lastStations);
+    if (!anim.medDone && t >= w.tS) {
+      anim.medDone = true;
+      L.circleMarker(MEDELLIN, { radius: 14, color: "#dc2626", weight: 3, fill: false, interactive: false }).addTo(layer)
+        .bindTooltip(`Onda S en Medellín: ${fmtS(w.tS)}`, { permanent: true, direction: "left", offset: [-14, 0] });
+    }
+    if (t < end) anim.raf = requestAnimationFrame(frame);
+  };
+  anim.raf = requestAnimationFrame(frame);
+}
+
+function stopAnimation() {
+  if (!anim) return;
+  cancelAnimationFrame(anim.raf);
+  map.removeLayer(anim.layer);
+  anim = null;
+  mapStations(lastStations);
+}
+
+function selectDet(id, fly = true) {
+  selectedId = id;
+  document.querySelectorAll(".det").forEach((el) => el.classList.toggle("selected", el.dataset.id === id));
+  mapQuakes([...dets.values()]);
+  const d = dets.get(id);
+  if (!d) return;
+  const z = sourceZone(d);
+  if (fly && z) {
+    const pts = [MEDELLIN, [z.lat, z.lon]];
+    detStations(d).forEach((s) => pts.push(s.pos));
+    map.flyToBounds(pts, { padding: [40, 40], maxZoom: 8, duration: 0.8 });
+    document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => startAnimation(d), 900);
+  } else {
+    startAnimation(d);
+  }
+}
+
+function renderStations(list) {
+  mapStations(list);
+  $("#stations").innerHTML = list.map((s) => {
+    const alive = s.last_packet_age_s !== null && s.last_packet_age_s < 120;
+    const cls = s.triggered ? "trig" : alive ? "ok" : "";
+    const lat = s.latency_s === null ? "sin datos" : `retraso ${Math.round(s.latency_s)} s`;
+    return `<div class="st"><b><span class="dot ${cls}"></span>${s.station}${s.station === "HEL" ? " · Medellín" : ""}</b>
+      <small>${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}</small></div>`;
+  }).join("");
+}
+
+function renderDets() {
+  const list = [...dets.values()].sort((a, b) => b.first_onset.localeCompare(a.first_onset));
+  if (!list.length) { $("#dets").innerHTML = '<div class="empty">Sin detecciones todavía.</div>'; return; }
+  $("#dets").innerHTML = list.map((d) => {
+    const sts = Object.entries(d.stations).map(([s, v]) => `${s} (${v.ratio})`).join(", ") || "ninguna";
+    const cat = Object.entries(d.catalog || {});
+    const rows = cat.map(([src, e]) => `<tr>
+        <td><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(src)}</a></td>
+        <td><b>M${esc(e.mag)}</b> ${esc(e.magtype || "")}</td>
+        <td>${esc(e.place)}<br><span class="muted">${fmtTime(e.time)} · prof. ${Math.round(e.depth ?? 0)} km · ${esc(e.status || "")}${e.felt_reports ? ` · <b>${e.felt_reports} lo sintieron</b>` : ""}</span></td>
+        <td>${e.distance_km} km</td>
+        <td><span class="tag ${esc(e.priority)}">${esc(e.priority)}</span></td></tr>`).join("");
+    return `<div class="det ${d.level}${d.id === selectedId ? " selected" : ""}" data-id="${esc(d.id)}" title="Ver en el mapa">
+      <div class="top"><b>${esc(d.message)}</b><span class="tag ${d.level}">${d.test ? "prueba · " : ""}${d.level}</span></div>
+      <div class="muted">Primer disparo: ${fmtTime(d.first_onset)} · Estaciones: ${esc(sts)}</div>
+      ${cat.length ? `<div class="table-wrap"><table><tr><th>Fuente</th><th>Mag.</th><th>Lugar</th><th>Distancia</th><th>Prioridad</th></tr>${rows}</table></div>`
+                   : '<div class="muted" style="margin-top:8px">Buscando en SGC, USGS y EMSC…</div>'}
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".det").forEach((el) => {
+    el.onclick = (ev) => { if (ev.target.closest("a")) return; selectDet(el.dataset.id); };
+  });
+  mapQuakes(list);
+}
+
+function handleDet(d, kind) {
+  dets.set(d.id, d);
+  renderDets();
+  const pre = d.test ? "[Prueba] " : "";
+  if (kind === "detection") selectedId = d.id;
+  if (kind === "catalog" && d.id === selectedId) selectDet(d.id, false);
+  if (kind === "detection" || kind === "update") {
+    notify(`${d.id}:${d.level}`, `${pre}Sismo detectado (${d.level})`, d.message, d.level);
+  }
+  if (kind === "catalog") {
+    for (const [src, e] of Object.entries(d.catalog || {})) {
+      if (e.priority === "silenciosa") continue;
+      notify(`${d.id}:${src}:${e.id}:${e.mag}`,
+        `${pre}M${e.mag} · ${e.place}`,
+        `${src}: a ${e.distance_km} km de Medellín, profundidad ${Math.round(e.depth ?? 0)} km. Prioridad ${e.priority}.` +
+          (e.felt_reports ? ` ${e.felt_reports} personas lo sintieron (EMSC).` : ""),
+        e.priority);
+    }
+  }
+}
+
+function addLog(e) {
+  const el = $("#log");
+  el.textContent += `${fmtTime(e.t)}  ${e.text}\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function load() {
+  const s = await (await fetch("/state")).json();
+  renderStations(s.stations);
+  s.detections.forEach((d) => { dets.set(d.id, d); notified.add(`${d.id}:${d.level}`); });
+  renderDets();
+  $("#log").textContent = "";
+  s.log.forEach(addLog);
+}
+
+function connect() {
+  const es = new EventSource("/events");
+  es.onopen = () => { $("#conn").textContent = "Conectado al servidor local"; $("#conn-dot").className = "dot ok"; load(); };
+  es.onerror = () => { $("#conn").textContent = "Sin conexión con el servidor local, reintentando…"; $("#conn-dot").className = "dot"; };
+  es.addEventListener("stations", (m) => renderStations(JSON.parse(m.data)));
+  es.addEventListener("log", (m) => addLog(JSON.parse(m.data)));
+  ["detection", "update", "catalog"].forEach((k) => es.addEventListener(k, (m) => handleDet(JSON.parse(m.data), k)));
+}
+
+$("#enable").onclick = async () => {
+  audio = audio || new AudioContext();
+  await audio.resume();
+  if ("Notification" in window) await Notification.requestPermission();
+  const ok = "Notification" in window && Notification.permission === "granted";
+  $("#enable").textContent = ok ? "Notificaciones activas ✓" : "Sonido activo (notificaciones bloqueadas)";
+  beep("media");
+};
+// Prueba con el M4.3 de Istmina del 27-sep: disparos reales que midió el detector en la repetición
+$("#test").onclick = () => fetch("/test?t=2026-09-27T21:58:25.998Z", {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ stations: {
+    HEL: { onset: "2026-09-27T21:58:25.998Z", ratio: 29.6 },
+    RUS: { onset: "2026-09-27T21:58:53.018Z", ratio: 27.9 },
+    OCA: { onset: "2026-09-27T21:59:07.968Z", ratio: 19.5 },
+  } }),
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden) document.title = "Alertas de sismos"; });
+initMap();
+connect();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Entorno de Python: cada computador crea el suyo
+.venv/
+__pycache__/
+*.pyc
+
+# Datos y registros de cada instalación
+datos/
+server.log
+*.tmp
