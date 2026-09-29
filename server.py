@@ -21,6 +21,7 @@ from obspy import UTCDateTime
 import config
 import sources
 import store
+import telegram
 import traveltime
 from detector import Associator, StationTrigger, simultaneous_artifact
 from emsc import EmscStream
@@ -192,6 +193,7 @@ def attach(det, name, ev):
     hub.note(f"{name} {verb} {det['id']}: M{ev['mag']} {ev['place']}, "
              f"a {dist} km de Medellín ({level})")
     hub.upsert_detection(det, "catalog")
+    telegram.catalog(det, name, ev)
 
 
 def refresh_felt_reports(det):
@@ -245,12 +247,15 @@ def search_catalogs(det):
     else:
         hub.note(f"{det['id']}: sin coincidencia en SGC, USGS ni EMSC tras "
                  f"{config.SEARCH_DURATION_S // 60} min (probable falsa alarma o sismo muy pequeño)")
+        if not det.get("discarded"):
+            telegram.no_match(det)
     hub.upsert_detection(det, "update")
 
 
 def on_detection(det):
     hub.note(f"DETECCIÓN {det['id']} [{det['level']}]: {det['message']}")
     hub.upsert_detection(det, "detection")
+    telegram.detection(det)
     threading.Thread(target=search_catalogs, args=(det,), daemon=True).start()
 
 
@@ -260,6 +265,9 @@ def on_update(det):
     if reason and not det.get("discarded"):
         det["discarded"] = reason
         hub.note(f"{det['id']} descartada: {reason}")
+        telegram.discarded(det, reason)
+    else:
+        telegram.level_change(det)
     hub.upsert_detection(det, "update")
 
 
@@ -383,6 +391,15 @@ def station_info():
     return out
 
 
+def recent_detections(seconds):
+    """Detecciones reales (sin pruebas ni descartadas) en los últimos `seconds`."""
+    since = UTCDateTime() - seconds
+    with hub.lock:
+        dets = list(hub.detections.values())
+    return sum(1 for d in dets if not d.get("test") and not d.get("discarded")
+               and d.get("detected_at") and UTCDateTime(d["detected_at"]) >= since)
+
+
 def status_loop():
     while True:
         hub.publish("stations", station_info())
@@ -502,6 +519,7 @@ def main():
     emsc_stream.start()
     threading.Thread(target=sgc_background_loop, daemon=True).start()
     threading.Thread(target=status_loop, daemon=True).start()
+    telegram.start(station_info, recent_detections)
     server = ThreadingHTTPServer((config.HTTP_HOST, config.HTTP_PORT), Handler)
     server.daemon_threads = True
     hub.note(f"Página de alertas en http://{config.HTTP_HOST}:{config.HTTP_PORT}")

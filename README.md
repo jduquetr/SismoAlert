@@ -138,6 +138,44 @@ publica, no conviene publicar `docs/` desde otro computador: sus cambios chocar�
 Estos mismos pasos sirven en la Raspberry Pi (Linux). Solo cambia el arranque automático:
 se hace con un servicio de systemd en lugar de launchd.
 
+## Servidor en la nube (Linux) y avisos por Telegram
+
+El mismo servidor corre en una máquina virtual Linux (probado en Azure, Ubuntu 24.04,
+Standard_B2ats_v2 con 1 GB de RAM y 1 GB de swap), así no depende de un computador encendido.
+
+```
+git clone https://github.com/jduquetr/SismoAlert.git ~/sismos-alerta
+cd ~/sismos-alerta
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+sh linux/instalar_servicio.sh
+```
+
+`linux/instalar_servicio.sh` lo registra en systemd (arranca con la máquina y se reinicia si
+se cae) y programa `linux/actualizar.sh` cada 5 minutos: si hay cambios en GitHub los trae y
+reinicia el servicio. Registro: `journalctl -u sismoalert -f`.
+
+**Telegram.** Crea un bot con @BotFather, escríbele algo y toma tu `chat_id` de
+`https://api.telegram.org/bot<TOKEN>/getUpdates` (para un grupo o canal, agrega el bot y usa
+el id que empieza por `-100`). Luego, en el servidor, crea `/etc/sismoalert.env` con permisos
+600 y reinicia el servicio (`sudo systemctl restart sismoalert`):
+
+```
+TELEGRAM_TOKEN=123456:ABC...
+TELEGRAM_CHAT_ID=123456789
+SISMOALERT_URL=https://sismo-alert-blue.vercel.app
+```
+
+`telegram.py` avisa de cada detección (con sonido si es alta o media), de la primera
+confirmación en un catálogo y de cada subida de prioridad, de las estaciones que dejan de
+enviar datos más de 10 minutos (`TELEGRAM_STALE_S`) y manda un resumen diario a las 7:00 de
+Colombia (`TELEGRAM_DAILY_HOUR`). Sin esas variables no envía nada. El botón de prueba de la
+página también llega a Telegram, marcado como PRUEBA.
+
+**Catálogo del SGC desde la nube.** `api.sgc.gov.co` responde 403 a las IP de Azure: desde
+ahí las detecciones se confirman con USGS y EMSC, y el mapa queda sin la sismicidad de fondo
+del SGC.
+
 ## Copia estática para compartir (`docs/`)
 
 `docs/index.html` es una copia de la página local con los datos del servidor en el momento en
@@ -197,4 +235,4 @@ Istmina sin falsas alarmas.
 - Base de sismos sentidos en Medellín para reemplazar la función `priority()` provisional.
 - Feed `archive.sgc.gov.co`, con eventos preliminares: está en `sources.sgc_archive`, apagado
   con `USE_SGC_ARCHIVE_FEED`. Hay que pedir autorización al SGC (datos@sgc.gov.co).
-- Llevarlo a la Raspberry Pi y enviar al celular (ntfy/Telegram).
+- Llevarlo a la Raspberry Pi.
