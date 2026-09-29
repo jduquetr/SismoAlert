@@ -485,8 +485,11 @@ function selectDet(id, fly = true) {
     detStations(d).forEach((s) => pts.push(s.pos));
     map.flyToBounds(pts, { padding: [40, 40], maxZoom: 8, duration: 0.8 });
     document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => startAnimation(d), 900);
+    // Si llega otra actualización durante el vuelo, solo corre la última simulación
+    clearTimeout(selectDet.pending);
+    selectDet.pending = setTimeout(() => startAnimation(d), 900);
   } else {
+    clearTimeout(selectDet.pending);
     startAnimation(d);
   }
 }
@@ -527,12 +530,35 @@ function renderDets() {
   mapQuakes(list);
 }
 
+// Simulación automática de la llegada de las ondas: al detectar un posible sismo se corre
+// desde la zona probable, y se vuelve a correr solo cuando esa zona cambia (se suman
+// estaciones y mejora la estimación, o un catálogo publica el epicentro). Los datos que no
+// mueven el origen, como los reportes "sentido", no la reinician.
+const simulatedZone = new Map();  // id de detección -> zona de la última simulación
+const zoneKey = (z) => (z ? `${z.method}|${z.lat.toFixed(2)}|${z.lon.toFixed(2)}|${Math.round(z.depth)}` : "");
+
+function autoSimulate(d, kind) {
+  if (kind === "detection") {
+    selectDet(d.id);
+    simulatedZone.set(d.id, zoneKey(sourceZone(d)));
+    return;
+  }
+  if (d.id !== selectedId) return;  // se está viendo otra detección: no interrumpirla
+  const key = zoneKey(sourceZone(d));
+  if (key && key !== simulatedZone.get(d.id)) {
+    simulatedZone.set(d.id, key);
+    selectDet(d.id);  // el origen cambió: centrar de nuevo y repetir la simulación
+  } else {
+    mapQuakes([...dets.values()]);
+    renderInfo(d, sourceZone(d));  // sin reiniciar la animación en curso
+  }
+}
+
 function handleDet(d, kind) {
   dets.set(d.id, d);
   renderDets();
   const pre = d.test ? "[Prueba] " : "";
-  if (kind === "detection") selectedId = d.id;
-  if (kind === "catalog" && d.id === selectedId) selectDet(d.id, false);
+  autoSimulate(d, kind);
   if (kind === "detection" || kind === "update") {
     notify(`${d.id}:${d.level}`, `${pre}Sismo detectado (${d.level})`, d.message, d.level);
   }
