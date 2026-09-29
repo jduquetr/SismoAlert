@@ -117,6 +117,24 @@ externa. La pantalla sí puede apagarse; eso no detiene el servidor.
 El servidor sigue escuchando solo en `127.0.0.1`: nadie fuera de tu red de Tailscale puede
 verlo, y el HTTPS permite que funcionen las notificaciones del navegador.
 
+**Publicar en Vercel automáticamente.** El Mac vigilante puede mantener al día
+https://sismo-alert-blue.vercel.app y el respaldo que usa el visor. Primero, una sola vez:
+
+```
+brew install gh
+gh auth login            # entrar con la cuenta de GitHub dueña de SismoAlert
+gh auth setup-git        # git push usa esa sesión, también desde launchd
+git config user.name "Tu nombre"
+git config user.email tu@correo
+./publicar.sh --forzar   # prueba: debe terminar con "publicado en Vercel" en publicar.log
+sh mac/instalar_publicacion.sh
+```
+
+`publicar.sh` corre cada 10 minutos. Solo hace commit y push de `docs/` si cambió el registro
+de sismos, o una vez al día para refrescar el estado de las estaciones. Deja lo que hace en
+`publicar.log`. Para quitarlo: `sh mac/instalar_publicacion.sh --quitar`. Desde que el Mac
+publica, no conviene publicar `docs/` desde otro computador: sus cambios chocarían.
+
 Estos mismos pasos sirven en la Raspberry Pi (Linux). Solo cambia el arranque automático:
 se hace con un servicio de systemd en lugar de launchd.
 
