@@ -144,6 +144,14 @@ def main():
     out.parent.mkdir(exist_ok=True)
     out.write_text(build(state), encoding="utf-8")
     print(f"{out}: {out.stat().st_size // 1024} KB, {len(state['detections'])} detecciones")
+    # El registro de sismos también se publica: el visor sismos-3d-colombia lo usa como
+    # respaldo cuando no alcanza el servidor en vivo (vercel.json le da CORS)
+    geo = ROOT / "datos" / "sismos-detectados.geojson"
+    if geo.exists():
+        dest = out.parent / geo.name
+        dest.write_bytes(geo.read_bytes())
+        count = json.loads(geo.read_text(encoding="utf-8"))["metadata"]["count"]
+        print(f"{dest}: {count} sismos registrados")
 
 
 if __name__ == "__main__":

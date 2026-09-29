@@ -136,8 +136,22 @@ git commit -m "Actualizar copia estática"
 git push
 ```
 
-El mapa tiene un selector de mapa base, arriba a la derecha: calles, topográfico, satélite,
-relieve sombreado, claro, oscuro y contornos sin conexión. Recuerda la última elección.
+El mapa tiene un selector de mapa base, plegado en un ícono arriba a la derecha: calles,
+topográfico, satélite, relieve sombreado, claro, oscuro y contornos sin conexión. La página
+tiene además un control de volumen para la alerta. Ambos se recuerdan en cada navegador.
+
+`copia_estatica.py` también publica `docs/sismos-detectados.geojson`, con CORS abierto. El
+botón "Sismos sentidos (SPAlert)" del visor sismos-3d-colombia lo usa como respaldo cuando no
+alcanza el servidor en vivo.
+
+## Visor de sismos (evento especial SPAlert)
+
+El servidor entrega el registro en `http://127.0.0.1:8765/sismos-detectados.geojson`, con
+CORS solo para las páginas del visor (`config.VISOR_ORIGINS`). En el visor, el botón "Sismos
+sentidos (SPAlert)" lo carga como evento especial. El campo de dirección acepta
+`http://127.0.0.1:8765` en el mismo equipo o la dirección de Tailscale (`https://….ts.net`)
+del computador que vigila. Si no responde, carga la copia publicada en Vercel y avisa de qué
+fecha es.
 
 ## Calibración
 

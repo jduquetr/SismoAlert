@@ -36,7 +36,11 @@
   button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
            background: var(--panel); color: var(--text); cursor: pointer; }
   button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .volume { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line);
+            border-radius: 8px; background: var(--panel); font-size: 13px; }
+  .volume input { width: 110px; accent-color: var(--alta); }
+  .volume output { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
   .stations { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
   .st { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .st b { display: flex; align-items: center; gap: 6px; }
@@ -91,6 +95,11 @@
     </div>
     <div class="actions">
       <button id="enable" class="primary">Activar notificaciones y sonido</button>
+      <label class="volume" for="volume" title="Volumen de la alerta">
+        <span aria-hidden="true">🔊</span>
+        <input type="range" id="volume" min="0" max="100" step="5" value="60" aria-label="Volumen de la alerta">
+        <output id="volume-value" for="volume">60%</output>
+      </label>
       <button id="test">Probar con el sismo de Istmina</button>
     </div>
   </header>
@@ -131,13 +140,20 @@ const fmtTime = (iso) => {
 };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// Volumen de la alerta (0-100), recordado en este navegador
+const VOLUME_KEY = "sismos-volumen";
+let volume = 60;
+try { const v = parseInt(localStorage.getItem(VOLUME_KEY), 10); if (v >= 0 && v <= 100) volume = v; } catch (e) { /* sin almacenamiento */ }
+
 function beep(level) {
-  if (!audio) return;
+  if (!audio || volume === 0) return;
+  // Escala cuadrática: el oído percibe mejor los cambios en la parte baja del control
+  const peak = 0.6 * (volume / 100) ** 2;
   const pattern = level === "alta" || level === "crítica" ? [0, .35, .7] : [0];
   pattern.forEach((t) => {
     const o = audio.createOscillator(), g = audio.createGain();
     o.frequency.value = level === "alta" || level === "crítica" ? 880 : 660;
-    g.gain.setValueAtTime(.25, audio.currentTime + t);
+    g.gain.setValueAtTime(peak, audio.currentTime + t);
     g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + t + .3);
     o.connect(g).connect(audio.destination);
     o.start(audio.currentTime + t); o.stop(audio.currentTime + t + .3);
@@ -205,7 +221,8 @@ function initMap() {
   const first = layers[saved] ? saved : Object.keys(layers)[0];
   layers[first].addTo(map);
   map.getContainer().classList.toggle("basemap", first.startsWith("Contornos"));
-  L.control.layers(layers, null, { position: "topright", collapsed: window.innerWidth < 700 }).addTo(map);
+  // Plegado: se muestra como un ícono de capas y se despliega al pasar el cursor o tocarlo
+  L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
   map.on("baselayerchange", (e) => {
     map.getContainer().classList.toggle("basemap", e.name.startsWith("Contornos"));
     try { localStorage.setItem(BASE_MAP_KEY, e.name); } catch (err) { /* sin almacenamiento: no se recuerda */ }
@@ -563,6 +580,15 @@ $("#enable").onclick = async () => {
   $("#enable").textContent = ok ? "Notificaciones activas ✓" : "Sonido activo (notificaciones bloqueadas)";
   beep("media");
 };
+// Control de volumen: al soltarlo suena un pitido de muestra (si el sonido ya está activo)
+$("#volume").value = volume;
+$("#volume-value").textContent = `${volume}%`;
+$("#volume").addEventListener("input", (e) => {
+  volume = Number(e.target.value);
+  $("#volume-value").textContent = `${volume}%`;
+  try { localStorage.setItem(VOLUME_KEY, String(volume)); } catch (err) { /* sin almacenamiento */ }
+});
+$("#volume").addEventListener("change", () => beep("media"));
 // Prueba con el M4.3 de Istmina del 27-sep: disparos reales que midió el detector en la repetición
 $("#test").onclick = () => fetch("/test?t=2026-09-27T21:58:25.998Z", {
   method: "POST", headers: { "Content-Type": "application/json" },

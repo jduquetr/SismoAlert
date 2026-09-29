@@ -139,7 +139,7 @@ def save(det):
               "features": features}
         DATA.mkdir(parents=True, exist_ok=True)
         tmp = GEOJSON.with_suffix(".tmp")
-        tmp.write_text(json.dumps(fc, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.write_text(json.dumps(fc, default=_to_json, ensure_ascii=False, indent=2), encoding="utf-8")
         tmp.replace(GEOJSON)
 
 
@@ -153,7 +153,9 @@ def load_recent(limit=30):
         det = f["properties"].get("deteccion")
         if not det:
             continue
-        det = dict(det)
+        # Copia profunda: convertir las horas a UTCDateTime sobre los registros guardados
+        # impedía después escribir el archivo (json no sabe serializarlas)
+        det = json.loads(json.dumps(det))
         for k in ("first_onset", "detected_at"):
             if det.get(k):
                 det[k] = UTCDateTime(det[k])

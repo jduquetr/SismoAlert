@@ -2,5 +2,15 @@
   "framework": null,
   "installCommand": "",
   "buildCommand": "",
-  "outputDirectory": "docs"
+  "outputDirectory": "docs",
+  "headers": [
+    {
+      "source": "/sismos-detectados.geojson",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Content-Type", "value": "application/geo+json; charset=utf-8" }
+      ]
+    }
+  ]
 }
