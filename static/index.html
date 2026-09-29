@@ -33,6 +33,16 @@
   .dot.ok { background: var(--ok); }
   .dot.trig { background: var(--alta); animation: pulse 1s infinite; }
   @keyframes pulse { 50% { opacity: .3; } }
+  /* Punto de conexión: late con cada dato que envía el servidor (~cada 5 s) */
+  #conn-dot { width: 11px; height: 11px; }
+  #conn-dot.ok { animation: blink 1.2s ease-in-out infinite; }
+  #conn-dot.beat { animation: beat .6s ease-out; }
+  #conn-dot.stale { background: var(--media); animation: pulse 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  @keyframes beat { 0% { transform: scale(1); box-shadow: 0 0 0 0 var(--ok); }
+                    40% { transform: scale(1.6); }
+                    100% { transform: scale(1); box-shadow: 0 0 0 8px transparent; } }
+  @media (prefers-reduced-motion: reduce) { #conn-dot.ok, #conn-dot.beat, #conn-dot.stale { animation: none; } }
   button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
            background: var(--panel); color: var(--text); cursor: pointer; }
   button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
@@ -646,11 +656,30 @@ async function load() {
   s.log.forEach(addLog);
 }
 
+// Latido del punto de conexión. El servidor manda el estado de las estaciones cada 5 s:
+// cada envío hace latir el punto. Si pasan 20 s sin nada, se pone ámbar ("sin datos").
+let lastBeat = 0;
+function heartbeat() {
+  lastBeat = Date.now();
+  const dot = $("#conn-dot");
+  dot.className = "dot ok beat";
+  void dot.offsetWidth;  // reiniciar la animación aunque la clase ya estuviera
+  setTimeout(() => { if (dot.classList.contains("beat")) dot.className = "dot ok"; }, 650);
+  if ($("#conn").textContent.startsWith("Sin datos")) $("#conn").textContent = "Conectado al servidor local · vigilando";
+}
+setInterval(() => {
+  if (typeof SNAPSHOT !== "undefined" || !lastBeat) return;
+  if (Date.now() - lastBeat > 20000) {
+    $("#conn-dot").className = "dot stale";
+    $("#conn").textContent = `Sin datos del servidor hace ${fmtS((Date.now() - lastBeat) / 1000)}`;
+  }
+}, 2000);
+
 function connect() {
   const es = new EventSource("/events");
-  es.onopen = () => { $("#conn").textContent = "Conectado al servidor local"; $("#conn-dot").className = "dot ok"; load(); };
-  es.onerror = () => { $("#conn").textContent = "Sin conexión con el servidor local, reintentando…"; $("#conn-dot").className = "dot"; };
-  es.addEventListener("stations", (m) => renderStations(JSON.parse(m.data)));
+  es.onopen = () => { $("#conn").textContent = "Conectado al servidor local · vigilando"; $("#conn-dot").className = "dot ok"; lastBeat = Date.now(); load(); };
+  es.onerror = () => { $("#conn").textContent = "Sin conexión con el servidor local, reintentando…"; $("#conn-dot").className = "dot"; lastBeat = 0; };
+  es.addEventListener("stations", (m) => { renderStations(JSON.parse(m.data)); heartbeat(); });
   es.addEventListener("log", (m) => addLog(JSON.parse(m.data)));
   ["detection", "update", "catalog"].forEach((k) => es.addEventListener(k, (m) => handleDet(JSON.parse(m.data), k)));
 }
