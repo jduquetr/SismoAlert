@@ -1,6 +1,6 @@
 #!/bin/sh
 # Registra en launchd (macOS) la publicación automática en Vercel: corre publicar.sh cada
-# 10 minutos, y este solo sube algo si cambió el registro de sismos (o una vez al día).
+# hora, y este solo sube algo si cambió el registro de sismos (o una vez al día).
 #
 # Antes, una sola vez en este Mac (ver README):
 #   brew install gh && gh auth login && gh auth setup-git

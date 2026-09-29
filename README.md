@@ -130,7 +130,7 @@ git config user.email tu@correo
 sh mac/instalar_publicacion.sh
 ```
 
-`publicar.sh` corre cada 10 minutos. Solo hace commit y push de `docs/` si cambió el registro
+`publicar.sh` corre cada hora (`INTERVALO` en `mac/instalar_publicacion.sh`). Solo hace commit y push de `docs/` si cambió el registro
 de sismos, o una vez al día para refrescar el estado de las estaciones. Deja lo que hace en
 `publicar.log`. Para quitarlo: `sh mac/instalar_publicacion.sh --quitar`. Desde que el Mac
 publica, no conviene publicar `docs/` desde otro computador: sus cambios chocarían.

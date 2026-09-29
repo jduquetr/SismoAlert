@@ -3,7 +3,7 @@
 #
 # Hace commit y push de docs/ solo si cambió el registro de sismos o si la última
 # publicación tiene más de REFRESCO_HORAS horas; si no, no deja rastro. Pensado para
-# correr cada 10 minutos con launchd (mac/instalar_publicacion.sh). Escribe en publicar.log.
+# correr cada hora con launchd (mac/instalar_publicacion.sh). Escribe en publicar.log.
 #
 # Uso: ./publicar.sh            publicar si hay cambios
 #      ./publicar.sh --forzar   publicar aunque no haya cambios
