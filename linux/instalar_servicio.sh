@@ -27,7 +27,8 @@ esac
 }
 [ -x "$DIR/.venv/bin/python" ] || { echo "Falta $DIR/.venv/bin/python" >&2; exit 1; }
 command -v flock >/dev/null
-sudo -v
+# No usar sudo -v: pide contraseña aunque el usuario tenga NOPASSWD (Azure, cloud-init).
+sudo true
 # Los secretos los lee systemd como root; no convertir el archivo en código shell.
 if sudo test -e /etc/sismoalert.env; then
   sudo test ! -L /etc/sismoalert.env || { echo "El archivo de entorno no puede ser un enlace" >&2; exit 1; }
