@@ -1,0 +1,7 @@
+# Vercel solo publica la copia estática de docs/. El resto (servidor en Python, página
+# de la app que necesita el servidor local) no se sube: si no, Vercel lo trata como una
+# app de Python, instala ObsPy y sirve static/index.html en lugar de docs/index.html.
+*
+!docs
+!docs/**
+!vercel.json
