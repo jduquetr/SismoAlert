@@ -22,9 +22,25 @@ class StationTrigger:
         self.last_packet = None   # hora de llegada del último paquete (reloj local)
         self.last_sample = None   # hora del último dato (UTCDateTime)
 
+    def reset(self):
+        """Descarta la señal acumulada; el STA/LTA se vuelve a estabilizar (~35 s)."""
+        self.stream = Stream()
+        self.triggered = False
+        self.onset = None
+        self.peak_ratio = 0.0
+        self.off_since = None
+        self.last_checked = None
+
     def add(self, trace):
         """Agrega un trozo de señal. Devuelve la hora de inicio si hay un disparo nuevo."""
         self.last_packet = time.time()
+        if len(self.stream):
+            gap = trace.stats.starttime - self.stream[0].stats.endtime
+            if gap > config.GAP_RESET_S:
+                # Un hueco (reconexión, corte de red, PC suspendido) no se rellena: unir la
+                # señal a través de él produce un salto que dispara con STA/LTA ~30 en todas
+                # las estaciones a la vez. Se empieza de cero.
+                self.reset()
         self.stream += trace
         self.stream.merge(method=1, fill_value="interpolate")
         tr = self.stream[0]
@@ -79,6 +95,36 @@ class StationTrigger:
             "last_packet_age_s": (round(time.time() - self.last_packet, 1)
                                   if self.last_packet else None),
         }
+
+
+def simultaneous_artifact(det):
+    """Motivo si la detección parece un artefacto de la señal y no un sismo, si no None.
+
+    Un sismo de la región no llega casi a la vez a estaciones separadas por cientos de km:
+    la onda más rápida (Pn, 8 km/s) tarda más de 100 s en recorrer 800 km, así que las
+    estaciones se van sumando de a poco. Cuando un bloque de 6 o más estaciones dispara
+    fuerte dentro de 20 s y en él hay pares a más de 800 km, la causa es la señal misma
+    (un hueco al reconectar, un corte de red), no un sismo. Se busca el bloque y no todo
+    el rango porque un disparo de ruido suelto puede estirar la ventana.
+    """
+    import math
+    strong = sorted((UTCDateTime(v["onset"]), s) for s, v in det.get("stations", {}).items()
+                    if v["ratio"] >= config.MIN_RATIO and s in config.STATIONS)
+    best = []
+    for i, (t_i, _) in enumerate(strong):
+        block = [(t, s) for t, s in strong[i:] if t - t_i <= 20]
+        if len(block) > len(best):
+            best = block
+    if len(best) < 6:
+        return None
+    pos = [config.STATIONS[s][3:5] for _, s in best]
+    far = max(111.2 * math.dist(a, b) for a in pos for b in pos)
+    if far < 800:
+        return None
+    span = best[-1][0] - best[0][0]
+    return (f"{len(best)} estaciones dispararon en {span:.0f} s estando hasta a {far:.0f} km entre "
+            "sí; un sismo de la región no llega tan rápido. Probable hueco en la señal "
+            "(reconexión o corte de red).")
 
 
 def n_groups(stations):

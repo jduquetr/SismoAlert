@@ -98,6 +98,7 @@
   .ring-label::before { display: none; }
   .det { cursor: pointer; }
   .det.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+  .det.discarded { opacity: .55; border-left-color: var(--off); }
   .leaflet-popup-content { font: 13px/1.4 system-ui, sans-serif; }
   .qinfo { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
   .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 16px; }
@@ -572,6 +573,15 @@ function renderStations(list) {
   }).join("");
 }
 
+// Estado de la búsqueda en catálogos de una detección sin coincidencias. Las detecciones
+// guardadas antes de que existiera el campo "search" se dan por terminadas tras 35 min.
+function catalogStatus(d) {
+  const searching = d.search ? d.search === "buscando"
+    : Date.now() - new Date(d.first_onset).getTime() < 35 * 60 * 1000;
+  return searching ? "Buscando en SGC, USGS y EMSC…"
+    : "Sin coincidencia en SGC, USGS ni EMSC tras 30 min: probable falsa alarma o sismo muy pequeño.";
+}
+
 function renderDets() {
   const list = [...dets.values()].sort((a, b) => b.first_onset.localeCompare(a.first_onset));
   if (!list.length) { $("#dets").innerHTML = '<div class="empty">Sin detecciones todavía.</div>'; return; }
@@ -584,11 +594,12 @@ function renderDets() {
         <td>${esc(e.place)}<br><span class="muted">${fmtTime(e.time)} · prof. ${Math.round(e.depth ?? 0)} km · ${esc(e.status || "")}${e.felt_reports ? ` · <b>${e.felt_reports} lo sintieron</b>` : ""}</span></td>
         <td>${e.distance_km} km</td>
         <td><span class="tag ${esc(e.priority)}">${esc(e.priority)}</span></td></tr>`).join("");
-    return `<div class="det ${d.level}${d.id === selectedId ? " selected" : ""}" data-id="${esc(d.id)}" title="Ver en el mapa">
+    return `<div class="det ${d.level}${d.id === selectedId ? " selected" : ""}${d.discarded ? " discarded" : ""}" data-id="${esc(d.id)}" title="Ver en el mapa">
       <div class="top"><b>${esc(d.message)}</b><span class="tag ${d.level}">${d.test ? "prueba · " : ""}${d.level}</span></div>
       <div class="muted">Primer disparo: ${fmtTime(d.first_onset)} · Estaciones: ${esc(sts)}</div>
+      ${d.discarded ? `<div class="muted" style="margin-top:8px"><b>Descartada:</b> ${esc(d.discarded)}</div>` : ""}
       ${cat.length ? `<div class="table-wrap"><table><tr><th>Fuente</th><th>Mag.</th><th>Lugar</th><th>Distancia</th><th>Prioridad</th></tr>${rows}</table></div>`
-                   : '<div class="muted" style="margin-top:8px">Buscando en SGC, USGS y EMSC…</div>'}
+                   : `<div class="muted" style="margin-top:8px">${catalogStatus(d)}</div>`}
     </div>`;
   }).join("");
   document.querySelectorAll(".det").forEach((el) => {

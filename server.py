@@ -22,7 +22,7 @@ import config
 import sources
 import store
 import traveltime
-from detector import Associator, StationTrigger
+from detector import Associator, StationTrigger, simultaneous_artifact
 from emsc import EmscStream
 from seedlink import SeedLinkClient
 
@@ -215,6 +215,7 @@ def search_catalogs(det):
     """Consulta los catálogos periódicamente hasta encontrar el sismo en todos."""
     deadline = time.time() + config.SEARCH_DURATION_S
     det.setdefault("catalog", {})
+    det["search"] = "buscando"
     active[det["id"]] = det
     try:
         while time.time() < deadline:
@@ -237,7 +238,14 @@ def search_catalogs(det):
                 time.sleep(config.SEARCH_INTERVAL_S)
     finally:
         active.pop(det["id"], None)
-    hub.note(f"Fin de la búsqueda en catálogos para {det['id']}")
+    # Estado final, para que la página no siga mostrando "Buscando…" indefinidamente
+    det["search"] = "terminada"
+    if det["catalog"]:
+        hub.note(f"Fin de la búsqueda en catálogos para {det['id']}")
+    else:
+        hub.note(f"{det['id']}: sin coincidencia en SGC, USGS ni EMSC tras "
+                 f"{config.SEARCH_DURATION_S // 60} min (probable falsa alarma o sismo muy pequeño)")
+    hub.upsert_detection(det, "update")
 
 
 def on_detection(det):
@@ -248,6 +256,10 @@ def on_detection(det):
 
 def on_update(det):
     hub.note(f"{det['id']} [{det['level']}]: estaciones {', '.join(det['stations'])}")
+    reason = simultaneous_artifact(det)
+    if reason and not det.get("discarded"):
+        det["discarded"] = reason
+        hub.note(f"{det['id']} descartada: {reason}")
     hub.upsert_detection(det, "update")
 
 

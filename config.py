@@ -37,6 +37,9 @@ THR_OFF = 1.5
 # disparos repetidos por la coda del mismo sismo)
 DEAD_TIME_S = 30
 BUFFER_S = 90  # segundos de señal que se guardan por estación
+# Si entre dos paquetes de una estación falta más de esto (s), se descarta la señal
+# anterior en vez de rellenar el hueco (ver StationTrigger.add)
+GAP_RESET_S = 1.0
 
 # Asociación: disparos en varias estaciones dentro de esta ventana = sismo
 ASSOC_WINDOW_S = 120
