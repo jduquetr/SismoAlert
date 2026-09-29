@@ -72,6 +72,54 @@ En la página, pulsa **Activar notificaciones y sonido** y acepta el permiso del
 El botón **Probar con el sismo de Istmina** simula una detección del M4.3 del 27-sep-2026
 y busca ese sismo real en los tres catálogos.
 
+## Uso en macOS (computador que vigila)
+
+Requiere Python 3.11 o más reciente. El `python3` que trae macOS suele ser más antiguo:
+instálalo desde python.org o con `brew install python@3.12`.
+
+```
+git clone https://github.com/jduquetr/SismoAlert.git ~/sismos-alerta
+cd ~/sismos-alerta
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+chmod +x iniciar.sh
+./iniciar.sh --abrir          # prueba a mano; Ctrl+C para detenerlo
+```
+
+**Dejarlo corriendo solo.** `sh mac/instalar_servicio.sh` lo registra en launchd: arranca al
+iniciar sesión, se reinicia si se cae y escribe en `server.log`. Para quitarlo, usa
+`sh mac/instalar_servicio.sh --quitar`. El servicio corre dentro de la sesión del usuario, así
+que conviene activar el inicio de sesión automático (Ajustes del Sistema → Usuarios y grupos).
+
+**Que no se duerma.** Con el Mac conectado a la corriente:
+
+```
+sudo pmset -c sleep 0 disksleep 0
+```
+
+En un MacBook, deja la tapa abierta: al cerrarla se suspende salvo que tenga una pantalla
+externa. La pantalla sí puede apagarse; eso no detiene el servidor.
+
+**Comprobar que funciona.**
+- Abre `http://127.0.0.1:8765`: las estaciones deben estar en verde.
+- Revisa el registro con `tail -f server.log`.
+- Pide el estado de las estaciones con
+  `curl -s http://127.0.0.1:8765/state | python3 -m json.tool | grep -E '"station"|last_packet'`.
+
+**Verlo desde afuera (Tailscale).**
+1. Instala Tailscale en el Mac y en tu celular o portátil, con la misma cuenta.
+2. En login.tailscale.com/admin/dns, activa MagicDNS y HTTPS Certificates.
+3. En el Mac, ejecuta `tailscale serve --bg 8765`. Con la app de la Mac App Store, el comando
+   es `/Applications/Tailscale.app/Contents/MacOS/Tailscale serve --bg 8765`.
+4. Abre desde tus dispositivos la dirección `https://<nombre-del-mac>.<tailnet>.ts.net` que
+   muestra el comando.
+
+El servidor sigue escuchando solo en `127.0.0.1`: nadie fuera de tu red de Tailscale puede
+verlo, y el HTTPS permite que funcionen las notificaciones del navegador.
+
+Estos mismos pasos sirven en la Raspberry Pi (Linux). Solo cambia el arranque automático:
+se hace con un servicio de systemd en lugar de launchd.
+
 ## Copia estática para compartir (`docs/`)
 
 `docs/index.html` es una copia de la página local con los datos del servidor en el momento en
