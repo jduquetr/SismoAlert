@@ -357,7 +357,10 @@ async function loadSgc() {
     }
     drawSgc();
   } catch (e) {
-    if (el) el.textContent = `Catálogo del SGC no disponible (${e.message})`;
+    // 404: la página es nueva pero el servidor que corre es anterior a esta función
+    const hint = /404/.test(e.message) ? ": reinicia el servidor para activarlo"
+      : /502/.test(e.message) ? ": el servidor no pudo consultar al SGC (revisa server.log)" : "";
+    if (el) el.textContent = `Catálogo del SGC no disponible (${e.message})${hint}`;
   }
   if (typeof SGC_SNAPSHOT === "undefined") {
     clearTimeout(sgcTimer);

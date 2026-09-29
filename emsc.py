@@ -8,7 +8,7 @@ import websockets
 from obspy import UTCDateTime
 
 import config
-from sources import _event
+from sources import SSL_CONTEXT, _event
 
 log = logging.getLogger("sismos")
 URL = "wss://www.seismicportal.eu/standing_order/websocket"
@@ -40,7 +40,8 @@ class EmscStream:
         delay = 5
         while True:
             try:
-                async with websockets.connect(URL, open_timeout=20, ping_interval=60) as ws:
+                async with websockets.connect(URL, open_timeout=20, ping_interval=60,
+                                              ssl=SSL_CONTEXT) as ws:
                     self.connected = True
                     delay = 5
                     self.note("Conectado al websocket de EMSC")

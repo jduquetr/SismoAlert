@@ -1,8 +1,11 @@
 """Búsqueda de eventos en los catálogos del SGC, USGS y EMSC."""
 import json
 import math
+import ssl
 import urllib.parse
 import urllib.request
+
+import certifi
 
 from obspy import UTCDateTime
 
@@ -10,11 +13,14 @@ import config
 
 USER_AGENT = "sismos-alerta-medellin/0.1 (prototipo personal)"
 BOGOTA_OFFSET_S = -5 * 3600
+# Certificados HTTPS de certifi en lugar de los del sistema: el Python de python.org en
+# macOS no trae certificados instalados y todas las consultas HTTPS fallarían
+SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 
 def _get_json(url, timeout=20):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT) as r:
         if r.status == 204:
             return None
         return json.loads(r.read().decode("utf-8"))
@@ -62,7 +68,7 @@ def emsc_felt_reports(unid):
         "https://www.seismicportal.eu/testimonies-ws/api/search?"
         + urllib.parse.urlencode(dict(unids=unid, format="json")),
         headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=20) as r:
+    with urllib.request.urlopen(req, timeout=20, context=SSL_CONTEXT) as r:
         body = r.read()
     if not body.strip():  # sin reportes: el servicio responde vacío
         return 0
