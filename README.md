@@ -74,9 +74,22 @@ y busca ese sismo real en los tres catálogos.
 
 ## Copia estática para compartir (`docs/`)
 
-`docs/index.html` es una copia de la página local con los datos del 28-sep-2026: estaciones,
-detecciones y registro. Funciona sin servidor y no se actualiza sola. `vercel.json` hace que
-Vercel publique esa carpeta al importar el repositorio.
+`docs/index.html` es una copia de la página local con los datos del servidor en el momento en
+que se generó: estaciones, detecciones y registro. Funciona sin servidor y no se actualiza sola.
+Se publica en https://sismo-alert-blue.vercel.app: Vercel despliega cada push a `main` y solo
+recibe `docs/` (ver `.vercelignore`).
+
+Para publicar datos nuevos, con el servidor en marcha:
+
+```
+.\.venv\Scripts\python.exe copia_estatica.py
+git add docs/index.html
+git commit -m "Actualizar copia estática"
+git push
+```
+
+El mapa tiene un selector de mapa base, arriba a la derecha: calles, topográfico, satélite,
+relieve sombreado, claro, oscuro y contornos sin conexión. Recuerda la última elección.
 
 ## Calibración
 

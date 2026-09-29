@@ -11,12 +11,14 @@
     --bg: #f6f5f2; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
     --alta: #c62828; --media: #d97706; --baja: #2563eb; --ok: #15803d; --off: #9ca3af;
     --critica: #c62828; --informativa: #d97706; --silenciosa: #6b7280;
+    --sea: #dfe9f1; --land: #f4f2ec; --border: #b9b4a6;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #151514; --panel: #1f1f1d; --text: #ecebe8; --muted: #a09e99; --line: #34332f;
       --alta: #ef5350; --media: #f59e0b; --baja: #60a5fa; --ok: #4ade80; --off: #6b7280;
       --critica: #ef5350; --informativa: #f59e0b; --silenciosa: #9ca3af;
+      --sea: #16222c; --land: #232826; --border: #4a524d;
     }
   }
   * { box-sizing: border-box; }
@@ -57,6 +59,12 @@
          border-radius: 10px; padding: 10px 12px; max-height: 240px; overflow: auto; white-space: pre-wrap; }
   .empty { color: var(--muted); padding: 12px 0; }
   #map { height: 520px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+  /* Mapa de contornos (copia estática): el mar es el fondo y los países se dibujan encima */
+  .leaflet-container.basemap { background: var(--sea); }
+  .city-label { background: transparent; border: 0; box-shadow: none; color: var(--muted); font: 600 11px system-ui, sans-serif; padding: 0; }
+  .city-label::before { display: none; }
+  .leaflet-control-layers { font: 13px/1.5 system-ui, sans-serif; }
+  .leaflet-control-layers-base label { margin: 2px 0; }
   @media (max-width: 600px) { #map { height: 380px; } }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 8px; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -155,11 +163,53 @@ const PRIORITY_COLOR = { "crítica": "#c62828", "informativa": "#d97706", "silen
 let map, quakeLayer, selectedId = null, lastStations = [];
 const stMarkers = {};
 
+// Mapas base que se pueden elegir con el control de capas (arriba a la derecha del mapa)
+const BASE_MAP_KEY = "sismos-mapa-base";
+function baseLayers() {
+  const layers = {
+    "Calles · OpenStreetMap": L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18, attribution: "&copy; OpenStreetMap" }),
+    "Topográfico · OpenTopoMap": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      maxZoom: 17, attribution: "&copy; OpenStreetMap, SRTM · estilo &copy; OpenTopoMap (CC-BY-SA)" }),
+    "Satélite · Esri": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18, attribution: "Imágenes &copy; Esri, Maxar, Earthstar Geographics" }),
+    "Relieve sombreado · Esri": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18, maxNativeZoom: 13, attribution: "Relieve &copy; Esri" }),
+    "Claro · CARTO": L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap &copy; CARTO" }),
+    "Oscuro · CARTO": L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap &copy; CARTO" }),
+  };
+  // La copia estática trae además un mapa de contornos incluido en la página, que funciona
+  // sin conexión y donde no se permiten mosaicos externos
+  if (typeof BASEMAP !== "undefined") {
+    const css = getComputedStyle(document.documentElement);
+    const color = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+    const group = L.layerGroup([L.geoJSON(BASEMAP, { interactive: false, style: () => ({
+      color: color("--border", "#b9b4a6"), weight: 1, fillColor: color("--land", "#f4f2ec"), fillOpacity: 1 }) })]);
+    (typeof CITIES !== "undefined" ? CITIES : []).forEach(([name, lat, lon]) => {
+      group.addLayer(L.circleMarker([lat, lon], { radius: 2.5, color: color("--muted", "#6b6a66"), weight: 1, fillOpacity: 1, interactive: false }));
+      group.addLayer(L.tooltip({ permanent: true, direction: "right", offset: [4, 0], className: "city-label" }).setLatLng([lat, lon]).setContent(name));
+    });
+    group.getAttribution = () => "Contornos: Natural Earth";
+    layers["Contornos · sin conexión"] = group;
+  }
+  return layers;
+}
+
 function initMap() {
   map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 12, attribution: "&copy; OpenStreetMap",
-  }).addTo(map);
+  const layers = baseLayers();
+  let saved = null;
+  try { saved = localStorage.getItem(BASE_MAP_KEY); } catch (e) { /* almacenamiento bloqueado */ }
+  const first = layers[saved] ? saved : Object.keys(layers)[0];
+  layers[first].addTo(map);
+  map.getContainer().classList.toggle("basemap", first.startsWith("Contornos"));
+  L.control.layers(layers, null, { position: "topright", collapsed: window.innerWidth < 700 }).addTo(map);
+  map.on("baselayerchange", (e) => {
+    map.getContainer().classList.toggle("basemap", e.name.startsWith("Contornos"));
+    try { localStorage.setItem(BASE_MAP_KEY, e.name); } catch (err) { /* sin almacenamiento: no se recuerda */ }
+  });
   // Círculos concéntricos de distancia a Medellín
   RINGS_KM.forEach((km) => {
     L.circle(MEDELLIN, { radius: km * 1000, color: "#1d4ed8", weight: 1, dashArray: "4 6", fill: false, interactive: false }).addTo(map);
