@@ -14,7 +14,7 @@ LABEL="co.sismoalert.publicar"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DOMAIN="gui/$(id -u)"
-INTERVALO=600  # segundos
+INTERVALO=3600  # segundos
 
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
 
