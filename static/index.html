@@ -78,6 +78,17 @@
   .city-label { background: transparent; border: 0; box-shadow: none; color: var(--muted); font: 600 11px system-ui, sans-serif; padding: 0; }
   .city-label::before { display: none; }
   .leaflet-control-layers { font: 13px/1.5 system-ui, sans-serif; }
+  .sgc-control { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+                 padding: 6px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.2); font: 12px/1.4 system-ui, sans-serif; width: 210px; }
+  .sgc-control .sgc-title { display: flex; justify-content: space-between; align-items: center; font-weight: 600; gap: 6px; }
+  .sgc-control select { font: 12px system-ui, sans-serif; background: var(--panel); color: var(--text);
+                        border: 1px solid var(--line); border-radius: 4px; padding: 1px 2px; }
+  .sgc-control .sgc-slider { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--muted); font-size: 11px; }
+  .sgc-control .sgc-slider input { flex: 1; min-width: 0; accent-color: var(--muted); }
+  .sgc-control .sgc-legend { display: flex; gap: 6px; flex-wrap: wrap; color: var(--muted); font-size: 10px; margin-top: 3px; }
+  .sgc-control .sgc-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; vertical-align: -1px; }
+  .sgc-control .sgc-count { color: var(--muted); font-size: 10px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 600px) { .sgc-control { width: 170px; } .sgc-control .sgc-legend { display: none; } }
   .map-clock { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
                padding: 6px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.2); text-align: right; font-variant-numeric: tabular-nums; }
   .map-clock .clock-local { font: 700 20px/1.1 ui-monospace, Consolas, monospace; }
@@ -275,6 +286,128 @@ function tickClock() {
 }
 setInterval(tickClock, 1000);
 
+// ---- Sismicidad de fondo: catálogo del SGC como puntos tenues bajo nuestras detecciones.
+// Un control deslizante va de gris casi transparente (no roba protagonismo) a color por
+// profundidad y opaco. El servidor consulta al SGC cada 30 min y la página se refresca igual.
+const SGC_OPACITY_KEY = "sismos-sgc-visibilidad", SGC_DAYS_KEY = "sismos-sgc-dias";
+const SGC_GRAY = [138, 143, 148];
+const DEPTH_STOPS = [[0, [214, 48, 49]], [30, [240, 140, 40]], [70, [230, 200, 50]],
+                     [150, [60, 170, 100]], [300, [50, 110, 200]]];  // km -> color
+let sgcLayer, sgcRenderer, sgcData = null, sgcTimer = null;
+let sgcVisibility = 35, sgcDays = 30;
+try {
+  const v = parseInt(localStorage.getItem(SGC_OPACITY_KEY), 10); if (v >= 0 && v <= 100) sgcVisibility = v;
+  const d = parseInt(localStorage.getItem(SGC_DAYS_KEY), 10); if ([7, 14, 30].includes(d)) sgcDays = d;
+} catch (e) { /* sin almacenamiento */ }
+
+function depthColor(km) {
+  const z = Math.max(0, km || 0);
+  for (let i = 1; i < DEPTH_STOPS.length; i++) {
+    const [z1, c1] = DEPTH_STOPS[i - 1], [z2, c2] = DEPTH_STOPS[i];
+    if (z <= z2) { const f = (z - z1) / (z2 - z1); return c1.map((v, k) => v + (c2[k] - v) * f); }
+  }
+  return DEPTH_STOPS[DEPTH_STOPS.length - 1][1];
+}
+
+function sgcStyle(depth) {
+  const t = sgcVisibility / 100;
+  // Color: de gris a color por profundidad a partir de la mitad del control
+  const mix = Math.max(0, (t - 0.5) / 0.5);
+  const rgb = SGC_GRAY.map((g, k) => Math.round(g + (depthColor(depth)[k] - g) * mix));
+  const color = `rgb(${rgb.join(",")})`;
+  return { color, fillColor: color, fillOpacity: 0.06 + 0.84 * t, opacity: 0.1 + 0.7 * t, weight: 0.6 };
+}
+
+function drawSgc() {
+  if (!sgcLayer || !sgcData) return;
+  sgcLayer.clearLayers();
+  const f = Object.fromEntries(sgcData.fields.map((name, i) => [name, i]));
+  const since = Date.now() - sgcDays * 86400000;
+  let n = 0;
+  sgcData.events.forEach((r) => {
+    if (new Date(r[f.time]).getTime() < since) return;
+    n++;
+    const mag = r[f.mag] || 0;
+    const m = L.circleMarker([r[f.lat], r[f.lon]], Object.assign(
+      { renderer: sgcRenderer, pane: "sgc", radius: 1.5 + Math.max(0, mag - 1) * 1.6 }, sgcStyle(r[f.depth])))
+      .bindTooltip(`M${mag} · ${esc(r[f.place])}<br>${fmtTime(r[f.time])}<br>Profundidad ${Math.round(r[f.depth] ?? 0)} km · ${esc(r[f.status] === "manual" ? "revisado" : r[f.status])} · SGC`);
+    m._depth = r[f.depth];  // para recolorear con el control sin redibujar
+    m.addTo(sgcLayer);
+  });
+  const gen = sgcData.generated ? `actualizado ${fmtTime(sgcData.generated).replace(" (Bogotá)", "")}` : "";
+  const el = document.getElementById("sgc-count");
+  if (el) el.textContent = `${n.toLocaleString("es-CO")} sismos · ${gen}`;
+}
+
+function restyleSgc() {
+  if (!sgcLayer) return;
+  sgcLayer.eachLayer((m) => { const s = sgcStyle(m._depth); m.setStyle(s); });
+}
+
+async function loadSgc() {
+  const el = document.getElementById("sgc-count");
+  try {
+    if (typeof SGC_SNAPSHOT !== "undefined") {
+      sgcData = SGC_SNAPSHOT;
+    } else {
+      if (el && !sgcData) el.textContent = "Consultando el catálogo del SGC…";
+      const res = await fetch(`/sgc-sismos?dias=30`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      sgcData = await res.json();
+    }
+    drawSgc();
+  } catch (e) {
+    if (el) el.textContent = `Catálogo del SGC no disponible (${e.message})`;
+  }
+  if (typeof SGC_SNAPSHOT === "undefined") {
+    clearTimeout(sgcTimer);
+    sgcTimer = setTimeout(loadSgc, ((sgcData && sgcData.refresh_s) || 1800) * 1000);
+  }
+}
+
+const SgcControl = L.Control.extend({
+  onAdd() {
+    const div = L.DomUtil.create("div", "sgc-control");
+    const legend = DEPTH_STOPS.map(([z, c]) => `<span><i style="background:rgb(${c.join(",")})"></i>${z}</span>`).join("");
+    div.innerHTML = `<div class="sgc-title">Sismos del SGC
+        <select id="sgc-days" aria-label="Periodo">
+          <option value="7">7 días</option><option value="14">14 días</option><option value="30">30 días</option>
+        </select></div>
+      <label class="sgc-slider" for="sgc-visibility"><span>Tenue</span>
+        <input type="range" id="sgc-visibility" min="0" max="100" step="5" aria-label="Visibilidad de los sismos del SGC">
+        <span>Color</span></label>
+      <div class="sgc-legend" title="Profundidad en km (el color aparece desde la mitad del control)">${legend}<span>km</span></div>
+      <div class="sgc-count" id="sgc-count">—</div>`;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  },
+});
+
+function initSgcLayer() {
+  map.createPane("sgc");
+  map.getPane("sgc").style.zIndex = 350;  // debajo de estaciones y epicentros (400+)
+  sgcRenderer = L.canvas({ pane: "sgc" });
+  sgcLayer = L.layerGroup().addTo(map);
+  new SgcControl({ position: "bottomleft" }).addTo(map);
+  const slider = document.getElementById("sgc-visibility"), days = document.getElementById("sgc-days");
+  slider.value = sgcVisibility;
+  days.value = String(sgcDays);
+  let raf = 0;
+  slider.addEventListener("input", () => {
+    sgcVisibility = Number(slider.value);
+    try { localStorage.setItem(SGC_OPACITY_KEY, String(sgcVisibility)); } catch (e) { /* sin almacenamiento */ }
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(restyleSgc);
+  });
+  days.addEventListener("change", () => {
+    sgcDays = Number(days.value);
+    try { localStorage.setItem(SGC_DAYS_KEY, String(sgcDays)); } catch (e) { /* sin almacenamiento */ }
+    drawSgc();  // los datos ya traen 30 días: basta con filtrar
+  });
+  loadSgc();
+}
+
 function initMap() {
   map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
   const layers = baseLayers();
@@ -300,6 +433,7 @@ function initMap() {
   L.circleMarker(MEDELLIN, { radius: 6, color: "#fff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1 })
     .addTo(map).bindTooltip("Medellín", { permanent: true, direction: "right", offset: [8, 0] });
   quakeLayer = L.layerGroup().addTo(map);
+  initSgcLayer();
 }
 
 // Modelo regional de tiempos de viaje (mismas constantes que traveltime.py): la primera

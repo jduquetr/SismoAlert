@@ -162,6 +162,20 @@ tiene además un control de volumen para la alerta. Ambos se recuerdan en cada n
 botón "Sismos sentidos (SPAlert)" del visor sismos-3d-colombia lo usa como respaldo cuando no
 alcanza el servidor en vivo.
 
+## Sismicidad de fondo del SGC en el mapa
+
+El servidor consulta cada 30 minutos el catálogo del SGC de los últimos 30 días y lo entrega
+en `/sgc-sismos?dias=7|14|30`. Los parámetros están en `config.py`:
+`SGC_BACKGROUND_MAX_DAYS` y `SGC_BACKGROUND_REFRESH_S`.
+
+El mapa lo dibuja como puntos bajo las detecciones propias, con un control abajo a la
+izquierda:
+- el periodo, de 7, 14 o 30 días;
+- la visibilidad: de gris casi transparente, para que no robe protagonismo, a color por
+  profundidad y opaco.
+
+La página se refresca con el mismo ritmo, y la copia estática incluye esos datos.
+
 ## Visor de sismos (evento especial SPAlert)
 
 El servidor entrega el registro en `http://127.0.0.1:8765/sismos-detectados.geojson`, con

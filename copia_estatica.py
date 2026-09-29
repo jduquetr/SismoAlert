@@ -18,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 CACHE = ROOT / "datos" / "cache"
 SERVER_STATE = "http://127.0.0.1:8765/state"
+SERVER_SGC = "http://127.0.0.1:8765/sgc-sismos?dias=30"
 LEAFLET_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
 NATURAL_EARTH = ("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/"
                  "geojson/ne_50m_admin_0_countries.geojson")
@@ -75,7 +76,7 @@ def replace(html, old, new):
     return html.replace(old, new, 1)
 
 
-def build(state):
+def build(state, sgc=None):
     html = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
     taken = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -92,7 +93,8 @@ def build(state):
                    f'const SNAPSHOT_TAKEN = "{taken}";\n'
                    f"const BASEMAP = {basemap()};\n"
                    f"const CITIES = {json.dumps(CITIES, ensure_ascii=False)};\n"
-                   "const $ = (s) => document.querySelector(s);")
+                   + (f"const SGC_SNAPSHOT = {json.dumps(sgc, ensure_ascii=False)};\n" if sgc else "")
+                   + "const $ = (s) => document.querySelector(s);")
     html = replace(html, '  const s = await (await fetch("/state")).json();', "  const s = SNAPSHOT;")
     html = replace(html, 'function connect() {\n  const es = new EventSource("/events");',
                    "function connect() {\n"
@@ -142,7 +144,13 @@ def main():
                              "archivo de estado: python copia_estatica.py estado.json")
     out = ROOT / "docs" / "index.html"
     out.parent.mkdir(exist_ok=True)
-    out.write_text(build(state), encoding="utf-8")
+    # Sismicidad de fondo del SGC (30 días) desde el servidor, si está en marcha
+    try:
+        sgc = json.loads(fetch(SERVER_SGC, timeout=60))
+    except (OSError, ValueError) as e:
+        print(f"Sin catálogo del SGC en la copia ({e})")
+        sgc = None
+    out.write_text(build(state, sgc), encoding="utf-8")
     print(f"{out}: {out.stat().st_size // 1024} KB, {len(state['detections'])} detecciones")
     # El registro de sismos también se publica: el visor sismos-3d-colombia lo usa como
     # respaldo cuando no alcanza el servidor en vivo (vercel.json le da CORS)

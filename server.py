@@ -325,6 +325,55 @@ def seedlink_loop():
         time.sleep(delay)
 
 
+# ------------------------------------------------- sismicidad de fondo del catálogo del SGC
+_sgc_cache = {"at": 0.0, "generated": None, "rows": []}  # últimos SGC_BACKGROUND_MAX_DAYS días
+_sgc_lock = threading.Lock()
+SGC_FIELDS = ["lon", "lat", "depth", "mag", "time", "place", "status", "id"]
+
+
+def refresh_sgc_background():
+    """Consulta al SGC los últimos SGC_BACKGROUND_MAX_DAYS días (ventanas de 14 días, lo que
+    admite la API biweekly) y los deja en memoria en formato compacto."""
+    end = UTCDateTime()
+    t = end - config.SGC_BACKGROUND_MAX_DAYS * 86400
+    events = {}
+    while t < end:
+        t2 = min(t + 14 * 86400, end)
+        for ev in sources.sgc_biweekly(t, t2):
+            events[ev["id"]] = ev
+        t = t2
+    rows = sorted(([round(ev["lon"], 3), round(ev["lat"], 3), ev["depth"], ev["mag"],
+                    ev["time"].isoformat()[:19] + "Z", ev["place"], ev["status"], ev["id"]]
+                   for ev in events.values()), key=lambda r: r[4])
+    with _sgc_lock:
+        _sgc_cache.update(at=time.time(), generated=UTCDateTime(), rows=rows)
+    log.info("Catálogo del SGC actualizado: %d sismos en %d días", len(rows), config.SGC_BACKGROUND_MAX_DAYS)
+
+
+def sgc_background_loop():
+    while True:
+        try:
+            refresh_sgc_background()
+        except Exception as e:
+            log.warning("No se pudo actualizar el catálogo del SGC: %s", e)
+        time.sleep(config.SGC_BACKGROUND_REFRESH_S)
+
+
+def sgc_background(days):
+    """Sismos del catálogo del SGC de los últimos `days` días, desde la copia en memoria."""
+    days = max(1, min(config.SGC_BACKGROUND_MAX_DAYS, int(days)))
+    with _sgc_lock:
+        empty = not _sgc_cache["generated"]
+    if empty:
+        refresh_sgc_background()  # primera vez, si la página pide antes que el hilo
+    with _sgc_lock:
+        since = (UTCDateTime() - days * 86400).isoformat()[:19] + "Z"
+        rows = [r for r in _sgc_cache["rows"] if r[4] >= since]
+        return {"days": days, "generated": _sgc_cache["generated"],
+                "refresh_s": config.SGC_BACKGROUND_REFRESH_S, "count": len(rows),
+                "fields": SGC_FIELDS, "events": rows}
+
+
 def station_info():
     """Estado de cada estación junto con su red y ubicación (para la lista y el mapa)."""
     out = []
@@ -380,6 +429,15 @@ class Handler(BaseHTTPRequestHandler):
             body = (store.GEOJSON.read_bytes() if store.GEOJSON.exists()
                     else '{"type": "FeatureCollection", "features": []}')
             self._send(200, body, "application/geo+json; charset=utf-8", cors=True)
+        elif path == "/sgc-sismos":
+            days = parse_qs(urlparse(self.path).query).get("dias", ["30"])[0]
+            try:
+                data = sgc_background(days)
+            except Exception as e:
+                log.warning("No se pudo consultar el catálogo del SGC: %s", e)
+                self._send(502, json.dumps({"error": f"No se pudo consultar el SGC: {e}"}))
+                return
+            self._send(200, json.dumps(data, default=to_json, ensure_ascii=False))
         elif path == "/state":
             snap = hub.snapshot()
             snap["stations"] = station_info()
@@ -442,6 +500,7 @@ def main():
         log.info("Cargadas %d detecciones guardadas en %s", len(saved), store.GEOJSON)
     threading.Thread(target=seedlink_loop, daemon=True).start()
     emsc_stream.start()
+    threading.Thread(target=sgc_background_loop, daemon=True).start()
     threading.Thread(target=status_loop, daemon=True).start()
     server = ThreadingHTTPServer((config.HTTP_HOST, config.HTTP_PORT), Handler)
     server.daemon_threads = True

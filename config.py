@@ -67,6 +67,11 @@ MATCH_AFTER_S = 15
 # primera estación entre la onda P y la S (ver server.arrival_misfit)
 MATCH_TOLERANCE_S = 15
 
+# Sismicidad de fondo del SGC en el mapa: días que se muestran como máximo y cada cuánto
+# se vuelve a consultar el catálogo (la página también se refresca con ese ritmo)
+SGC_BACKGROUND_MAX_DAYS = 30
+SGC_BACKGROUND_REFRESH_S = 30 * 60
+
 # Feed de archive.sgc.gov.co: trae eventos preliminares, pero bloquea clientes
 # que no son navegador. Mantener apagado hasta tener autorización del SGC.
 USE_SGC_ARCHIVE_FEED = False
