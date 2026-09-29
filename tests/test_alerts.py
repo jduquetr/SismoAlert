@@ -242,5 +242,16 @@ class AssociatorTests(unittest.TestCase):
         self.assertEqual(a.current['stations']['HEL']['ratio'], 12)
 
 
+class MultiChatTests(unittest.TestCase):
+    def test_each_chat_gets_its_own_queue_item(self):
+        q = queue.Queue()
+        with patch.object(telegram, '_q', q), patch.object(telegram, 'TOKEN', 't'), \
+             patch.object(telegram, 'CHAT_IDS', ['111', '-100222']):
+            self.assertTrue(telegram.send('hola', silent=True))
+        items = [q.get_nowait() for _ in range(q.qsize())]
+        self.assertEqual([i[3] for i in items], ['111', '-100222'])
+        self.assertTrue(all(i[0] == 'hola' and i[1] is True for i in items))
+
+
 if __name__ == '__main__':
     unittest.main()
