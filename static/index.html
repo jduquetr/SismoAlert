@@ -68,6 +68,16 @@
   .city-label { background: transparent; border: 0; box-shadow: none; color: var(--muted); font: 600 11px system-ui, sans-serif; padding: 0; }
   .city-label::before { display: none; }
   .leaflet-control-layers { font: 13px/1.5 system-ui, sans-serif; }
+  .map-clock { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+               padding: 6px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.2); text-align: right; font-variant-numeric: tabular-nums; }
+  .map-clock .clock-local { font: 700 20px/1.1 ui-monospace, Consolas, monospace; }
+  .map-clock .clock-zone { font: 600 11px system-ui, sans-serif; color: var(--muted); }
+  .map-clock .clock-sub { font: 11px/1.4 system-ui, sans-serif; color: var(--muted); }
+  .map-clock .clock-data { font: 600 11px/1.4 system-ui, sans-serif; }
+  .map-clock .clock-data.ok { color: var(--ok); }
+  .map-clock .clock-data.warn { color: var(--media); }
+  .map-clock .clock-data.old { color: var(--alta); }
+  @media (max-width: 600px) { .map-clock .clock-local { font-size: 16px; } }
   .leaflet-control-layers-base label { margin: 2px 0; }
   @media (max-width: 600px) { #map { height: 380px; } }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 8px; }
@@ -213,6 +223,47 @@ function baseLayers() {
   return layers;
 }
 
+// ---- Reloj: hora de Bogotá (la de la lista de detecciones), UTC (la del archivo y los
+// catálogos) y cuánto hace que llegó el último dato de alguna estación
+let freshest = null;  // { age: s del paquete más reciente, at: cuándo lo supo la página }
+const clockFmt = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", hour12: false,
+  hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const dateFmt = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota",
+  weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
+const ClockControl = L.Control.extend({
+  onAdd() {
+    const div = L.DomUtil.create("div", "map-clock");
+    div.innerHTML = `<div class="clock-local"><span id="clock-time">--:--:--</span> <span class="clock-zone">Bogotá</span></div>
+      <div class="clock-sub"><span id="clock-date"></span> · <span id="clock-utc"></span> UTC</div>
+      <div class="clock-data" id="clock-data">Último dato: —</div>`;
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  },
+});
+
+function tickClock() {
+  const now = new Date();
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set("clock-time", clockFmt.format(now));
+  set("clock-date", dateFmt.format(now));
+  set("clock-utc", now.toISOString().slice(11, 19));
+  const el = document.getElementById("clock-data");
+  if (!el) return;
+  if (typeof SNAPSHOT !== "undefined") {
+    el.textContent = `Datos de la copia: ${fmtTime(SNAPSHOT_TAKEN)}`;
+    el.className = "clock-data old";
+    return;
+  }
+  if (!freshest) { el.textContent = "Último dato: esperando estaciones…"; el.className = "clock-data warn"; return; }
+  const age = freshest.age + (Date.now() - freshest.at) / 1000;
+  // Retraso de la señal: cuánto va atrás de la hora real la muestra más reciente
+  const lag = freshest.lag === null ? "" : ` · señal ${fmtS(freshest.lag + (Date.now() - freshest.at) / 1000)} atrás`;
+  el.textContent = `Último dato: hace ${fmtS(age)}${lag}`;
+  el.className = "clock-data " + (age <= 60 ? "ok" : age <= 300 ? "warn" : "old");
+}
+setInterval(tickClock, 1000);
+
 function initMap() {
   map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
   const layers = baseLayers();
@@ -221,6 +272,8 @@ function initMap() {
   const first = layers[saved] ? saved : Object.keys(layers)[0];
   layers[first].addTo(map);
   map.getContainer().classList.toggle("basemap", first.startsWith("Contornos"));
+  // Reloj arriba a la derecha (antes que las capas, para que quede encima)
+  new ClockControl({ position: "topright" }).addTo(map);
   // Plegado: se muestra como un ícono de capas y se despliega al pasar el cursor o tocarlo
   L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
   map.on("baselayerchange", (e) => {
@@ -496,6 +549,10 @@ function selectDet(id, fly = true) {
 
 function renderStations(list) {
   mapStations(list);
+  const ages = list.map((s) => s.last_packet_age_s).filter((a) => a !== null && a !== undefined);
+  const lags = list.map((s) => s.latency_s).filter((a) => a !== null && a !== undefined);
+  if (ages.length) freshest = { age: Math.min(...ages), lag: lags.length ? Math.min(...lags) : null, at: Date.now() };
+  tickClock();
   $("#stations").innerHTML = list.map((s) => {
     const alive = s.last_packet_age_s !== null && s.last_packet_age_s < 120;
     const cls = s.triggered ? "trig" : alive ? "ok" : "";
