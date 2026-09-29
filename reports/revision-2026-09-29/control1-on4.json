@@ -1,0 +1,521 @@
+{
+  "detections": [
+    {
+      "id": "DET20260927100430",
+      "first_onset": "2026-09-27T10:04:30.008393Z",
+      "detected_at": "2026-09-27T10:05:22.000000Z",
+      "stations": {
+        "TUM": {
+          "onset": "2026-09-27T10:04:30.008393Z",
+          "ratio": 10.3
+        },
+        "CRJC": {
+          "onset": "2026-09-27T10:04:53.618393Z",
+          "ratio": 4.5
+        },
+        "OCA": {
+          "onset": "2026-09-27T10:03:43.168393Z",
+          "ratio": 5.3
+        },
+        "PUYO": {
+          "onset": "2026-09-27T10:03:37.488393Z",
+          "ratio": 5.9
+        },
+        "ARGC": {
+          "onset": "2026-09-27T10:04:18.778393Z",
+          "ratio": 4.1
+        },
+        "PRV": {
+          "onset": "2026-09-27T10:04:42.708393Z",
+          "ratio": 4.8
+        },
+        "HEL": {
+          "onset": "2026-09-27T10:05:20.108393Z",
+          "ratio": 26.5
+        },
+        "RUS": {
+          "onset": "2026-09-27T10:05:33.958391Z",
+          "ratio": 4.7
+        }
+      },
+      "level": "alta",
+      "message": "Señal compatible con sismo en 2 estaciones, incluida HEL (Medellín). La coincidencia entre estaciones no determina la intensidad sentida.",
+      "delay_from_reference_s": 322.0
+    },
+    {
+      "id": "DET20260927100848",
+      "first_onset": "2026-09-27T10:08:48.268393Z",
+      "detected_at": "2026-09-27T10:09:06.000000Z",
+      "stations": {
+        "TUM": {
+          "onset": "2026-09-27T10:08:38.388393Z",
+          "ratio": 4.2
+        },
+        "URI": {
+          "onset": "2026-09-27T10:08:48.268393Z",
+          "ratio": 28.3
+        },
+        "ARGC": {
+          "onset": "2026-09-27T10:07:03.678393Z",
+          "ratio": 4.9
+        },
+        "OCA": {
+          "onset": "2026-09-27T10:07:32.618393Z",
+          "ratio": 4.7
+        },
+        "HEL": {
+          "onset": "2026-09-27T10:08:59.778393Z",
+          "ratio": 8.1
+        },
+        "CRJC": {
+          "onset": "2026-09-27T10:09:00.968393Z",
+          "ratio": 25.7
+        },
+        "SMAR": {
+          "onset": "2026-09-27T10:09:06.448393Z",
+          "ratio": 14.4
+        },
+        "RUS": {
+          "onset": "2026-09-27T10:10:11.288391Z",
+          "ratio": 24.6
+        },
+        "PUYO": {
+          "onset": "2026-09-27T10:10:37.858393Z",
+          "ratio": 4.5
+        }
+      },
+      "level": "alta",
+      "message": "Señal compatible con sismo en 5 estaciones, incluida HEL (Medellín). La coincidencia entre estaciones no determina la intensidad sentida.",
+      "delay_from_reference_s": 546.0
+    }
+  ],
+  "triggers": [
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T09:58:02.278393Z",
+      "ratio": 6.552667746680832
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T09:58:05.688393Z",
+      "ratio": 5.265003705371102
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T09:58:06.238393Z",
+      "ratio": 4.733042528590366
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T09:58:09.948393Z",
+      "ratio": 4.050008157465967
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-27T09:58:17.008393Z",
+      "ratio": 9.207974348167419
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T09:58:47.878393Z",
+      "ratio": 4.321382413552241
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T09:58:58.888393Z",
+      "ratio": 5.444223910719851
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-27T09:58:58.888393Z",
+      "ratio": 6.375141061422803
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T09:59:11.098393Z",
+      "ratio": 6.3153100977788865
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T09:59:20.028393Z",
+      "ratio": 4.451399242063032
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T09:59:49.958393Z",
+      "ratio": 16.754190390471145
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:00:04.118393Z",
+      "ratio": 5.386936792964562
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:00:07.308393Z",
+      "ratio": 4.427743764599575
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:01:02.728393Z",
+      "ratio": 5.097523214961269
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:01:16.218393Z",
+      "ratio": 4.1336023145782494
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:01:36.818393Z",
+      "ratio": 4.148077768184079
+    },
+    {
+      "station": "HEL",
+      "onset": "2026-09-27T10:02:08.268393Z",
+      "ratio": 4.392027996903185
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:02:12.188393Z",
+      "ratio": 5.848858424165605
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:02:47.998393Z",
+      "ratio": 4.415661695764001
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:03:00.538393Z",
+      "ratio": 4.342751609936754
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:03:23.558393Z",
+      "ratio": 5.747090713063795
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-27T10:03:37.488393Z",
+      "ratio": 5.3560262497742706
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:03:43.168393Z",
+      "ratio": 5.2846690167269355
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:03:53.138393Z",
+      "ratio": 4.1545089298122635
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:04:18.778393Z",
+      "ratio": 4.144907621744115
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:04:30.008393Z",
+      "ratio": 10.295168841217215
+    },
+    {
+      "station": "PRV",
+      "onset": "2026-09-27T10:04:42.708393Z",
+      "ratio": 4.7571679063748125
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:04:53.618393Z",
+      "ratio": 4.48030637692842
+    },
+    {
+      "station": "HEL",
+      "onset": "2026-09-27T10:05:20.108393Z",
+      "ratio": 26.50633617503782
+    },
+    {
+      "station": "RUS",
+      "onset": "2026-09-27T10:05:33.958391Z",
+      "ratio": 4.694851212136252
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:05:32.408393Z",
+      "ratio": 8.496129012661843
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:05:54.508393Z",
+      "ratio": 4.040195951533494
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:05:59.398393Z",
+      "ratio": 4.236157912216341
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:06:41.438393Z",
+      "ratio": 8.192907303130088
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:06:53.118393Z",
+      "ratio": 4.587020339045603
+    },
+    {
+      "station": "URI",
+      "onset": "2026-09-27T10:06:52.028393Z",
+      "ratio": 8.942714919891044
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:07:03.678393Z",
+      "ratio": 4.884808544984873
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:07:32.618393Z",
+      "ratio": 4.70499049283358
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:07:48.858393Z",
+      "ratio": 4.017190448871314
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:08:38.388393Z",
+      "ratio": 4.186364632262739
+    },
+    {
+      "station": "URI",
+      "onset": "2026-09-27T10:08:48.268393Z",
+      "ratio": 28.274066252941584
+    },
+    {
+      "station": "HEL",
+      "onset": "2026-09-27T10:08:59.778393Z",
+      "ratio": 5.421002787480401
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:09:00.968393Z",
+      "ratio": 7.27494696713248
+    },
+    {
+      "station": "SMAR",
+      "onset": "2026-09-27T10:09:06.448393Z",
+      "ratio": 14.400358540242221
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:09:14.078393Z",
+      "ratio": 5.046162085009771
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:09:39.168393Z",
+      "ratio": 18.10580412117133
+    },
+    {
+      "station": "URI",
+      "onset": "2026-09-27T10:09:56.448393Z",
+      "ratio": 5.161747711600183
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:09:58.858393Z",
+      "ratio": 6.395483729605346
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:09:58.238393Z",
+      "ratio": 15.521100099214989
+    },
+    {
+      "station": "RUS",
+      "onset": "2026-09-27T10:10:11.288391Z",
+      "ratio": 15.650964806800344
+    },
+    {
+      "station": "HEL",
+      "onset": "2026-09-27T10:10:19.658393Z",
+      "ratio": 6.947862978931735
+    },
+    {
+      "station": "CRJC",
+      "onset": "2026-09-27T10:10:20.768393Z",
+      "ratio": 4.484471263031629
+    },
+    {
+      "station": "SMAR",
+      "onset": "2026-09-27T10:10:35.258393Z",
+      "ratio": 4.302346155676778
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-27T10:10:37.858393Z",
+      "ratio": 4.465005478304067
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:10:52.968393Z",
+      "ratio": 8.145013080689221
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-27T10:11:22.648393Z",
+      "ratio": 4.454721715389215
+    },
+    {
+      "station": "TUM",
+      "onset": "2026-09-27T10:11:31.288393Z",
+      "ratio": 9.506593707943336
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-27T10:11:36.158393Z",
+      "ratio": 9.872779502222194
+    }
+  ],
+  "updates": [
+    {
+      "at": "2026-09-27T10:05:22.000000Z",
+      "id": "DET20260927100430",
+      "level": "alta"
+    },
+    {
+      "at": "2026-09-27T10:05:34.000000Z",
+      "id": "DET20260927100430",
+      "level": "alta"
+    },
+    {
+      "at": "2026-09-27T10:09:06.000000Z",
+      "id": "DET20260927100848",
+      "level": "alta"
+    },
+    {
+      "at": "2026-09-27T10:09:08.000000Z",
+      "id": "DET20260927100848",
+      "level": "alta"
+    },
+    {
+      "at": "2026-09-27T10:10:12.000000Z",
+      "id": "DET20260927100848",
+      "level": "alta"
+    },
+    {
+      "at": "2026-09-27T10:10:38.000000Z",
+      "id": "DET20260927100848",
+      "level": "alta"
+    }
+  ],
+  "reference": "2026-09-27T10:00:00.000000Z",
+  "start": "2026-09-27T09:57:00.000000Z",
+  "end": "2026-09-27T10:12:00.000000Z",
+  "parameters": {
+    "THR_ON": 4.0,
+    "THR_OFF": 1.5,
+    "STA_S": 1.0,
+    "LTA_S": 30.0,
+    "MIN_RATIO": 8.0,
+    "LOCAL_ONLY_MIN_RATIO": 8.0,
+    "MIN_STATIONS": 2,
+    "MIN_STATIONS_REMOTE": 3,
+    "ASSOC_WINDOW_S": 120,
+    "DEAD_TIME_S": 30
+  },
+  "coverage": {
+    "HEL": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.HEL.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "5c1aca44c58d8e755437c482bbb159f112f58a72b65b948d31704004917008aa",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "RUS": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.RUS.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "88e0b434029f9b8b12b66889f4e113b9efb56cc7376f1771751bfe1b315afdde",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "OCA": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.OCA.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "042004a239f9ab9105d1f12d8ae57dc6e3e39dcac65ef2e887b26695ea65806c",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "ARGC": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.ARGC.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "a7be0f544429312b405bfb4186102cb96d0dd1bbd591db798a0eded72d1deaf3",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "SMAR": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.SMAR.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "7774d7459e38e99d8032726fb8ae2e4349c5e06f7ee0ab4f15100406a7e7bff8",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "TUM": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.TUM.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "58b9f45bd5c0d012dfdb623802830b13146333d1bfe240a332a1521f1873bb63",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "CRJC": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.CRJC.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "cb2914bcf732d3a25e74c3a3a853d9d6e44197bddea735ff89dd20c6db96b90e",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "URI": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.URI.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "26d79514615b621a2582b7b3d02b9a4e1cc10150df2983274477cb02423d0273",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "PRV": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.PRV.00.HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "acae14defede1aadc0739168d48e95ca47701735e27eec1de261f368f871308f",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "OTAV": {
+      "request": "https://service.earthscope.org|IU.OTAV.00.BHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "https://service.earthscope.org",
+      "sha256": "2d9efcde6cd6e7240735701ba562c4e4536ae6fbea73e81acb2cda0935e6d46e",
+      "segments": 1,
+      "samples": 18000,
+      "seconds": 900.0
+    },
+    "PUYO": {
+      "request": "https://service.earthscope.org|EC.PUYO..HHZ|2026-09-27T09:57:00.000000Z|2026-09-27T10:12:00.000000Z",
+      "provider": "https://service.earthscope.org",
+      "sha256": "ed74f1c02b59cc470feca6828de5e1020b9665cc68ae52fe5c68e60d5e0615f4",
+      "segments": 1,
+      "samples": 90000,
+      "seconds": 900.0
+    }
+  }
+}

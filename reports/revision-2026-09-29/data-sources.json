@@ -1,0 +1,41 @@
+{
+  "retrieved_on": "2026-09-29",
+  "sources": [
+    {
+      "file": "sgc_recent.txt",
+      "url": "https://api.sgc.gov.co/biweekly/biweekly_earthquakes?startdate=2026-09-22T00:00:00&enddate=2026-09-29T00:00:00",
+      "sha256": "9536bdf6b947d34b1f4685607a06dc9ec7f97b4084dee70b6f723697d894b7e6",
+      "transformation": "Respuesta original"
+    },
+    {
+      "file": "usgs_recent.txt",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-09-22&endtime=2026-09-29&minlatitude=-6&maxlatitude=20&minlongitude=-86&maxlongitude=-60",
+      "sha256": "aa08798ccf4364ad63b24d9bc6523d8dabf727dc012650ed5af5eabd1cb7b98c",
+      "transformation": "Respuesta original"
+    },
+    {
+      "file": "emsc_recent.txt",
+      "url": "https://www.seismicportal.eu/fdsnws/event/1/query?format=json&starttime=2026-09-22&endtime=2026-09-29&minlat=-6&maxlat=20&minlon=-86&maxlon=-60",
+      "sha256": "43f309d5db8257e868b14b2bb072ab08ebccd2ba612e4ee29907b62fa2fb642e",
+      "transformation": "Respuesta original"
+    },
+    {
+      "file": "stations.txt",
+      "url": "https://service.earthscope.org/fdsnws/station/1/query?net=CM&cha=HHZ&level=channel&format=text&latitude=6.2476&longitude=-75.5658&maxradius=3",
+      "sha256": "daa4dbfe55a60c1bcfa4679b11d5bda79a0218f1485da446b8b8b27a8ff3645a",
+      "transformation": "Respuesta original"
+    },
+    {
+      "file": "sgc_stations.txt",
+      "url": "http://sismo.sgc.gov.co:8080/fdsnws/station/1/query?net=CM&cha=HHZ&level=channel&format=text&latitude=6.2476&longitude=-75.5658&maxradius=3",
+      "sha256": "d00e8d91909bab9868d92edc52354cf2c5fa273756973c8730f7effef40b8560",
+      "transformation": "Respuesta original"
+    },
+    {
+      "file": "seedlink-cm.txt",
+      "url": "http://rtserve.iris.washington.edu:18000/streams",
+      "sha256": "6ed761953f97137784107d889a1184820662fdfa4873dd71d7c6f39e646c2771",
+      "transformation": "Solo líneas FDSN:CM_"
+    }
+  ]
+}

@@ -1,0 +1,2563 @@
+[
+  {
+    "case_profile": "background-hour-base",
+    "detections": [
+      {
+        "id": "DET20260928025314",
+        "level": "alta",
+        "delay": 3196.0,
+        "stations": {
+          "URI": {
+            "onset": "2026-09-28T02:51:46.378393Z",
+            "ratio": 5.8
+          },
+          "HEL": {
+            "onset": "2026-09-28T02:53:14.758393Z",
+            "ratio": 26.7
+          },
+          "RUS": {
+            "onset": "2026-09-28T02:53:43.948393Z",
+            "ratio": 14.2
+          },
+          "ARGC": {
+            "onset": "2026-09-28T02:53:56.888393Z",
+            "ratio": 6.2
+          },
+          "PRV": {
+            "onset": "2026-09-28T02:54:54.048393Z",
+            "ratio": 8.4
+          },
+          "OCA": {
+            "onset": "2026-09-28T02:55:01.858393Z",
+            "ratio": 5.9
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 52
+  },
+  {
+    "case_profile": "background-hour-ratio10",
+    "detections": [
+      {
+        "id": "DET20260928025314",
+        "level": "alta",
+        "delay": 3196.0,
+        "stations": {
+          "URI": {
+            "onset": "2026-09-28T02:51:46.378393Z",
+            "ratio": 5.8
+          },
+          "HEL": {
+            "onset": "2026-09-28T02:53:14.758393Z",
+            "ratio": 26.7
+          },
+          "RUS": {
+            "onset": "2026-09-28T02:53:43.948393Z",
+            "ratio": 14.2
+          },
+          "ARGC": {
+            "onset": "2026-09-28T02:53:56.888393Z",
+            "ratio": 6.2
+          },
+          "PRV": {
+            "onset": "2026-09-28T02:54:54.048393Z",
+            "ratio": 8.4
+          },
+          "OCA": {
+            "onset": "2026-09-28T02:55:01.858393Z",
+            "ratio": 5.9
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 52
+  },
+  {
+    "case_profile": "chaparral-base",
+    "detections": [
+      {
+        "id": "DET20260926063853",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-26T06:38:05.768393Z",
+            "ratio": 6.1
+          },
+          "OCA": {
+            "onset": "2026-09-26T06:38:53.198393Z",
+            "ratio": 11.2
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:38:22.138391Z",
+            "ratio": 7.1
+          },
+          "HEL": {
+            "onset": "2026-09-26T06:38:58.748393Z",
+            "ratio": 29.9
+          },
+          "RUS": {
+            "onset": "2026-09-26T06:39:11.678393Z",
+            "ratio": 25.6
+          },
+          "ARGC": {
+            "onset": "2026-09-26T06:40:01.108393Z",
+            "ratio": 5.7
+          },
+          "PRV": {
+            "onset": "2026-09-26T06:40:09.188393Z",
+            "ratio": 5.0
+          },
+          "PUYO": {
+            "onset": "2026-09-26T06:40:20.308393Z",
+            "ratio": 5.4
+          },
+          "URI": {
+            "onset": "2026-09-26T06:40:24.788393Z",
+            "ratio": 12.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txrj",
+          "time": "2026-09-26T06:38:19.029000Z",
+          "lat": 4.018,
+          "lon": -75.8315,
+          "depth": 10,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "25 km W of Roncesvalles, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txrj"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 17
+  },
+  {
+    "case_profile": "chaparral-on4",
+    "detections": [
+      {
+        "id": "DET20260926063852",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-26T06:38:42.498393Z",
+            "ratio": 4.4
+          },
+          "TUM": {
+            "onset": "2026-09-26T06:38:57.958393Z",
+            "ratio": 4.0
+          },
+          "SMAR": {
+            "onset": "2026-09-26T06:37:57.718393Z",
+            "ratio": 4.2
+          },
+          "OCA": {
+            "onset": "2026-09-26T06:38:52.958393Z",
+            "ratio": 11.2
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:38:22.038391Z",
+            "ratio": 7.1
+          },
+          "HEL": {
+            "onset": "2026-09-26T06:38:58.728393Z",
+            "ratio": 29.9
+          },
+          "RUS": {
+            "onset": "2026-09-26T06:39:11.568393Z",
+            "ratio": 25.6
+          },
+          "PRV": {
+            "onset": "2026-09-26T06:40:08.738393Z",
+            "ratio": 5.0
+          },
+          "PUYO": {
+            "onset": "2026-09-26T06:40:20.118393Z",
+            "ratio": 5.4
+          },
+          "URI": {
+            "onset": "2026-09-26T06:40:24.758393Z",
+            "ratio": 12.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txrj",
+          "time": "2026-09-26T06:38:19.029000Z",
+          "lat": 4.018,
+          "lon": -75.8315,
+          "depth": 10,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "25 km W of Roncesvalles, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txrj"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 29
+  },
+  {
+    "case_profile": "chaparral-on6",
+    "detections": [
+      {
+        "id": "DET20260926063853",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-26T06:38:05.848393Z",
+            "ratio": 6.1
+          },
+          "OCA": {
+            "onset": "2026-09-26T06:38:53.298393Z",
+            "ratio": 11.2
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:38:22.418391Z",
+            "ratio": 7.1
+          },
+          "HEL": {
+            "onset": "2026-09-26T06:38:58.908393Z",
+            "ratio": 29.9
+          },
+          "RUS": {
+            "onset": "2026-09-26T06:39:11.698393Z",
+            "ratio": 25.6
+          },
+          "ARGC": {
+            "onset": "2026-09-26T06:40:12.858393Z",
+            "ratio": 7.0
+          },
+          "URI": {
+            "onset": "2026-09-26T06:40:24.828393Z",
+            "ratio": 12.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txrj",
+          "time": "2026-09-26T06:38:19.029000Z",
+          "lat": 4.018,
+          "lon": -75.8315,
+          "depth": 10,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "25 km W of Roncesvalles, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txrj"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 14
+  },
+  {
+    "case_profile": "chaparral-ratio10",
+    "detections": [
+      {
+        "id": "DET20260926063853",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-26T06:38:05.768393Z",
+            "ratio": 6.1
+          },
+          "OCA": {
+            "onset": "2026-09-26T06:38:53.198393Z",
+            "ratio": 11.2
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:38:22.138391Z",
+            "ratio": 7.1
+          },
+          "HEL": {
+            "onset": "2026-09-26T06:38:58.748393Z",
+            "ratio": 29.9
+          },
+          "RUS": {
+            "onset": "2026-09-26T06:39:11.678393Z",
+            "ratio": 25.6
+          },
+          "ARGC": {
+            "onset": "2026-09-26T06:40:01.108393Z",
+            "ratio": 5.7
+          },
+          "PRV": {
+            "onset": "2026-09-26T06:40:09.188393Z",
+            "ratio": 5.0
+          },
+          "PUYO": {
+            "onset": "2026-09-26T06:40:20.308393Z",
+            "ratio": 5.4
+          },
+          "URI": {
+            "onset": "2026-09-26T06:40:24.788393Z",
+            "ratio": 12.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txrj",
+          "time": "2026-09-26T06:38:19.029000Z",
+          "lat": 4.018,
+          "lon": -75.8315,
+          "depth": 10,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "25 km W of Roncesvalles, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txrj"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 17
+  },
+  {
+    "case_profile": "chaparral-ratio6",
+    "detections": [
+      {
+        "id": "DET20260926063648",
+        "level": "media",
+        "delay": -4.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-26T06:36:48.428393Z",
+            "ratio": 6.1
+          },
+          "TUM": {
+            "onset": "2026-09-26T06:38:05.768393Z",
+            "ratio": 6.1
+          },
+          "OCA": {
+            "onset": "2026-09-26T06:38:11.798393Z",
+            "ratio": 23.4
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:38:22.138391Z",
+            "ratio": 7.1
+          }
+        },
+        "match": null,
+        "discarded": null
+      },
+      {
+        "id": "DET20260926063853",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-26T06:38:53.198393Z",
+            "ratio": 11.2
+          },
+          "HEL": {
+            "onset": "2026-09-26T06:38:58.748393Z",
+            "ratio": 29.9
+          },
+          "RUS": {
+            "onset": "2026-09-26T06:39:11.678393Z",
+            "ratio": 25.6
+          },
+          "TUM": {
+            "onset": "2026-09-26T06:39:16.008393Z",
+            "ratio": 15.1
+          },
+          "ARGC": {
+            "onset": "2026-09-26T06:40:01.108393Z",
+            "ratio": 5.7
+          },
+          "PRV": {
+            "onset": "2026-09-26T06:40:09.188393Z",
+            "ratio": 5.0
+          },
+          "CRJC": {
+            "onset": "2026-09-26T06:40:11.338391Z",
+            "ratio": 24.2
+          },
+          "PUYO": {
+            "onset": "2026-09-26T06:40:20.308393Z",
+            "ratio": 5.4
+          },
+          "URI": {
+            "onset": "2026-09-26T06:40:24.788393Z",
+            "ratio": 12.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txrj",
+          "time": "2026-09-26T06:38:19.029000Z",
+          "lat": 4.018,
+          "lon": -75.8315,
+          "depth": 10,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "25 km W of Roncesvalles, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txrj"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 17
+  },
+  {
+    "case_profile": "control1-base",
+    "detections": [
+      {
+        "id": "DET20260927100430",
+        "level": "alta",
+        "delay": 322.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T10:03:43.398393Z",
+            "ratio": 5.3
+          },
+          "TUM": {
+            "onset": "2026-09-27T10:04:30.068393Z",
+            "ratio": 10.3
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:03:23.608393Z",
+            "ratio": 5.7
+          },
+          "PUYO": {
+            "onset": "2026-09-27T10:03:37.738393Z",
+            "ratio": 5.9
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:05:20.538393Z",
+            "ratio": 26.5
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:05:34.168391Z",
+            "ratio": 5.3
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taojuu",
+          "time": "2026-09-27T10:04:38.000000Z",
+          "lat": 3.862555370879817,
+          "lon": -75.64035916013442,
+          "depth": 16.0,
+          "mag": 3.4,
+          "magtype": "MLr_2",
+          "place": "Chaparral - Tolima, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taojuu/resumen"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100841",
+        "level": "alta",
+        "delay": 544.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:08:41.828393Z",
+            "ratio": 10.8
+          },
+          "URI": {
+            "onset": "2026-09-27T10:08:48.438393Z",
+            "ratio": 28.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:08:59.948393Z",
+            "ratio": 8.1
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:09:01.748393Z",
+            "ratio": 25.7
+          },
+          "SMAR": {
+            "onset": "2026-09-27T10:09:06.528393Z",
+            "ratio": 14.4
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:09:39.198393Z",
+            "ratio": 18.8
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:09:58.928393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:10:11.458391Z",
+            "ratio": 15.7
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 40
+  },
+  {
+    "case_profile": "control1-on4",
+    "detections": [
+      {
+        "id": "DET20260927100430",
+        "level": "alta",
+        "delay": 322.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:04:30.008393Z",
+            "ratio": 10.3
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:04:53.618393Z",
+            "ratio": 4.5
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:03:43.168393Z",
+            "ratio": 5.3
+          },
+          "PUYO": {
+            "onset": "2026-09-27T10:03:37.488393Z",
+            "ratio": 5.9
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:04:18.778393Z",
+            "ratio": 4.1
+          },
+          "PRV": {
+            "onset": "2026-09-27T10:04:42.708393Z",
+            "ratio": 4.8
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:05:20.108393Z",
+            "ratio": 26.5
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:05:33.958391Z",
+            "ratio": 4.7
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taojuu",
+          "time": "2026-09-27T10:04:38.000000Z",
+          "lat": 3.862555370879817,
+          "lon": -75.64035916013442,
+          "depth": 16.0,
+          "mag": 3.4,
+          "magtype": "MLr_2",
+          "place": "Chaparral - Tolima, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taojuu/resumen"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100848",
+        "level": "alta",
+        "delay": 546.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:08:38.388393Z",
+            "ratio": 4.2
+          },
+          "URI": {
+            "onset": "2026-09-27T10:08:48.268393Z",
+            "ratio": 28.3
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:07:03.678393Z",
+            "ratio": 4.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:07:32.618393Z",
+            "ratio": 4.7
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:08:59.778393Z",
+            "ratio": 8.1
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:09:00.968393Z",
+            "ratio": 25.7
+          },
+          "SMAR": {
+            "onset": "2026-09-27T10:09:06.448393Z",
+            "ratio": 14.4
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:10:11.288391Z",
+            "ratio": 24.6
+          },
+          "PUYO": {
+            "onset": "2026-09-27T10:10:37.858393Z",
+            "ratio": 4.5
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 58
+  },
+  {
+    "case_profile": "control1-on6",
+    "detections": [
+      {
+        "id": "DET20260927100430",
+        "level": "alta",
+        "delay": 322.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:04:30.078393Z",
+            "ratio": 10.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:05:20.568393Z",
+            "ratio": 26.5
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:05:37.098391Z",
+            "ratio": 15.0
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taojuu",
+          "time": "2026-09-27T10:04:38.000000Z",
+          "lat": 3.862555370879817,
+          "lon": -75.64035916013442,
+          "depth": 16.0,
+          "mag": 3.4,
+          "magtype": "MLr_2",
+          "place": "Chaparral - Tolima, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taojuu/resumen"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100841",
+        "level": "alta",
+        "delay": 546.0,
+        "stations": {
+          "URI": {
+            "onset": "2026-09-27T10:08:48.448393Z",
+            "ratio": 28.3
+          },
+          "TUM": {
+            "onset": "2026-09-27T10:08:41.858393Z",
+            "ratio": 10.8
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:09:00.088393Z",
+            "ratio": 8.1
+          },
+          "SMAR": {
+            "onset": "2026-09-27T10:09:06.608393Z",
+            "ratio": 14.4
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:09:39.278393Z",
+            "ratio": 18.8
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:09:59.198393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:10:11.488391Z",
+            "ratio": 24.6
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:10:27.158393Z",
+            "ratio": 6.1
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 33
+  },
+  {
+    "case_profile": "control1-ratio10",
+    "detections": [
+      {
+        "id": "DET20260927100430",
+        "level": "alta",
+        "delay": 322.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T10:03:43.398393Z",
+            "ratio": 5.3
+          },
+          "TUM": {
+            "onset": "2026-09-27T10:04:30.068393Z",
+            "ratio": 10.3
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:03:23.608393Z",
+            "ratio": 5.7
+          },
+          "PUYO": {
+            "onset": "2026-09-27T10:03:37.738393Z",
+            "ratio": 5.9
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:05:20.538393Z",
+            "ratio": 26.5
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:05:34.168391Z",
+            "ratio": 5.3
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taojuu",
+          "time": "2026-09-27T10:04:38.000000Z",
+          "lat": 3.862555370879817,
+          "lon": -75.64035916013442,
+          "depth": 16.0,
+          "mag": 3.4,
+          "magtype": "MLr_2",
+          "place": "Chaparral - Tolima, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taojuu/resumen"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100841",
+        "level": "media",
+        "delay": 544.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:08:41.828393Z",
+            "ratio": 10.8
+          },
+          "URI": {
+            "onset": "2026-09-27T10:08:48.438393Z",
+            "ratio": 28.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:08:59.948393Z",
+            "ratio": 8.1
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:09:01.748393Z",
+            "ratio": 25.7
+          },
+          "SMAR": {
+            "onset": "2026-09-27T10:09:06.528393Z",
+            "ratio": 14.4
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:09:39.198393Z",
+            "ratio": 18.8
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:09:58.928393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:10:11.458391Z",
+            "ratio": 15.7
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 40
+  },
+  {
+    "case_profile": "control1-ratio6",
+    "detections": [
+      {
+        "id": "DET20260927095802",
+        "level": "media",
+        "delay": -104.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T09:58:02.448393Z",
+            "ratio": 6.6
+          },
+          "OCA": {
+            "onset": "2026-09-27T09:58:05.868393Z",
+            "ratio": 6.2
+          },
+          "TUM": {
+            "onset": "2026-09-27T09:58:14.408393Z",
+            "ratio": 14.0
+          },
+          "PUYO": {
+            "onset": "2026-09-27T09:58:17.068393Z",
+            "ratio": 9.2
+          },
+          "CRJC": {
+            "onset": "2026-09-27T09:59:11.178393Z",
+            "ratio": 6.3
+          }
+        },
+        "match": null,
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100430",
+        "level": "alta",
+        "delay": 322.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T10:03:43.398393Z",
+            "ratio": 5.3
+          },
+          "TUM": {
+            "onset": "2026-09-27T10:04:30.068393Z",
+            "ratio": 10.3
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:03:23.608393Z",
+            "ratio": 5.7
+          },
+          "PUYO": {
+            "onset": "2026-09-27T10:03:37.738393Z",
+            "ratio": 5.9
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:05:20.538393Z",
+            "ratio": 26.5
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:05:34.168391Z",
+            "ratio": 5.3
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taojuu",
+          "time": "2026-09-27T10:04:38.000000Z",
+          "lat": 3.862555370879817,
+          "lon": -75.64035916013442,
+          "depth": 16.0,
+          "mag": 3.4,
+          "magtype": "MLr_2",
+          "place": "Chaparral - Tolima, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taojuu/resumen"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927100841",
+        "level": "alta",
+        "delay": 542.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T10:08:41.828393Z",
+            "ratio": 10.8
+          },
+          "URI": {
+            "onset": "2026-09-27T10:08:48.438393Z",
+            "ratio": 28.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T10:08:59.948393Z",
+            "ratio": 8.1
+          },
+          "CRJC": {
+            "onset": "2026-09-27T10:09:01.748393Z",
+            "ratio": 25.7
+          },
+          "SMAR": {
+            "onset": "2026-09-27T10:09:06.528393Z",
+            "ratio": 14.4
+          },
+          "OCA": {
+            "onset": "2026-09-27T10:09:39.198393Z",
+            "ratio": 18.8
+          },
+          "ARGC": {
+            "onset": "2026-09-27T10:09:58.928393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-27T10:10:11.458391Z",
+            "ratio": 15.7
+          }
+        },
+        "match": null,
+        "discarded": null
+      }
+    ],
+    "trigger_count": 40
+  },
+  {
+    "case_profile": "control2-base",
+    "detections": [],
+    "trigger_count": 6
+  },
+  {
+    "case_profile": "control2-on4",
+    "detections": [],
+    "trigger_count": 13
+  },
+  {
+    "case_profile": "control2-on6",
+    "detections": [],
+    "trigger_count": 5
+  },
+  {
+    "case_profile": "control2-ratio10",
+    "detections": [],
+    "trigger_count": 6
+  },
+  {
+    "case_profile": "control2-ratio6",
+    "detections": [],
+    "trigger_count": 6
+  },
+  {
+    "case_profile": "holdout-chaparral-base",
+    "detections": [
+      {
+        "id": "DET20260928084037",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-28T08:39:20.448393Z",
+            "ratio": 5.8
+          },
+          "HEL": {
+            "onset": "2026-09-28T08:40:37.488393Z",
+            "ratio": 26.9
+          },
+          "RUS": {
+            "onset": "2026-09-28T08:40:50.238393Z",
+            "ratio": 18.5
+          },
+          "OCA": {
+            "onset": "2026-09-28T08:41:15.598393Z",
+            "ratio": 11.6
+          },
+          "OTAV": {
+            "onset": "2026-09-28T08:41:47.219538Z",
+            "ratio": 6.2
+          },
+          "SMAR": {
+            "onset": "2026-09-28T08:41:50.418393Z",
+            "ratio": 7.3
+          },
+          "CRJC": {
+            "onset": "2026-09-28T08:41:54.228393Z",
+            "ratio": 8.3
+          },
+          "URI": {
+            "onset": "2026-09-28T08:42:04.398391Z",
+            "ratio": 6.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty3z",
+          "time": "2026-09-28T08:39:55.313000Z",
+          "lat": 3.7929,
+          "lon": -75.7141,
+          "depth": 10,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "26 km WNW of Chaparral, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty3z"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 16
+  },
+  {
+    "case_profile": "holdout-chaparral-ratio10",
+    "detections": [
+      {
+        "id": "DET20260928084037",
+        "level": "alta",
+        "delay": 44.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-28T08:39:20.448393Z",
+            "ratio": 5.8
+          },
+          "HEL": {
+            "onset": "2026-09-28T08:40:37.488393Z",
+            "ratio": 26.9
+          },
+          "RUS": {
+            "onset": "2026-09-28T08:40:50.238393Z",
+            "ratio": 18.5
+          },
+          "OCA": {
+            "onset": "2026-09-28T08:41:15.598393Z",
+            "ratio": 11.6
+          },
+          "OTAV": {
+            "onset": "2026-09-28T08:41:47.219538Z",
+            "ratio": 6.2
+          },
+          "SMAR": {
+            "onset": "2026-09-28T08:41:50.418393Z",
+            "ratio": 7.3
+          },
+          "CRJC": {
+            "onset": "2026-09-28T08:41:54.228393Z",
+            "ratio": 8.3
+          },
+          "URI": {
+            "onset": "2026-09-28T08:42:04.398391Z",
+            "ratio": 6.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty3z",
+          "time": "2026-09-28T08:39:55.313000Z",
+          "lat": 3.7929,
+          "lon": -75.7141,
+          "depth": 10,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "26 km WNW of Chaparral, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty3z"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 16
+  },
+  {
+    "case_profile": "holdout-istmina-base",
+    "detections": [
+      {
+        "id": "DET20260924073850",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "URI": {
+            "onset": "2026-09-24T07:38:50.418393Z",
+            "ratio": 16.0
+          },
+          "TUM": {
+            "onset": "2026-09-24T07:37:41.608393Z",
+            "ratio": 5.3
+          },
+          "HEL": {
+            "onset": "2026-09-24T07:39:39.888393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-24T07:40:08.448393Z",
+            "ratio": 19.7
+          },
+          "SMAR": {
+            "onset": "2026-09-24T07:40:08.488394Z",
+            "ratio": 9.1
+          },
+          "OCA": {
+            "onset": "2026-09-24T07:40:22.848393Z",
+            "ratio": 13.3
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026suwjsn",
+          "time": "2026-09-24T07:39:04.000000Z",
+          "lat": 4.4769774906178235,
+          "lon": -76.7581993371491,
+          "depth": 41.0,
+          "mag": 3.6,
+          "magtype": "MLr_1",
+          "place": "Istmina - Chocó, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026suwjsn/resumen"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 16
+  },
+  {
+    "case_profile": "holdout-istmina-ratio10",
+    "detections": [
+      {
+        "id": "DET20260924073850",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "URI": {
+            "onset": "2026-09-24T07:38:50.418393Z",
+            "ratio": 16.0
+          },
+          "TUM": {
+            "onset": "2026-09-24T07:37:41.608393Z",
+            "ratio": 5.3
+          },
+          "HEL": {
+            "onset": "2026-09-24T07:39:39.888393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-24T07:40:08.448393Z",
+            "ratio": 19.7
+          },
+          "SMAR": {
+            "onset": "2026-09-24T07:40:08.488394Z",
+            "ratio": 9.1
+          },
+          "OCA": {
+            "onset": "2026-09-24T07:40:22.848393Z",
+            "ratio": 13.3
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026suwjsn",
+          "time": "2026-09-24T07:39:04.000000Z",
+          "lat": 4.4769774906178235,
+          "lon": -76.7581993371491,
+          "depth": 41.0,
+          "mag": 3.6,
+          "magtype": "MLr_1",
+          "place": "Istmina - Chocó, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026suwjsn/resumen"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 16
+  },
+  {
+    "case_profile": "holdout-istmina2-base",
+    "detections": [
+      {
+        "id": "DET20260927031614",
+        "level": "alta",
+        "delay": 38.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T03:14:47.368394Z",
+            "ratio": 6.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T03:16:14.118393Z",
+            "ratio": 29.7
+          },
+          "RUS": {
+            "onset": "2026-09-27T03:16:41.818393Z",
+            "ratio": 25.7
+          },
+          "URI": {
+            "onset": "2026-09-27T03:17:44.128393Z",
+            "ratio": 10.9
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taaviy",
+          "time": "2026-09-27T03:15:38.000000Z",
+          "lat": 4.473276152547113,
+          "lon": -76.77363273040167,
+          "depth": 40.0,
+          "mag": 3.9,
+          "magtype": "MLv",
+          "place": "Istmina - Chocó, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taaviy/resumen"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 6
+  },
+  {
+    "case_profile": "holdout-istmina2-ratio10",
+    "detections": [
+      {
+        "id": "DET20260927031614",
+        "level": "alta",
+        "delay": 38.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T03:14:47.368394Z",
+            "ratio": 6.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T03:16:14.118393Z",
+            "ratio": 29.7
+          },
+          "RUS": {
+            "onset": "2026-09-27T03:16:41.818393Z",
+            "ratio": 25.7
+          },
+          "URI": {
+            "onset": "2026-09-27T03:17:44.128393Z",
+            "ratio": 10.9
+          }
+        },
+        "match": {
+          "source": "SGC",
+          "id": "SGC2026taaviy",
+          "time": "2026-09-27T03:15:38.000000Z",
+          "lat": 4.473276152547113,
+          "lon": -76.77363273040167,
+          "depth": 40.0,
+          "mag": 3.9,
+          "magtype": "MLv",
+          "place": "Istmina - Chocó, Colombia",
+          "status": "manual",
+          "url": "https://www.sgc.gov.co/detallesismo/SGC2026taaviy/resumen"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 6
+  },
+  {
+    "case_profile": "istmina-base",
+    "detections": [
+      {
+        "id": "DET20260927215129",
+        "level": "alta",
+        "delay": -360.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:50:19.858393Z",
+            "ratio": 6.7
+          },
+          "URI": {
+            "onset": "2026-09-27T21:51:29.658393Z",
+            "ratio": 29.8
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:51:43.418394Z",
+            "ratio": 28.9
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:51:49.348393Z",
+            "ratio": 27.5
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:52:07.238393Z",
+            "ratio": 13.7
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:52:21.248393Z",
+            "ratio": 24.1
+          },
+          "PRV": {
+            "onset": "2026-09-27T21:52:49.688391Z",
+            "ratio": 18.0
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:52:50.918394Z",
+            "ratio": 29.0
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:53:00.298393Z",
+            "ratio": 28.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215353",
+        "level": "alta",
+        "delay": -138.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:53:53.948393Z",
+            "ratio": 9.2
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:54:23.648393Z",
+            "ratio": 9.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:55:17.788394Z",
+            "ratio": 5.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:55:30.738393Z",
+            "ratio": 9.4
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:55:31.998393Z",
+            "ratio": 16.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215825",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:56:43.668393Z",
+            "ratio": 5.1
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:58:22.378393Z",
+            "ratio": 6.5
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:57:56.828393Z",
+            "ratio": 5.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:58:25.998393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:58:53.018394Z",
+            "ratio": 27.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:59:07.968393Z",
+            "ratio": 19.4
+          },
+          "URI": {
+            "onset": "2026-09-27T21:59:56.678393Z",
+            "ratio": 5.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0u",
+          "time": "2026-09-27T21:57:52.827000Z",
+          "lat": 4.5313,
+          "lon": -76.7753,
+          "depth": 70.497,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "19 km SW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0u"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 33
+  },
+  {
+    "case_profile": "istmina-on4",
+    "detections": [
+      {
+        "id": "DET20260927215129",
+        "level": "media",
+        "delay": -360.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:51:11.698393Z",
+            "ratio": 4.0
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:49:53.508393Z",
+            "ratio": 4.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:50:45.718393Z",
+            "ratio": 4.4
+          },
+          "URI": {
+            "onset": "2026-09-27T21:51:29.608393Z",
+            "ratio": 29.8
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:51:43.338394Z",
+            "ratio": 28.9
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:51:49.088393Z",
+            "ratio": 27.5
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:52:21.168393Z",
+            "ratio": 24.1
+          },
+          "PRV": {
+            "onset": "2026-09-27T21:52:49.518391Z",
+            "ratio": 18.0
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:52:50.848394Z",
+            "ratio": 14.8
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215353",
+        "level": "media",
+        "delay": -138.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:53:53.668393Z",
+            "ratio": 9.2
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:54:23.578393Z",
+            "ratio": 9.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:55:17.708394Z",
+            "ratio": 5.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:55:27.028393Z",
+            "ratio": 4.9
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:55:31.978393Z",
+            "ratio": 16.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215825",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:56:43.298393Z",
+            "ratio": 5.1
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:58:22.048393Z",
+            "ratio": 6.5
+          },
+          "PUYO": {
+            "onset": "2026-09-27T21:57:11.508393Z",
+            "ratio": 4.2
+          },
+          "URI": {
+            "onset": "2026-09-27T21:58:17.078393Z",
+            "ratio": 4.3
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:57:56.118393Z",
+            "ratio": 5.1
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:58:18.418394Z",
+            "ratio": 4.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:58:25.908393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:58:52.938394Z",
+            "ratio": 27.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:59:07.828393Z",
+            "ratio": 17.0
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0u",
+          "time": "2026-09-27T21:57:52.827000Z",
+          "lat": 4.5313,
+          "lon": -76.7753,
+          "depth": 70.497,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "19 km SW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0u"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 49
+  },
+  {
+    "case_profile": "istmina-on6",
+    "detections": [
+      {
+        "id": "DET20260927215129",
+        "level": "alta",
+        "delay": -360.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:50:20.078393Z",
+            "ratio": 6.7
+          },
+          "URI": {
+            "onset": "2026-09-27T21:51:29.798393Z",
+            "ratio": 29.8
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:51:43.568394Z",
+            "ratio": 28.9
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:51:49.458393Z",
+            "ratio": 27.5
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:52:09.318393Z",
+            "ratio": 13.7
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:52:21.288393Z",
+            "ratio": 24.1
+          },
+          "PRV": {
+            "onset": "2026-09-27T21:52:49.978391Z",
+            "ratio": 18.0
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:52:50.928394Z",
+            "ratio": 29.0
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:53:00.338393Z",
+            "ratio": 28.1
+          }
+        },
+        "match": {
+          "source": "EMSC",
+          "id": "20260927_0000285",
+          "time": "2026-09-27T21:49:47.360000Z",
+          "lat": 18.5389,
+          "lon": -69.0679,
+          "depth": 109.7,
+          "mag": 4.8,
+          "magtype": "mw",
+          "place": "DOMINICAN REPUBLIC",
+          "status": "ke",
+          "url": "https://www.seismicportal.eu/eventdetails.html?unid=20260927_0000285"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215354",
+        "level": "alta",
+        "delay": -138.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:53:54.398393Z",
+            "ratio": 9.2
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:54:24.518393Z",
+            "ratio": 9.6
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:55:32.358393Z",
+            "ratio": 9.4
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:55:32.008393Z",
+            "ratio": 16.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215826",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:58:22.478393Z",
+            "ratio": 6.5
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:58:26.038393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:58:53.038394Z",
+            "ratio": 27.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:59:07.988393Z",
+            "ratio": 19.4
+          },
+          "URI": {
+            "onset": "2026-09-27T21:59:57.288393Z",
+            "ratio": 9.9
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0u",
+          "time": "2026-09-27T21:57:52.827000Z",
+          "lat": 4.5313,
+          "lon": -76.7753,
+          "depth": 70.497,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "19 km SW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0u"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 28
+  },
+  {
+    "case_profile": "istmina-ratio10",
+    "detections": [
+      {
+        "id": "DET20260927215129",
+        "level": "alta",
+        "delay": -360.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:50:19.858393Z",
+            "ratio": 6.7
+          },
+          "URI": {
+            "onset": "2026-09-27T21:51:29.658393Z",
+            "ratio": 29.8
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:51:43.418394Z",
+            "ratio": 28.9
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:51:49.348393Z",
+            "ratio": 27.5
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:52:07.238393Z",
+            "ratio": 13.7
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:52:21.248393Z",
+            "ratio": 24.1
+          },
+          "PRV": {
+            "onset": "2026-09-27T21:52:49.688391Z",
+            "ratio": 18.0
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:52:50.918394Z",
+            "ratio": 29.0
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:53:00.298393Z",
+            "ratio": 28.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215825",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:58:22.378393Z",
+            "ratio": 6.5
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:56:43.668393Z",
+            "ratio": 5.1
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:57:56.828393Z",
+            "ratio": 5.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:58:25.998393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:58:53.018394Z",
+            "ratio": 27.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:59:07.968393Z",
+            "ratio": 19.4
+          },
+          "URI": {
+            "onset": "2026-09-27T21:59:56.678393Z",
+            "ratio": 5.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0u",
+          "time": "2026-09-27T21:57:52.827000Z",
+          "lat": 4.5313,
+          "lon": -76.7753,
+          "depth": 70.497,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "19 km SW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0u"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 33
+  },
+  {
+    "case_profile": "istmina-ratio6",
+    "detections": [
+      {
+        "id": "DET20260927215019",
+        "level": "media",
+        "delay": -366.0,
+        "stations": {
+          "TUM": {
+            "onset": "2026-09-27T21:50:19.858393Z",
+            "ratio": 6.7
+          },
+          "URI": {
+            "onset": "2026-09-27T21:51:29.658393Z",
+            "ratio": 29.8
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:51:43.418394Z",
+            "ratio": 28.9
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:51:49.348393Z",
+            "ratio": 27.5
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:52:07.238393Z",
+            "ratio": 5.5
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215221",
+        "level": "alta",
+        "delay": -300.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T21:52:21.248393Z",
+            "ratio": 24.1
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:52:23.098393Z",
+            "ratio": 8.5
+          },
+          "PRV": {
+            "onset": "2026-09-27T21:52:49.688391Z",
+            "ratio": 18.0
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:52:50.918394Z",
+            "ratio": 29.0
+          },
+          "URI": {
+            "onset": "2026-09-27T21:52:51.588393Z",
+            "ratio": 9.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:53:00.298393Z",
+            "ratio": 29.7
+          },
+          "CRJC": {
+            "onset": "2026-09-27T21:53:14.718394Z",
+            "ratio": 13.2
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:53:20.128393Z",
+            "ratio": 17.4
+          },
+          "ARGC": {
+            "onset": "2026-09-27T21:53:53.948393Z",
+            "ratio": 6.2
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215423",
+        "level": "alta",
+        "delay": -138.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-27T21:54:23.648393Z",
+            "ratio": 9.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:55:17.788394Z",
+            "ratio": 5.3
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:55:30.738393Z",
+            "ratio": 9.4
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:55:31.998393Z",
+            "ratio": 16.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0q",
+          "time": "2026-09-27T21:49:48.024000Z",
+          "lat": 18.5869,
+          "lon": -68.9986,
+          "depth": 119.235,
+          "mag": 4.8,
+          "magtype": "mww",
+          "place": "2 km W of Guaymate, Dominican Republic",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0q"
+        },
+        "discarded": null
+      },
+      {
+        "id": "DET20260927215822",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "ARGC": {
+            "onset": "2026-09-27T21:56:43.668393Z",
+            "ratio": 5.1
+          },
+          "TUM": {
+            "onset": "2026-09-27T21:58:22.378393Z",
+            "ratio": 6.5
+          },
+          "SMAR": {
+            "onset": "2026-09-27T21:57:56.828393Z",
+            "ratio": 5.1
+          },
+          "HEL": {
+            "onset": "2026-09-27T21:58:25.998393Z",
+            "ratio": 29.6
+          },
+          "RUS": {
+            "onset": "2026-09-27T21:58:53.018394Z",
+            "ratio": 27.9
+          },
+          "OCA": {
+            "onset": "2026-09-27T21:59:07.968393Z",
+            "ratio": 19.4
+          },
+          "URI": {
+            "onset": "2026-09-27T21:59:56.678393Z",
+            "ratio": 5.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty0u",
+          "time": "2026-09-27T21:57:52.827000Z",
+          "lat": 4.5313,
+          "lon": -76.7753,
+          "depth": 70.497,
+          "mag": 4.6,
+          "magtype": "mb",
+          "place": "19 km SW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty0u"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 33
+  },
+  {
+    "case_profile": "istmina2-base",
+    "detections": [
+      {
+        "id": "DET20260925005740",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "HEL": {
+            "onset": "2026-09-25T00:57:40.428393Z",
+            "ratio": 29.6
+          },
+          "CRJC": {
+            "onset": "2026-09-25T00:57:58.258393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-25T00:58:09.358393Z",
+            "ratio": 21.4
+          },
+          "OCA": {
+            "onset": "2026-09-25T00:58:23.288393Z",
+            "ratio": 13.5
+          },
+          "URI": {
+            "onset": "2026-09-25T00:59:11.028391Z",
+            "ratio": 10.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txhs",
+          "time": "2026-09-25T00:57:07.267000Z",
+          "lat": 4.5217,
+          "lon": -76.9788,
+          "depth": 52.219,
+          "mag": 4.5,
+          "magtype": "mb",
+          "place": "39 km WSW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txhs"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 8
+  },
+  {
+    "case_profile": "istmina2-on4",
+    "detections": [
+      {
+        "id": "DET20260925005740",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "OTAV": {
+            "onset": "2026-09-25T00:56:30.019538Z",
+            "ratio": 4.0
+          },
+          "ARGC": {
+            "onset": "2026-09-25T00:57:16.588393Z",
+            "ratio": 4.4
+          },
+          "HEL": {
+            "onset": "2026-09-25T00:57:40.418393Z",
+            "ratio": 29.6
+          },
+          "PRV": {
+            "onset": "2026-09-25T00:57:51.918393Z",
+            "ratio": 4.3
+          },
+          "CRJC": {
+            "onset": "2026-09-25T00:57:58.158393Z",
+            "ratio": 6.4
+          },
+          "TUM": {
+            "onset": "2026-09-25T00:58:06.138393Z",
+            "ratio": 4.7
+          },
+          "RUS": {
+            "onset": "2026-09-25T00:58:09.098393Z",
+            "ratio": 21.4
+          },
+          "OCA": {
+            "onset": "2026-09-25T00:58:23.008393Z",
+            "ratio": 13.5
+          },
+          "URI": {
+            "onset": "2026-09-25T00:59:09.848391Z",
+            "ratio": 4.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txhs",
+          "time": "2026-09-25T00:57:07.267000Z",
+          "lat": 4.5217,
+          "lon": -76.9788,
+          "depth": 52.219,
+          "mag": 4.5,
+          "magtype": "mb",
+          "place": "39 km WSW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txhs"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 14
+  },
+  {
+    "case_profile": "istmina2-on6",
+    "detections": [
+      {
+        "id": "DET20260925005740",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "HEL": {
+            "onset": "2026-09-25T00:57:40.438393Z",
+            "ratio": 29.6
+          },
+          "CRJC": {
+            "onset": "2026-09-25T00:57:58.638393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-25T00:58:09.428393Z",
+            "ratio": 21.4
+          },
+          "OCA": {
+            "onset": "2026-09-25T00:58:23.708393Z",
+            "ratio": 13.5
+          },
+          "URI": {
+            "onset": "2026-09-25T00:59:11.178391Z",
+            "ratio": 10.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txhs",
+          "time": "2026-09-25T00:57:07.267000Z",
+          "lat": 4.5217,
+          "lon": -76.9788,
+          "depth": 52.219,
+          "mag": 4.5,
+          "magtype": "mb",
+          "place": "39 km WSW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txhs"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 8
+  },
+  {
+    "case_profile": "istmina2-ratio10",
+    "detections": [
+      {
+        "id": "DET20260925005740",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "HEL": {
+            "onset": "2026-09-25T00:57:40.428393Z",
+            "ratio": 29.6
+          },
+          "CRJC": {
+            "onset": "2026-09-25T00:57:58.258393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-25T00:58:09.358393Z",
+            "ratio": 21.4
+          },
+          "OCA": {
+            "onset": "2026-09-25T00:58:23.288393Z",
+            "ratio": 13.5
+          },
+          "URI": {
+            "onset": "2026-09-25T00:59:11.028391Z",
+            "ratio": 10.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txhs",
+          "time": "2026-09-25T00:57:07.267000Z",
+          "lat": 4.5217,
+          "lon": -76.9788,
+          "depth": 52.219,
+          "mag": 4.5,
+          "magtype": "mb",
+          "place": "39 km WSW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txhs"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 8
+  },
+  {
+    "case_profile": "istmina2-ratio6",
+    "detections": [
+      {
+        "id": "DET20260925005740",
+        "level": "alta",
+        "delay": 36.0,
+        "stations": {
+          "HEL": {
+            "onset": "2026-09-25T00:57:40.428393Z",
+            "ratio": 29.6
+          },
+          "CRJC": {
+            "onset": "2026-09-25T00:57:58.258393Z",
+            "ratio": 6.4
+          },
+          "RUS": {
+            "onset": "2026-09-25T00:58:09.358393Z",
+            "ratio": 21.4
+          },
+          "OCA": {
+            "onset": "2026-09-25T00:58:23.288393Z",
+            "ratio": 13.5
+          },
+          "URI": {
+            "onset": "2026-09-25T00:59:11.028391Z",
+            "ratio": 10.1
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000txhs",
+          "time": "2026-09-25T00:57:07.267000Z",
+          "lat": 4.5217,
+          "lon": -76.9788,
+          "depth": 52.219,
+          "mag": 4.5,
+          "magtype": "mb",
+          "place": "39 km WSW of Sipí, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000txhs"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 8
+  },
+  {
+    "case_profile": "santos-base",
+    "detections": [
+      {
+        "id": "DET20260928144255",
+        "level": "alta",
+        "delay": 42.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-28T14:43:00.388393Z",
+            "ratio": 29.8
+          },
+          "RUS": {
+            "onset": "2026-09-28T14:42:55.798393Z",
+            "ratio": 30.0
+          },
+          "HEL": {
+            "onset": "2026-09-28T14:43:12.508393Z",
+            "ratio": 28.8
+          },
+          "ARGC": {
+            "onset": "2026-09-28T14:43:23.588393Z",
+            "ratio": 25.9
+          },
+          "CRJC": {
+            "onset": "2026-09-28T14:43:32.748393Z",
+            "ratio": 29.7
+          },
+          "SMAR": {
+            "onset": "2026-09-28T14:43:37.248393Z",
+            "ratio": 22.8
+          },
+          "TUM": {
+            "onset": "2026-09-28T14:43:40.818393Z",
+            "ratio": 9.4
+          },
+          "URI": {
+            "onset": "2026-09-28T14:43:42.918393Z",
+            "ratio": 29.8
+          },
+          "OTAV": {
+            "onset": "2026-09-28T14:44:26.619538Z",
+            "ratio": 5.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty5f",
+          "time": "2026-09-28T14:42:31.470000Z",
+          "lat": 6.8087,
+          "lon": -72.9604,
+          "depth": 155.23,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "6 km NNE of Cepitá, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty5f"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 19
+  },
+  {
+    "case_profile": "santos-on4",
+    "detections": [
+      {
+        "id": "DET20260928144255",
+        "level": "alta",
+        "delay": 42.0,
+        "stations": {
+          "PUYO": {
+            "onset": "2026-09-28T14:41:25.238393Z",
+            "ratio": 4.4
+          },
+          "OCA": {
+            "onset": "2026-09-28T14:43:00.378393Z",
+            "ratio": 29.8
+          },
+          "OTAV": {
+            "onset": "2026-09-28T14:42:40.619538Z",
+            "ratio": 4.9
+          },
+          "PRV": {
+            "onset": "2026-09-28T14:42:51.418394Z",
+            "ratio": 4.3
+          },
+          "RUS": {
+            "onset": "2026-09-28T14:42:55.798393Z",
+            "ratio": 30.0
+          },
+          "TUM": {
+            "onset": "2026-09-28T14:42:57.208393Z",
+            "ratio": 4.3
+          },
+          "HEL": {
+            "onset": "2026-09-28T14:43:12.498393Z",
+            "ratio": 28.8
+          },
+          "ARGC": {
+            "onset": "2026-09-28T14:43:23.538393Z",
+            "ratio": 25.9
+          },
+          "CRJC": {
+            "onset": "2026-09-28T14:43:32.748393Z",
+            "ratio": 29.7
+          },
+          "SMAR": {
+            "onset": "2026-09-28T14:43:37.228393Z",
+            "ratio": 22.8
+          },
+          "URI": {
+            "onset": "2026-09-28T14:43:42.908393Z",
+            "ratio": 29.8
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty5f",
+          "time": "2026-09-28T14:42:31.470000Z",
+          "lat": 6.8087,
+          "lon": -72.9604,
+          "depth": 155.23,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "6 km NNE of Cepitá, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty5f"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 27
+  },
+  {
+    "case_profile": "santos-on6",
+    "detections": [
+      {
+        "id": "DET20260928144255",
+        "level": "alta",
+        "delay": 42.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-28T14:43:00.398393Z",
+            "ratio": 29.8
+          },
+          "RUS": {
+            "onset": "2026-09-28T14:42:55.798393Z",
+            "ratio": 30.0
+          },
+          "HEL": {
+            "onset": "2026-09-28T14:43:12.518393Z",
+            "ratio": 28.8
+          },
+          "ARGC": {
+            "onset": "2026-09-28T14:43:23.728393Z",
+            "ratio": 25.9
+          },
+          "CRJC": {
+            "onset": "2026-09-28T14:43:32.758393Z",
+            "ratio": 29.7
+          },
+          "SMAR": {
+            "onset": "2026-09-28T14:43:37.258393Z",
+            "ratio": 22.8
+          },
+          "TUM": {
+            "onset": "2026-09-28T14:43:40.928393Z",
+            "ratio": 9.4
+          },
+          "URI": {
+            "onset": "2026-09-28T14:43:42.918393Z",
+            "ratio": 29.8
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty5f",
+          "time": "2026-09-28T14:42:31.470000Z",
+          "lat": 6.8087,
+          "lon": -72.9604,
+          "depth": 155.23,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "6 km NNE of Cepitá, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty5f"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 14
+  },
+  {
+    "case_profile": "santos-ratio10",
+    "detections": [
+      {
+        "id": "DET20260928144255",
+        "level": "alta",
+        "delay": 42.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-28T14:43:00.388393Z",
+            "ratio": 29.8
+          },
+          "RUS": {
+            "onset": "2026-09-28T14:42:55.798393Z",
+            "ratio": 30.0
+          },
+          "HEL": {
+            "onset": "2026-09-28T14:43:12.508393Z",
+            "ratio": 28.8
+          },
+          "ARGC": {
+            "onset": "2026-09-28T14:43:23.588393Z",
+            "ratio": 25.9
+          },
+          "CRJC": {
+            "onset": "2026-09-28T14:43:32.748393Z",
+            "ratio": 29.7
+          },
+          "SMAR": {
+            "onset": "2026-09-28T14:43:37.248393Z",
+            "ratio": 22.8
+          },
+          "TUM": {
+            "onset": "2026-09-28T14:43:40.818393Z",
+            "ratio": 9.4
+          },
+          "URI": {
+            "onset": "2026-09-28T14:43:42.918393Z",
+            "ratio": 29.8
+          },
+          "OTAV": {
+            "onset": "2026-09-28T14:44:26.619538Z",
+            "ratio": 5.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty5f",
+          "time": "2026-09-28T14:42:31.470000Z",
+          "lat": 6.8087,
+          "lon": -72.9604,
+          "depth": 155.23,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "6 km NNE of Cepitá, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty5f"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 19
+  },
+  {
+    "case_profile": "santos-ratio6",
+    "detections": [
+      {
+        "id": "DET20260928144255",
+        "level": "alta",
+        "delay": 42.0,
+        "stations": {
+          "OCA": {
+            "onset": "2026-09-28T14:43:00.388393Z",
+            "ratio": 29.8
+          },
+          "RUS": {
+            "onset": "2026-09-28T14:42:55.798393Z",
+            "ratio": 30.0
+          },
+          "HEL": {
+            "onset": "2026-09-28T14:43:12.508393Z",
+            "ratio": 28.8
+          },
+          "ARGC": {
+            "onset": "2026-09-28T14:43:23.588393Z",
+            "ratio": 25.9
+          },
+          "CRJC": {
+            "onset": "2026-09-28T14:43:32.748393Z",
+            "ratio": 29.7
+          },
+          "SMAR": {
+            "onset": "2026-09-28T14:43:37.248393Z",
+            "ratio": 22.8
+          },
+          "TUM": {
+            "onset": "2026-09-28T14:43:40.818393Z",
+            "ratio": 9.4
+          },
+          "URI": {
+            "onset": "2026-09-28T14:43:42.918393Z",
+            "ratio": 29.8
+          },
+          "OTAV": {
+            "onset": "2026-09-28T14:44:26.619538Z",
+            "ratio": 5.7
+          }
+        },
+        "match": {
+          "source": "USGS",
+          "id": "us6000ty5f",
+          "time": "2026-09-28T14:42:31.470000Z",
+          "lat": 6.8087,
+          "lon": -72.9604,
+          "depth": 155.23,
+          "mag": 4.3,
+          "magtype": "mb",
+          "place": "6 km NNE of Cepitá, Colombia",
+          "status": "reviewed",
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ty5f"
+        },
+        "discarded": null
+      }
+    ],
+    "trigger_count": 19
+  }
+]

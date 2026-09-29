@@ -12,9 +12,9 @@ notificaciones del navegador.
    son estaciones volcánicas y dan demasiado ruido.
 2. **Detector STA/LTA** por estación: banda 2–10 Hz, STA 1 s, LTA 30 s, umbral 5.
 3. **Asociación**, con tres niveles de alerta:
-   - **alta**: 2 o más estaciones con STA/LTA ≥ 8 y HEL entre ellas (probablemente sentido en Medellín).
-   - **media**: 2 o más estaciones con STA/LTA ≥ 8, sin HEL.
-   - **baja**: solo HEL, con STA/LTA ≥ 8 (puede ser ruido local).
+   - **alta**: 2 o más estaciones con STA/LTA ≥ 10 y HEL entre ellas (coincidencia de señales; no mide intensidad sentida).
+   - **media**: 3 o más estaciones con STA/LTA ≥ 10, sin HEL.
+   - **baja**: solo HEL, con STA/LTA ≥ 10 (puede ser ruido local).
 4. **Búsqueda en catálogos**: cada 60 s durante 30 min consulta el SGC (API biweekly) y el
    USGS. EMSC llega por **websocket** (`emsc.py`), así que sus eventos se asocian apenas se
    publican. También se consulta cuántas personas reportaron en EMSC haberlo sentido. Si EMSC
@@ -144,7 +144,7 @@ El mismo servidor corre en una máquina virtual Linux (probado en Azure, Ubuntu 
 Standard_B2ats_v2 con 1 GB de RAM y 1 GB de swap), así no depende de un computador encendido.
 
 ```
-git clone https://github.com/jduquetr/SismoAlert.git ~/sismos-alerta
+git clone --branch azure-telegram https://github.com/jduquetr/SismoAlert.git ~/sismos-alerta
 cd ~/sismos-alerta
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
@@ -153,7 +153,13 @@ sh linux/instalar_servicio.sh
 
 `linux/instalar_servicio.sh` lo registra en systemd (arranca con la máquina y se reinicia si
 se cae) y programa `linux/actualizar.sh` cada 5 minutos: si hay cambios en GitHub los trae y
-reinicia el servicio. Registro: `journalctl -u sismoalert -f`.
+reinicia el servicio. Solo admite `origin/azure-telegram` por fast-forward, sin cambios
+locales. Si cambian dependencias se detiene para preparar un entorno aparte; si falla el
+arranque intenta volver al commit anterior. Registro: `journalctl -u sismoalert -f`.
+El instalador debe ejecutarse como usuario del servicio (no root), con sudo. Instala un
+permiso limitado al reinicio de esa unidad y restricciones de escritura en systemd.
+Tras actualizar el instalador en una instalación existente, ejecútalo una vez para aplicar
+los cambios de `/etc`; actualizar Git no instala la unidad automáticamente.
 
 **Telegram.** Crea un bot con @BotFather, escríbele algo y toma tu `chat_id` de
 `https://api.telegram.org/bot<TOKEN>/getUpdates` (para un grupo o canal, agrega el bot y usa
@@ -174,7 +180,10 @@ página también llega a Telegram, marcado como PRUEBA.
 
 **Catálogo del SGC desde la nube.** `api.sgc.gov.co` responde 403 a las IP de Azure: desde
 ahí las detecciones se confirman con USGS y EMSC, y el mapa queda sin la sismicidad de fondo
-del SGC.
+del SGC. Configura `SISMOALERT_SGC_ENABLED=0` en `/etc/sismoalert.env` para evitar las
+consultas bloqueadas y reinicia el servicio. USGS y EMSC conservan su procedencia;
+pueden omitir eventos pequeños que solo publique SGC. Alternativas y diseño de un
+colector autorizado en el [informe de revisión](reports/revision-2026-09-29/README.md#sgc-desde-azure-alternativa-al-403).
 
 ## Copia estática para compartir (`docs/`)
 
@@ -227,8 +236,17 @@ fecha es.
 
 `python replay.py <hora UTC> [min_antes] [min_despues]` corre el detector sobre datos
 archivados del SGC como si llegaran en vivo. Así se ajustan los umbrales de `config.py`.
-Con 2026-09-27T21:57:52 10 5, detecta el M4.8 de República Dominicana y el M4.3 de
-Istmina sin falsas alarmas.
+`--output resultado.json` guarda parámetros, cobertura, hashes y tiempos simulados;
+`--offline` reutiliza `datos/replay/` y `--set MIN_RATIO=8` permite comparar parámetros.
+El replay preserva huecos y no incluye retrasos de red o catálogo.
+
+La [calibración del 29-sep-2026](reports/revision-2026-09-29/README.md) compara 38 ejecuciones
+sobre siete eventos objetivo y ventanas de fondo: el ajuste 10 conserva 7/7 objetivos y
+elimina una repetición de coda respecto a 8. Persisten dos detecciones sin coincidencia;
+no constituye una medida de falsas alarmas por día. Reproducir con
+`.venv/bin/python tools/calibrate.py --offline` (omitir `--offline` para descargar ondas).
+
+Pruebas sin red ni mensajes reales: `.venv/bin/python -m unittest discover -s tests -v`.
 
 ## Pendiente
 

@@ -1,0 +1,141 @@
+{
+  "detections": [],
+  "triggers": [
+    {
+      "station": "PUYO",
+      "onset": "2026-09-28T17:57:50.648393Z",
+      "ratio": 6.145377743930176
+    },
+    {
+      "station": "URI",
+      "onset": "2026-09-28T18:01:25.578393Z",
+      "ratio": 7.393338780937947
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-28T18:02:01.708393Z",
+      "ratio": 6.188684913431824
+    },
+    {
+      "station": "OCA",
+      "onset": "2026-09-28T18:02:04.938393Z",
+      "ratio": 5.142009970644381
+    },
+    {
+      "station": "PUYO",
+      "onset": "2026-09-28T18:05:10.448393Z",
+      "ratio": 7.700940394004957
+    },
+    {
+      "station": "ARGC",
+      "onset": "2026-09-28T18:07:46.348393Z",
+      "ratio": 7.895605049324196
+    }
+  ],
+  "updates": [],
+  "reference": "2026-09-28T18:00:00.000000Z",
+  "start": "2026-09-28T17:57:00.000000Z",
+  "end": "2026-09-28T18:12:00.000000Z",
+  "parameters": {
+    "THR_ON": 5.0,
+    "THR_OFF": 1.5,
+    "STA_S": 1.0,
+    "LTA_S": 30.0,
+    "MIN_RATIO": 8.0,
+    "LOCAL_ONLY_MIN_RATIO": 8.0,
+    "MIN_STATIONS": 2,
+    "MIN_STATIONS_REMOTE": 3,
+    "ASSOC_WINDOW_S": 120,
+    "DEAD_TIME_S": 30
+  },
+  "coverage": {
+    "HEL": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.HEL.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "b700662db83fda9ed262608f6d9fe9597647ebeb7c2a96cd2b8d3b91f84a534b",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "RUS": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.RUS.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "34023fd67462bbf06763f265b91df67b86e31d3d91a12c64bae969472b2770dd",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "OCA": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.OCA.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "c86ccb2b253e63c434c045b20543d44ffc27f616175a1438cf5579f47703e28d",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "ARGC": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.ARGC.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "3e0670202418bee4ec2d12bfa8533e7127bd7b72041a2ceaf39298e5a6e27a6b",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "SMAR": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.SMAR.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "b7a1700f40cf97fce2b982f8ae40f4f4cd0606efa976412ae4a7c667b578c5e0",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "TUM": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.TUM.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "2375d103f3a11cade6902a2f29af39116267e4e1ef010bc01da65d46c364a5c6",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "CRJC": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.CRJC.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "139df1acb287585d72ad580cbe2f63fe2c804617328cad7c8e77b2ef4f102f70",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "URI": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.URI.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "89b1cbde3160e854c42e34d2909bfb8824b86eb7561397153ce9e71d732c6a17",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "PRV": {
+      "request": "http://sismo.sgc.gov.co:8080|CM.PRV.00.HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "http://sismo.sgc.gov.co:8080",
+      "sha256": "2e0930d9ca99b81a56ea23b4c81f15706df6ce103ff1a91b56c40b7faf2663f9",
+      "segments": 1,
+      "samples": 90001,
+      "seconds": 900.01
+    },
+    "OTAV": {
+      "request": "https://service.earthscope.org|IU.OTAV.00.BHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "https://service.earthscope.org",
+      "sha256": "1a29213ebdf45d30f20151c28a6fbaffcd0497030dd30ddbd1755dd81640b1e8",
+      "segments": 1,
+      "samples": 18000,
+      "seconds": 900.0
+    },
+    "PUYO": {
+      "request": "https://service.earthscope.org|EC.PUYO..HHZ|2026-09-28T17:57:00.000000Z|2026-09-28T18:12:00.000000Z",
+      "provider": "https://service.earthscope.org",
+      "sha256": "999df0f5f7dfe9f478a1abef2bbc78f53963be4b8483933c5ebecddb5a0ff95f",
+      "segments": 1,
+      "samples": 90000,
+      "seconds": 900.0
+    }
+  }
+}

@@ -13,3 +13,5 @@ actualizar.log
 
 .vercel
 .env*
+
+.actualizar.lock

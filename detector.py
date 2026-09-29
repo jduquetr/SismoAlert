@@ -135,10 +135,10 @@ def n_groups(stations):
 class Associator:
     """Agrupa disparos cercanos en el tiempo y decide cuándo hay una detección."""
 
-    def __init__(self, on_detection, on_update):
+    def __init__(self, on_detection, on_update, lock=None):
         self.on_detection = on_detection  # detección nueva
         self.on_update = on_update        # cambia el nivel o se suman estaciones
-        self.lock = threading.Lock()
+        self.lock = lock if lock is not None else threading.RLock()
         self.pending = {}  # estación -> {"onset": UTCDateTime, "ratio": float}
         self.current = None
 
@@ -146,28 +146,33 @@ class Associator:
         """Una estación acaba de dispararse."""
         with self.lock:
             cur = self.current
-            if cur and onset - cur["first_onset"] <= config.ASSOC_WINDOW_S:
+            if cur and 0 <= onset - cur["first_onset"] <= config.ASSOC_WINDOW_S:
                 if station not in cur["stations"]:
                     cur["stations"][station] = {"onset": str(onset), "ratio": round(float(ratio), 1)}
                     self._refresh(cur)
                 return
             self.pending = {s: p for s, p in self.pending.items()
-                            if onset - p["onset"] <= config.ASSOC_WINDOW_S}
-            self.pending.setdefault(station, {"onset": onset, "ratio": float(ratio)})
+                            if 0 <= onset - p["onset"] <= config.ASSOC_WINDOW_S}
+            self.pending[station] = {"onset": onset, "ratio": float(ratio)}
             self._check_pending()
 
-    def peak(self, station, ratio):
-        """Actualiza la relación STA/LTA máxima de una estación disparada."""
+    def peak(self, station, ratio, onset=None):
+        """Solo actualiza el disparo al que pertenece el pico (no uno anterior)."""
         with self.lock:
+            if station in self.pending:
+                pending = self.pending[station]
+                if onset is None or UTCDateTime(pending["onset"]) == onset:
+                    pending["ratio"] = max(pending["ratio"], float(ratio))
+                    self._check_pending()
+                return
             cur = self.current
             if cur and station in cur["stations"]:
-                old = cur["stations"][station]["ratio"]
-                if ratio > old + 0.5:
-                    cur["stations"][station]["ratio"] = round(float(ratio), 1)
+                old = cur["stations"][station]
+                if onset is not None and UTCDateTime(old["onset"]) != onset:
+                    return
+                if ratio > old["ratio"] + 0.5:
+                    old["ratio"] = round(float(ratio), 1)
                     self._refresh(cur, quiet=True)
-            elif station in self.pending:
-                self.pending[station]["ratio"] = max(self.pending[station]["ratio"], float(ratio))
-                self._check_pending()
 
     def _check_pending(self):
         local = self.pending.get(config.LOCAL_STATION)
@@ -204,11 +209,11 @@ class Associator:
         n = len(sts)
         if n_groups(sts) >= config.MIN_STATIONS and config.LOCAL_STATION in sts:
             det["level"] = "alta"
-            det["message"] = (f"Sismo detectado en {n} estaciones, incluida HEL (Medellín): "
-                              "probablemente se sintió en Medellín")
+            det["message"] = (f"Señal compatible con sismo en {n} estaciones, incluida HEL (Medellín). "
+                              "La coincidencia entre estaciones no determina la intensidad sentida.")
         elif n_groups(sts) >= config.MIN_STATIONS_REMOTE:
             det["level"] = "media"
-            det["message"] = f"Sismo detectado en {n} estaciones de Colombia y vecinos"
+            det["message"] = f"Señal compatible con sismo en {n} estaciones de Colombia y vecinos"
         else:
             det["level"] = "baja"
             det["message"] = ("Movimiento fuerte en HEL (Medellín), aún sin confirmación "

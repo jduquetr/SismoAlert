@@ -116,7 +116,11 @@ def distance_km(lat1, lon1, lat2, lon2):
 
 
 def priority(ev):
-    """Clasificación provisional hasta tener la base de sismos sentidos en Medellín."""
+    """Regla operativa heredada; no representa intensidad física ni riesgo.
+
+    Propuesta de reemplazo por IPE y validación local:
+    reports/revision-2026-09-29/README.md (sección Intensidad).
+    """
     d = distance_km(*config.MEDELLIN, ev["lat"], ev["lon"])
     r = math.hypot(d, ev["depth"] or 0)  # distancia hipocentral
     m = ev["mag"] or 0
