@@ -1,6 +1,7 @@
 """Avisos por Telegram.
 
-Lee TELEGRAM_TOKEN y TELEGRAM_CHAT_ID del entorno; si faltan, no hace nada. Los mensajes
+Lee TELEGRAM_TOKEN y TELEGRAM_CHAT_ID del entorno; si faltan, no hace nada.
+TELEGRAM_CHAT_ID acepta varios chats separados por coma: cada uno recibe todos los avisos. Los mensajes
 salen en un hilo aparte para no frenar la detección si Telegram tarda o no responde.
 
 Qué se avisa:
@@ -30,7 +31,7 @@ import config
 
 log = logging.getLogger("sismos.telegram")
 TOKEN = os.environ.get("TELEGRAM_TOKEN", "").strip()
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+CHAT_IDS = [c.strip() for c in os.environ.get("TELEGRAM_CHAT_ID", "").split(",") if c.strip()]
 PAGE_URL = os.environ.get("SISMOALERT_URL", "").strip()
 BOGOTA = timezone(timedelta(hours=-5))
 
@@ -77,22 +78,24 @@ def restore(detections):
 
 
 def enabled():
-    return bool(TOKEN and CHAT_ID)
+    return bool(TOKEN and CHAT_IDS)
 
 
 def send(text, silent=False):
     if not enabled():
         return False
     try:
-        _q.put_nowait((text, silent, time.monotonic()))
+        # Un elemento por chat: los reintentos de uno no duplican el aviso en otro
+        for chat in CHAT_IDS:
+            _q.put_nowait((text, silent, time.monotonic(), chat))
         return True
     except queue.Full:
         log.warning("Cola de Telegram llena; se descarta un mensaje")
         return False
 
 
-def _post(text, silent):
-    body = json.dumps({"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML",
+def _post(text, silent, chat=None):
+    body = json.dumps({"chat_id": chat or CHAT_IDS[0], "text": text, "parse_mode": "HTML",
                        "disable_web_page_preview": True,
                        "disable_notification": silent}).encode()
     req = urllib.request.Request(f"https://api.telegram.org/bot{TOKEN}/sendMessage",
@@ -105,7 +108,7 @@ def _post(text, silent):
 
 def _worker():
     while True:
-        text, silent, enqueued_at = _q.get()
+        text, silent, enqueued_at, *chat = _q.get()
         try:
             for attempt in range(4):
                 if time.monotonic() - enqueued_at > MAX_QUEUE_AGE_S:
@@ -113,7 +116,7 @@ def _worker():
                     break
                 delay = 5 * (attempt + 1)
                 try:
-                    _post(text, silent)
+                    _post(text, silent, *chat)
                     break
                 except urllib.error.HTTPError as exc:
                     # No registrar la URL: contiene el token del bot.
