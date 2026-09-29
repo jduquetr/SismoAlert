@@ -321,6 +321,11 @@ function sgcStyle(depth) {
 function drawSgc() {
   if (!sgcLayer || !sgcData) return;
   sgcLayer.clearLayers();
+  if (sgcData.available === false) {
+    const el = document.getElementById("sgc-count");
+    if (el) el.textContent = sgcData.reason || "Catálogo del SGC no disponible";
+    return;
+  }
   const f = Object.fromEntries(sgcData.fields.map((name, i) => [name, i]));
   const since = Date.now() - sgcDays * 86400000;
   let n = 0;
@@ -715,8 +720,13 @@ function renderStations(list) {
 function catalogStatus(d) {
   const searching = d.search ? d.search === "buscando"
     : Date.now() - new Date(d.first_onset).getTime() < 35 * 60 * 1000;
-  return searching ? "Buscando en SGC, USGS y EMSC…"
-    : "Sin coincidencia en SGC, USGS ni EMSC tras 30 min: probable falsa alarma o sismo muy pequeño.";
+  if (d.discarded) return "Búsqueda cerrada para esta detección descartada.";
+  if (searching) return "Buscando confirmación en los catálogos habilitados…";
+  const failed = Object.entries(d.catalog_status || {}).filter(([, status]) => status !== "ok").map(([name]) => name);
+  if (d.search === "error" || failed.length) {
+    return `Búsqueda incompleta${failed.length ? ": " + esc(failed.join(", ")) : ""}. No permite descartar un sismo.`;
+  }
+  return "Sin coincidencias en los catálogos consultados. Sin confirmación de catálogo.";
 }
 
 function renderDets() {

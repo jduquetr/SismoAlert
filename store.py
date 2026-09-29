@@ -164,3 +164,13 @@ def load_recent(limit=30):
         recs.append(det)
     recs.sort(key=lambda r: r["first_onset"])
     return recs[-limit:]
+
+
+def count_recent(seconds):
+    """Conteo diario sobre todo el registro, no solo las 30 filas visibles."""
+    since = UTCDateTime() - seconds
+    with _lock:
+        _load()
+        detections = [f["properties"].get("deteccion", {}) for f in _records.values()]
+        return sum(1 for d in detections if not d.get("test") and not d.get("discarded")
+                   and d.get("detected_at") and UTCDateTime(d["detected_at"]) >= since)

@@ -7,6 +7,8 @@ web local con notificaciones del navegador.
 Uso: python server.py   y abrir http://127.0.0.1:8765
 """
 import json
+from copy import deepcopy
+from functools import wraps
 import logging
 import queue
 import re
@@ -76,7 +78,7 @@ class Hub:
 
     def upsert_detection(self, det, kind):
         with self.lock:
-            self.detections[det["id"]] = det
+            self.detections[det["id"]] = deepcopy(det)
             if len(self.detections) > 30:
                 self.detections.pop(next(iter(self.detections)))
         try:
@@ -87,7 +89,7 @@ class Hub:
 
     def snapshot(self):
         with self.lock:
-            return {"detections": list(self.detections.values())[::-1], "log": self.log[-30:]}
+            return deepcopy({"detections": list(self.detections.values())[::-1], "log": self.log[-30:]})
 
 
 hub = Hub()
@@ -96,17 +98,27 @@ triggers = {s: StationTrigger(s) for s in config.STATIONS}
 
 # ---------------------------------------------------------------- búsqueda en catálogos
 PRIORITY_ORDER = ["silenciosa", "informativa", "crítica"]
-catalog_lock = threading.Lock()
+catalog_lock = threading.RLock()
 active = {}  # detecciones con búsqueda en curso: id -> detección
 
 
+def serialized(fn):
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        with catalog_lock:
+            return fn(*args, **kwargs)
+    return wrapped
+
+
 def emsc_search(start, end):
-    """EMSC desde el caché del websocket; si no está ahí, se consulta su servicio web."""
-    return emsc_stream.search(start, end) or sources.emsc(start, end)
+    """REST completa el websocket: un caché parcial no oculta otros eventos."""
+    return sources.emsc(start, end)
 
 
 def catalog_sources():
-    srcs = [("SGC", sources.sgc_biweekly), ("USGS", sources.usgs), ("EMSC", emsc_search)]
+    srcs = [("USGS", sources.usgs), ("EMSC", emsc_search)]
+    if config.USE_SGC_BIWEEKLY:
+        srcs.append(("SGC", sources.sgc_biweekly))
     if config.USE_SGC_ARCHIVE_FEED:
         srcs.insert(0, ("SGC-feed", sources.sgc_archive))
     return srcs
@@ -175,18 +187,20 @@ def best_match(det, evs):
     return min(scored, key=lambda x: (round(x[0] / 5), -(x[1]["mag"] or 0)))[1]
 
 
+@serialized
 def attach(det, name, ev):
     """Asocia un evento de catálogo a una detección y avisa si es nuevo o cambió."""
+    if det.get("discarded"):
+        return
     level, dist, hyp = sources.priority(ev)
     ev = dict(ev, priority=level, distance_km=dist, hypo_km=hyp)
     with catalog_lock:
         cat = det.setdefault("catalog", {})
         prev = cat.get(name)
-        if (prev and prev["id"] == ev["id"] and prev["mag"] == ev["mag"]
-                and prev["status"] == ev["status"]):
-            return
-        if prev and prev["id"] == ev["id"]:
+        if prev and prev["id"] == ev["id"] and "felt_reports" in prev:
             ev["felt_reports"] = prev.get("felt_reports")
+        if prev == ev:
+            return
         cat[name] = ev
         det["priority"] = max((e["priority"] for e in cat.values()), key=PRIORITY_ORDER.index)
     verb = "actualiza" if prev else "confirma"
@@ -197,107 +211,155 @@ def attach(det, name, ev):
 
 
 def refresh_felt_reports(det):
-    ev = det.get("catalog", {}).get("EMSC")
-    if not ev:
+    with catalog_lock:
+        ev = deepcopy(det.get("catalog", {}).get("EMSC"))
+    if not ev or det.get("discarded"):
         return
     try:
         n = sources.emsc_felt_reports(ev["id"])
-    except Exception as e:
-        log.warning("Error consultando reportes de EMSC: %s", e)
+    except Exception as exc:
+        log.warning("Error consultando reportes de EMSC: %s", exc)
         return
-    if n != ev.get("felt_reports"):
-        ev["felt_reports"] = n
-        det["felt_reports"] = n
-        if n:
-            hub.note(f"{det['id']}: {n} personas reportaron en EMSC haberlo sentido")
-        hub.upsert_detection(det, "catalog")
+    with catalog_lock:
+        current = det.get("catalog", {}).get("EMSC")
+        if not current or current["id"] != ev["id"] or det.get("discarded"):
+            return
+        if n != current.get("felt_reports"):
+            current["felt_reports"] = n
+            det["felt_reports"] = n
+            hub.upsert_detection(det, "catalog")
 
 
 def search_catalogs(det):
-    """Consulta los catálogos periódicamente hasta encontrar el sismo en todos."""
-    deadline = time.time() + config.SEARCH_DURATION_S
-    det.setdefault("catalog", {})
-    det["search"] = "buscando"
-    active[det["id"]] = det
+    """No mantiene el bloqueo de estado mientras consulta la red o espera."""
+    age = max(0, UTCDateTime() - UTCDateTime(det.get("detected_at") or UTCDateTime()))
+    deadline = time.monotonic() + max(0, config.SEARCH_DURATION_S - age)
+    srcs = catalog_sources()
+    with catalog_lock:
+        det["catalog_status"] = {name: "pendiente" for name, _ in srcs}
+    failed = False
     try:
-        while time.time() < deadline:
-            # Se recalcula en cada vuelta porque pueden sumarse estaciones a la detección
-            start, end = detection_window(det)
-            for name, fn in catalog_sources():
+        while time.monotonic() < deadline:
+            with catalog_lock:
+                if det.get("discarded"):
+                    break
+                start, end = detection_window(det)
+            for name, fn in srcs:
                 try:
                     evs = fn(start, end)
-                except Exception as e:
-                    log.warning("Error consultando %s: %s", name, e)
-                    continue
-                ev = best_match(det, evs)
-                if ev:
-                    attach(det, name, ev)
+                    with catalog_lock:
+                        det["catalog_status"][name] = "ok"
+                        ev = best_match(det, evs)
+                        if ev:
+                            attach(det, name, ev)
+                except Exception as exc:
+                    with catalog_lock:
+                        det["catalog_status"][name] = "error"
+                    log.warning("Error consultando %s: %s", name, exc)
             refresh_felt_reports(det)
-            if all(n in det["catalog"] for n, _ in catalog_sources()):
-                # Seguir un rato más por si cambian magnitudes, pero con menos frecuencia
-                time.sleep(config.SEARCH_INTERVAL_S * 5)
-            else:
-                time.sleep(config.SEARCH_INTERVAL_S)
+            with catalog_lock:
+                complete = all(name in det["catalog"] for name, _ in srcs)
+            delay = config.SEARCH_INTERVAL_S * (5 if complete else 1)
+            time.sleep(max(0, min(delay, deadline - time.monotonic())))
+    except Exception:
+        failed = True
+        log.exception("Búsqueda interrumpida para %s", det["id"])
     finally:
-        active.pop(det["id"], None)
-    # Estado final, para que la página no siga mostrando "Buscando…" indefinidamente
-    det["search"] = "terminada"
-    if det["catalog"]:
-        hub.note(f"Fin de la búsqueda en catálogos para {det['id']}")
-    else:
-        hub.note(f"{det['id']}: sin coincidencia en SGC, USGS ni EMSC tras "
-                 f"{config.SEARCH_DURATION_S // 60} min (probable falsa alarma o sismo muy pequeño)")
-        if not det.get("discarded"):
-            telegram.no_match(det)
-    hub.upsert_detection(det, "update")
+        with catalog_lock:
+            active.pop(det["id"], None)
+            det["search"] = ("descartada" if det.get("discarded") else
+                             "error" if failed else "terminada")
+            if not det.get("catalog") and not det.get("discarded"):
+                telegram.no_match(det)
+            hub.note(f"Fin de búsqueda para {det['id']}: {det['search']}")
+            hub.upsert_detection(det, "update")
 
 
-def on_detection(det):
+@serialized
+def on_detection(det, catalog_event=None):
+    with hub.lock:
+        if det["id"] in hub.detections or det["id"] in active:
+            return
+    # Si EMSC avisó antes de llegar las ondas, enriquecer esa misma detección.
+    if catalog_event is None and not det.get("test"):
+        with hub.lock:
+            known = dict(hub.detections)
+        known.update(active)
+        for old in known.values():
+            ev = old.get("catalog", {}).get("EMSC")
+            if (old.get("level") == "catálogo" and ev and not old.get("discarded")
+                    and in_window(det, ev) and arrival_misfit(det, ev) is not None):
+                old.update(stations=det["stations"], first_onset=det["first_onset"],
+                           level=det["level"], message=det["message"])
+                assoc.current = old
+                hub.upsert_detection(old, "update")
+                return
+    det.setdefault("catalog", {})
+    det["search"] = "buscando"
+    active[det["id"]] = det  # registrar antes de arrancar el hilo
     hub.note(f"DETECCIÓN {det['id']} [{det['level']}]: {det['message']}")
     hub.upsert_detection(det, "detection")
-    telegram.detection(det)
+    if catalog_event is None:
+        telegram.detection(det)
+    else:
+        attach(det, "EMSC", catalog_event)  # un solo aviso, ya confirmado
     threading.Thread(target=search_catalogs, args=(det,), daemon=True).start()
 
 
+@serialized
 def on_update(det):
     hub.note(f"{det['id']} [{det['level']}]: estaciones {', '.join(det['stations'])}")
     reason = simultaneous_artifact(det)
-    if reason and not det.get("discarded"):
+    # La heurística de simultaneidad no invalida un evento ya confirmado.
+    if reason and not det.get("discarded") and not det.get("catalog"):
         det["discarded"] = reason
         hub.note(f"{det['id']} descartada: {reason}")
         telegram.discarded(det, reason)
-    else:
+    elif not det.get("discarded"):
         telegram.level_change(det)
     hub.upsert_detection(det, "update")
 
 
+@serialized
 def on_emsc_event(ev, action):
-    """Evento empujado por el websocket de EMSC."""
-    matched = False
-    for det in list(active.values()):
-        if in_window(det, ev) and arrival_misfit(det, ev) is not None:
+    """Deduplica por id de catálogo incluso al terminar búsquedas o reiniciar."""
+    if action not in {"create", "update"}:
+        return
+    with hub.lock:
+        known = dict(hub.detections)
+    known.update(active)  # preferir la detección mutable en curso
+    if assoc.current:
+        known[assoc.current["id"]] = assoc.current
+    for det in known.values():
+        if det.get("test") or det.get("discarded"):
+            continue
+        old = det.get("catalog", {}).get("EMSC")
+        if (old and old["id"] == ev["id"]) or det["id"] == f"EMSC-{ev['id']}":
             attach(det, "EMSC", ev)
-            matched = True
-    if matched or action != "create":
+            return
+    candidates = [d for d in known.values() if not d.get("test")
+                  and not d.get("discarded") and d.get("stations")
+                  and in_window(d, ev) and arrival_misfit(d, ev) is not None]
+    if candidates:
+        attach(min(candidates, key=lambda d: arrival_misfit(d, ev)), "EMSC", ev)
+        return
+    # No alertar del historial reenviado al reconectar.
+    if not -60 <= UTCDateTime() - ev["time"] <= config.SEARCH_DURATION_S:
         return
     level, dist, _ = sources.priority(ev)
     if level == "silenciosa":
         return
-    # Sismo relevante que las estaciones no detectaron: alertar igual
     det = {
-        "id": f"EMSC-{ev['id']}",
-        "first_onset": ev["time"],
-        "detected_at": UTCDateTime(),
-        "stations": {},
-        "level": "catálogo",
+        "id": f"EMSC-{ev['id']}", "first_onset": ev["time"],
+        "detected_at": UTCDateTime(), "stations": {}, "level": "catálogo",
         "message": (f"Reportado por EMSC sin detección de las estaciones: M{ev['mag']} "
                     f"{ev['place']}, a {dist} km de Medellín"),
     }
-    on_detection(det)
+    on_detection(det, catalog_event=ev)
 
 
 emsc_stream = EmscStream(on_emsc_event, note=hub.note)
-assoc = Associator(on_detection, on_update)
+assoc = Associator(on_detection, on_update, lock=catalog_lock)
 
 
 # ---------------------------------------------------------------------------- SeedLink
@@ -315,7 +377,7 @@ def on_trace(trace):
         log.info("Disparo %s %s (STA/LTA %.1f)", sta, onset, trig.peak_ratio)
         assoc.trigger(sta, onset, trig.peak_ratio)
     elif trig.triggered:
-        assoc.peak(sta, trig.peak_ratio)
+        assoc.peak(sta, trig.peak_ratio, trig.onset)
 
 
 def seedlink_loop():
@@ -342,6 +404,8 @@ SGC_FIELDS = ["lon", "lat", "depth", "mag", "time", "place", "status", "id"]
 def refresh_sgc_background():
     """Consulta al SGC los últimos SGC_BACKGROUND_MAX_DAYS días (ventanas de 14 días, lo que
     admite la API biweekly) y los deja en memoria en formato compacto."""
+    if not config.USE_SGC_BIWEEKLY:
+        return
     end = UTCDateTime()
     t = end - config.SGC_BACKGROUND_MAX_DAYS * 86400
     events = {}
@@ -377,7 +441,9 @@ def sgc_background(days):
     with _sgc_lock:
         since = (UTCDateTime() - days * 86400).isoformat()[:19] + "Z"
         rows = [r for r in _sgc_cache["rows"] if r[4] >= since]
-        return {"days": days, "generated": _sgc_cache["generated"],
+        return {"available": bool(_sgc_cache["generated"]),
+                "reason": None if config.USE_SGC_BIWEEKLY else "SGC desactivado en esta instalación",
+                "days": days, "generated": _sgc_cache["generated"],
                 "refresh_s": config.SGC_BACKGROUND_REFRESH_S, "count": len(rows),
                 "fields": SGC_FIELDS, "events": rows}
 
@@ -393,11 +459,7 @@ def station_info():
 
 def recent_detections(seconds):
     """Detecciones reales (sin pruebas ni descartadas) en los últimos `seconds`."""
-    since = UTCDateTime() - seconds
-    with hub.lock:
-        dets = list(hub.detections.values())
-    return sum(1 for d in dets if not d.get("test") and not d.get("discarded")
-               and d.get("detected_at") and UTCDateTime(d["detected_at"]) >= since)
+    return store.count_recent(seconds)
 
 
 def status_loop():
@@ -512,7 +574,13 @@ def main():
     # Recuperar las detecciones guardadas para que la lista no se pierda al reiniciar
     saved = store.load_recent()
     with hub.lock:
-        hub.detections = {d["id"]: d for d in saved}
+        hub.detections = {d["id"]: deepcopy(d) for d in saved}
+    telegram.restore(saved)
+    for det in saved:
+        if det.get("search") == "buscando" and not det.get("discarded"):
+            with catalog_lock:
+                active[det["id"]] = det
+            threading.Thread(target=search_catalogs, args=(det,), daemon=True).start()
     if saved:
         log.info("Cargadas %d detecciones guardadas en %s", len(saved), store.GEOJSON)
     threading.Thread(target=seedlink_loop, daemon=True).start()

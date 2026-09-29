@@ -1,0 +1,73 @@
+test_old_peak_cannot_raise_new_detection (test_alerts.AssociatorTests.test_old_peak_cannot_raise_new_detection) ... ok
+test_peak_of_new_event_not_applied_to_previous_event (test_alerts.AssociatorTests.test_peak_of_new_event_not_applied_to_previous_event) ... ok
+test_discarded_update_does_not_notify_again (test_alerts.ServerTests.test_discarded_update_does_not_notify_again) ... 2026-09-29 13:28:24,342 INFO DET1 [baja]: estaciones HEL
+ok
+test_emsc_fallback_attached_once_even_after_search (test_alerts.ServerTests.test_emsc_fallback_attached_once_even_after_search) ... 2026-09-29 13:28:24,343 INFO DETECCIÓN EMSC-ev1 [catálogo]: Reportado por EMSC sin detección de las estaciones: M4.5 Medellín, a 9 km de Medellín
+2026-09-29 13:28:24,343 INFO EMSC confirma EMSC-ev1: M4.5 Medellín, a 9 km de Medellín (crítica)
+ok
+test_emsc_update_can_be_first_relevant_version (test_alerts.ServerTests.test_emsc_update_can_be_first_relevant_version) ... 2026-09-29 13:28:24,344 INFO DETECCIÓN EMSC-ev1 [catálogo]: Reportado por EMSC sin detección de las estaciones: M4.5 Medellín, a 9 km de Medellín
+2026-09-29 13:28:24,344 INFO EMSC confirma EMSC-ev1: M4.5 Medellín, a 9 km de Medellín (crítica)
+ok
+test_location_revision_recomputes_priority (test_alerts.ServerTests.test_location_revision_recomputes_priority) ... 2026-09-29 13:28:24,344 INFO EMSC confirma DET1: M4.5 Medellín, a 9 km de Medellín (crítica)
+2026-09-29 13:28:24,344 INFO EMSC actualiza DET1: M4.5 Medellín, a 804 km de Medellín (informativa)
+ok
+test_old_emsc_create_not_announced (test_alerts.ServerTests.test_old_emsc_create_not_announced) ... ok
+test_registration_precedes_thread_and_duplicate_is_ignored (test_alerts.ServerTests.test_registration_precedes_thread_and_duplicate_is_ignored) ... 2026-09-29 13:28:24,345 INFO DETECCIÓN DET1 [baja]: HEL
+ok
+test_search_finalizes_after_exception (test_alerts.ServerTests.test_search_finalizes_after_exception) ... 2026-09-29 13:28:24,346 INFO DETECCIÓN DET1 [baja]: HEL
+2026-09-29 13:28:24,346 ERROR Búsqueda interrumpida para DET1
+Traceback (most recent call last):
+  File "/Users/santiagojl/SismoAlert/server.py", line 246, in search_catalogs
+    start, end = detection_window(det)
+                 ~~~~~~~~~~~~~~~~^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1241, in _execute_mock_call
+    raise effect
+RuntimeError: bad
+2026-09-29 13:28:24,347 INFO Fin de búsqueda para DET1: error
+ok
+test_sgc_can_be_disabled (test_alerts.ServerTests.test_sgc_can_be_disabled) ... ok
+test_snapshot_is_detached (test_alerts.ServerTests.test_snapshot_is_detached) ... ok
+test_station_detection_enriches_existing_catalog_alert (test_alerts.ServerTests.test_station_detection_enriches_existing_catalog_alert) ... 2026-09-29 13:28:24,348 INFO DETECCIÓN EMSC-ev1 [catálogo]: Reportado por EMSC sin detección de las estaciones: M4.5 Medellín, a 9 km de Medellín
+2026-09-29 13:28:24,349 INFO EMSC confirma EMSC-ev1: M4.5 Medellín, a 9 km de Medellín (crítica)
+ok
+test_all_test_transitions_are_marked (test_alerts.TelegramTests.test_all_test_transitions_are_marked) ... ok
+test_bounded_state (test_alerts.TelegramTests.test_bounded_state) ... ok
+test_catalog_outage_is_not_false_alarm (test_alerts.TelegramTests.test_catalog_outage_is_not_false_alarm) ... ok
+test_concurrent_first_confirmation_and_escalation (test_alerts.TelegramTests.test_concurrent_first_confirmation_and_escalation) ... ok
+test_discard_suppresses_later_escalation (test_alerts.TelegramTests.test_discard_suppresses_later_escalation) ... ok
+test_failed_enqueue_does_not_consume_transition (test_alerts.TelegramTests.test_failed_enqueue_does_not_consume_transition) ... ok
+test_health_checks_sample_age_even_when_packets_arrive (test_alerts.TelegramTests.test_health_checks_sample_age_even_when_packets_arrive) ... ok
+test_html_link_escaped (test_alerts.TelegramTests.test_html_link_escaped) ... ok
+test_restore_does_not_reannounce_catalog (test_alerts.TelegramTests.test_restore_does_not_reannounce_catalog) ... ok
+test_400_is_not_retried_or_logged_with_token (test_alerts.WorkerTests.test_400_is_not_retried_or_logged_with_token) ... ok
+test_429_honors_retry_after (test_alerts.WorkerTests.test_429_honors_retry_after) ... 2026-09-29 13:28:24,474 WARNING Telegram HTTP 429 (intento 1)
+ok
+test_old_message_is_not_sent_after_outage (test_alerts.WorkerTests.test_old_message_is_not_sent_after_outage) ... 2026-09-29 13:28:24,498 WARNING Telegram: se descarta un mensaje vencido en la cola
+ok
+test_gap_resets_instead_of_inventing_signal (test_replay.ReplayTests.test_gap_resets_instead_of_inventing_signal) ... ok
+test_offline_missing_is_reported_not_downloaded (test_replay.ReplayTests.test_offline_missing_is_reported_not_downloaded) ... HEL: sin datos (FileNotFoundError)
+ok
+test_daily_count_uses_all_records_and_excludes_tests_and_discarded (test_store.StoreTests.test_daily_count_uses_all_records_and_excludes_tests_and_discarded) ... ok
+test_dependency_change_requires_operator (test_update.UpdateTests.test_dependency_change_requires_operator) ... ok
+test_dirty_docs_preserved (test_update.UpdateTests.test_dirty_docs_preserved) ... ok
+test_divergent_history_refused (test_update.UpdateTests.test_divergent_history_refused) ... ok
+test_docs_only_does_not_restart (test_update.UpdateTests.test_docs_only_does_not_restart) ... ok
+test_failed_health_rolls_back (test_update.UpdateTests.test_failed_health_rolls_back) ... ok
+test_fetch_failure_is_nonzero (test_update.UpdateTests.test_fetch_failure_is_nonzero) ... ok
+test_installer_refuses_root_before_sudo (test_update.UpdateTests.test_installer_refuses_root_before_sudo) ... ok
+test_installer_renders_restricted_unit_and_narrow_sudoers (test_update.UpdateTests.test_installer_renders_restricted_unit_and_narrow_sudoers) ... ok
+test_invalid_python_refused_before_checkout (test_update.UpdateTests.test_invalid_python_refused_before_checkout) ... ok
+test_missing_sudo_refused_before_checkout (test_update.UpdateTests.test_missing_sudo_refused_before_checkout) ... ok
+test_successful_update (test_update.UpdateTests.test_successful_update) ... ok
+test_wrong_branch_is_refused (test_update.UpdateTests.test_wrong_branch_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 9.193s
+
+OK

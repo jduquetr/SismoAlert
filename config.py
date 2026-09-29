@@ -1,5 +1,7 @@
 """Configuración del sistema de alertas de sismos para Medellín."""
 
+import os
+
 MEDELLIN = (6.2476, -75.5658)  # lat, lon
 
 # SeedLink público de IRIS/EarthScope
@@ -48,12 +50,13 @@ MIN_STATIONS = 2
 # a 1.500 km entre sí) produjeron una falsa alerta con solo 2
 MIN_STATIONS_REMOTE = 3
 # Solo cuentan para confirmar las estaciones cuya relación STA/LTA máxima llega a
-# este valor. En la prueba del 27-sep, los sismos reales dieron 10-30 y el ruido 5-6.
-MIN_RATIO = 8.0
+# este valor. Calibración 29-sep: 7/7 eventos objetivo retenidos; se elimina una
+# repetición de coda al subir de 8 a 10. Ver reports/revision-2026-09-29/README.md.
+MIN_RATIO = 10.0
 # Alertar también cuando solo dispara HEL (baja confianza, puede ser ruido local)
 ALERT_LOCAL_ONLY = True
 # Relación STA/LTA mínima en HEL para alertar sin confirmación de otras estaciones
-LOCAL_ONLY_MIN_RATIO = 8.0
+LOCAL_ONLY_MIN_RATIO = 10.0
 
 # Búsqueda en catálogos tras una detección
 SEARCH_INTERVAL_S = 60
@@ -75,6 +78,8 @@ SGC_BACKGROUND_REFRESH_S = 30 * 60
 # Feed de archive.sgc.gov.co: trae eventos preliminares, pero bloquea clientes
 # que no son navegador. Mantener apagado hasta tener autorización del SGC.
 USE_SGC_ARCHIVE_FEED = False
+# En Azure: SISMOALERT_SGC_ENABLED=0 evita consultas destinadas a fallar con 403.
+USE_SGC_BIWEEKLY = os.environ.get("SISMOALERT_SGC_ENABLED", "1") != "0"
 
 # Servidor web local
 HTTP_HOST = "127.0.0.1"
