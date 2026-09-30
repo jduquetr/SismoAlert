@@ -436,8 +436,18 @@ def sgc_background(days):
     days = max(1, min(config.SGC_BACKGROUND_MAX_DAYS, int(days)))
     with _sgc_lock:
         empty = not _sgc_cache["generated"]
+        failed_recently = time.time() - _sgc_cache.get("failed_at", 0) < 300
     if empty:
-        refresh_sgc_background()  # primera vez, si la página pide antes que el hilo
+        # Primera vez, si la página pide antes que el hilo. Si acaba de fallar (p. ej. el SGC
+        # bloquea esta IP), no reintentar con cada visita: el hilo lo reintenta a su ritmo.
+        if failed_recently:
+            raise RuntimeError("el catálogo del SGC no respondió hace poco; se reintentará")
+        try:
+            refresh_sgc_background()
+        except Exception:
+            with _sgc_lock:
+                _sgc_cache["failed_at"] = time.time()
+            raise
     with _sgc_lock:
         since = (UTCDateTime() - days * 86400).isoformat()[:19] + "Z"
         rows = [r for r in _sgc_cache["rows"] if r[4] >= since]
