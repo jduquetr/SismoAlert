@@ -1,7 +1,8 @@
 #!/bin/sh
 # Programa el informe diario (informe_diario.py) con un timer de systemd: todos los días a
 # las 6 p. m. de Bogotá lo envía por Telegram. Si la máquina estaba apagada a esa hora, sale
-# al encenderla. Necesita TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID en el archivo .env.
+# al encenderla. Necesita TELEGRAM_BOT_TOKEN (o TELEGRAM_TOKEN) y TELEGRAM_CHAT_ID en el
+# archivo .env del proyecto o en /etc/sismoalert.env (el mismo que usa el servicio).
 #
 # Uso (desde la carpeta del proyecto):
 #   sh linux/instalar_informe.sh              instalar o actualizar
@@ -37,8 +38,9 @@ After=network-online.target
 Type=oneshot
 User=$USER_NAME
 WorkingDirectory=$DIR
+EnvironmentFile=-/etc/sismoalert.env
 ExecStart=$DIR/.venv/bin/python $DIR/informe_diario.py
-Environment=PYTHONIOENCODING=utf-8
+Environment=PYTHONIOENCODING=utf-8 PYTHONDONTWRITEBYTECODE=1
 EOF
 
 sudo tee "/etc/systemd/system/$NAME.timer" >/dev/null <<EOF
@@ -55,5 +57,6 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now "$NAME.timer"
-[ -f "$DIR/.env" ] || echo "Falta $DIR/.env con TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID"
+[ -f "$DIR/.env" ] || sudo test -f /etc/sismoalert.env \
+  || echo "Falta $DIR/.env o /etc/sismoalert.env con TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID"
 systemctl list-timers "$NAME.timer" --no-pager

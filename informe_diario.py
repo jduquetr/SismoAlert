@@ -10,8 +10,10 @@ Uso:
   .venv/bin/python informe_diario.py --prueba    solo imprimirlo
   .venv/bin/python informe_diario.py --horas 48
 
-Telegram: TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID en el archivo .env de esta carpeta
-(fuera de git). Se programa a diario con linux/instalar_informe.sh.
+Telegram: TELEGRAM_BOT_TOKEN (o TELEGRAM_TOKEN, el nombre que usa telegram.py) y
+TELEGRAM_CHAT_ID en el archivo .env de esta carpeta (fuera de git) o en /etc/sismoalert.env
+cuando corre como servicio. TELEGRAM_CHAT_ID acepta varios chats separados por coma.
+Se programa a diario con linux/instalar_informe.sh.
 """
 import argparse
 import html
@@ -217,9 +219,10 @@ def build(hours):
 
 
 def send_telegram(text):
-    token, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat:
-        raise SystemExit("Faltan TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID en .env")
+    token = (os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("TELEGRAM_TOKEN") or "").strip()
+    chats = [c.strip() for c in os.environ.get("TELEGRAM_CHAT_ID", "").split(",") if c.strip()]
+    if not token or not chats:
+        raise SystemExit("Faltan TELEGRAM_BOT_TOKEN (o TELEGRAM_TOKEN) o TELEGRAM_CHAT_ID en .env")
     # Telegram admite 4096 caracteres por mensaje: se parte por líneas
     chunks, cur = [], ""
     for line in text.split("\n"):
@@ -228,12 +231,13 @@ def send_telegram(text):
             cur = ""
         cur += line + "\n"
     chunks.append(cur)
-    for chunk in chunks:
-        data = urllib.parse.urlencode({"chat_id": chat, "text": chunk, "parse_mode": "HTML",
-                                       "disable_web_page_preview": "true"}).encode()
-        req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage", data=data)
-        with urllib.request.urlopen(req, timeout=30, context=sources.SSL_CONTEXT) as r:
-            json.loads(r.read())
+    for chat in chats:
+        for chunk in chunks:
+            data = urllib.parse.urlencode({"chat_id": chat, "text": chunk, "parse_mode": "HTML",
+                                           "disable_web_page_preview": "true"}).encode()
+            req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage", data=data)
+            with urllib.request.urlopen(req, timeout=30, context=sources.SSL_CONTEXT) as r:
+                json.loads(r.read())
 
 
 def main():
