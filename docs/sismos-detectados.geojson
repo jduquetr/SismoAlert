@@ -2,9 +2,9 @@
   "type": "FeatureCollection",
   "metadata": {
     "titulo": "Sismos detectados por sismos-alerta (Medellín)",
-    "generado": "2026-09-29T03:14:38.892940Z",
-    "count": 27,
-    "con_ubicacion": 11
+    "generado": "2026-09-30T00:44:56.869101Z",
+    "count": 36,
+    "con_ubicacion": 12
   },
   "features": [
     {
@@ -164,9 +164,10 @@
               "hypo_km": 266
             }
           },
-          "priority": "informativa"
+          "priority": "informativa",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:07:24.828054Z"
+        "actualizado": "2026-09-29T13:12:22.576812Z"
       }
     },
     {
@@ -334,9 +335,10 @@
             }
           },
           "priority": "informativa",
-          "felt_reports": 0
+          "felt_reports": 0,
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:08:01.358613Z"
+        "actualizado": "2026-09-29T13:12:22.580305Z"
       }
     },
     {
@@ -509,9 +511,10 @@
               "hypo_km": 267
             }
           },
-          "priority": "informativa"
+          "priority": "informativa",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:08:18.537625Z"
+        "actualizado": "2026-09-29T13:12:22.582728Z"
       }
     },
     {
@@ -689,9 +692,10 @@
             }
           },
           "priority": "informativa",
-          "felt_reports": 6
+          "felt_reports": 6,
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:08:36.015369Z"
+        "actualizado": "2026-09-29T13:12:22.584451Z"
       }
     },
     {
@@ -885,9 +889,10 @@
             }
           },
           "priority": "informativa",
-          "felt_reports": 17
+          "felt_reports": 17,
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:08:53.293539Z"
+        "actualizado": "2026-09-29T13:12:22.586128Z"
       }
     },
     {
@@ -1021,9 +1026,10 @@
               "hypo_km": 245
             }
           },
-          "priority": "informativa"
+          "priority": "informativa",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:09:08.810901Z"
+        "actualizado": "2026-09-29T13:12:22.587793Z"
       }
     },
     {
@@ -1144,9 +1150,10 @@
               "hypo_km": 242
             }
           },
-          "priority": "informativa"
+          "priority": "informativa",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:09:24.301441Z"
+        "actualizado": "2026-09-29T13:12:22.589317Z"
       }
     },
     {
@@ -1306,9 +1313,10 @@
               "hypo_km": 268
             }
           },
-          "priority": "informativa"
+          "priority": "informativa",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:09:40.383042Z"
+        "actualizado": "2026-09-29T13:12:22.591020Z"
       }
     },
     {
@@ -1473,9 +1481,10 @@
             }
           },
           "priority": "informativa",
-          "felt_reports": 463
+          "felt_reports": 463,
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:09:56.712644Z"
+        "actualizado": "2026-09-29T13:12:22.592617Z"
       }
     },
     {
@@ -1643,9 +1652,10 @@
             }
           },
           "priority": "informativa",
-          "felt_reports": 11
+          "felt_reports": 11,
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:10:14.172920Z"
+        "actualizado": "2026-09-29T13:12:22.594127Z"
       }
     },
     {
@@ -1704,9 +1714,10 @@
             }
           },
           "registro": "en_vivo",
-          "catalog": {}
+          "catalog": {},
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:10:17.239866Z"
+        "actualizado": "2026-09-29T13:12:22.595808Z"
       }
     },
     {
@@ -1795,9 +1806,10 @@
             }
           },
           "registro": "en_vivo",
-          "catalog": {}
+          "catalog": {},
+          "search": "terminada"
         },
-        "actualizado": "2026-09-28T14:10:18.566075Z"
+        "actualizado": "2026-09-29T13:12:22.597475Z"
       }
     },
     {
@@ -1936,9 +1948,11 @@
           "level": "alta",
           "message": "Sismo detectado en 9 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "7 estaciones dispararon en 17 s estando hasta a 1613 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.172369Z"
+        "actualizado": "2026-09-29T13:13:01.096594Z"
       }
     },
     {
@@ -2077,9 +2091,11 @@
           "level": "alta",
           "message": "Sismo detectado en 11 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "discarded": "11 estaciones dispararon en 24 s estando hasta a 1695 km entre sí; un sismo no llega tan rápido. Probable hueco en la señal (reconexión o corte de red).",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.170670Z"
+        "actualizado": "2026-09-29T13:12:22.600957Z"
       }
     },
     {
@@ -2226,9 +2242,10 @@
             }
           },
           "priority": "informativa",
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.168940Z"
+        "actualizado": "2026-09-29T13:12:22.603423Z"
       }
     },
     {
@@ -2367,9 +2384,11 @@
           "level": "media",
           "message": "Sismo detectado en 9 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "discarded": "9 estaciones dispararon en 19 s estando hasta a 1695 km entre sí; un sismo no llega tan rápido. Probable hueco en la señal (reconexión o corte de red).",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.166909Z"
+        "actualizado": "2026-09-29T13:12:22.607779Z"
       }
     },
     {
@@ -2498,9 +2517,10 @@
           "level": "media",
           "message": "Sismo detectado en 4 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.165379Z"
+        "actualizado": "2026-09-29T13:12:22.609392Z"
       }
     },
     {
@@ -2639,9 +2659,11 @@
           "level": "alta",
           "message": "Sismo detectado en 11 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "9 estaciones dispararon en 20 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.164043Z"
+        "actualizado": "2026-09-29T13:13:01.099297Z"
       }
     },
     {
@@ -2780,9 +2802,11 @@
           "level": "media",
           "message": "Sismo detectado en 10 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "7 estaciones dispararon en 14 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.162580Z"
+        "actualizado": "2026-09-29T13:13:01.101178Z"
       }
     },
     {
@@ -2921,9 +2945,11 @@
           "level": "media",
           "message": "Sismo detectado en 10 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "8 estaciones dispararon en 11 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.160775Z"
+        "actualizado": "2026-09-29T13:13:01.103137Z"
       }
     },
     {
@@ -2992,9 +3018,10 @@
           "level": "alta",
           "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.159228Z"
+        "actualizado": "2026-09-29T13:12:22.616596Z"
       }
     },
     {
@@ -3064,9 +3091,10 @@
           "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
           "priority": null,
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:38.866530Z"
+        "actualizado": "2026-09-29T13:12:22.618234Z"
       }
     },
     {
@@ -3136,9 +3164,10 @@
           "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
           "priority": null,
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:38.890832Z"
+        "actualizado": "2026-09-29T13:12:22.619989Z"
       }
     },
     {
@@ -3227,9 +3256,10 @@
           "level": "alta",
           "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:06.153109Z"
+        "actualizado": "2026-09-29T13:12:22.621456Z"
       }
     },
     {
@@ -3368,9 +3398,11 @@
           "level": "media",
           "message": "Sismo detectado en 10 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "8 estaciones dispararon en 16 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.151851Z"
+        "actualizado": "2026-09-29T13:13:01.105292Z"
       }
     },
     {
@@ -3509,9 +3541,11 @@
           "level": "media",
           "message": "Sismo detectado en 10 estaciones de Colombia y vecinos",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada",
+          "discarded": "9 estaciones dispararon en 13 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
         },
-        "actualizado": "2026-09-29T03:14:06.150570Z"
+        "actualizado": "2026-09-29T13:13:01.107197Z"
       }
     },
     {
@@ -3570,9 +3604,918 @@
           "level": "baja",
           "message": "Movimiento fuerte en HEL (Medellín), aún sin confirmación de otras estaciones",
           "catalog": {},
-          "registro": "en_vivo"
+          "registro": "en_vivo",
+          "search": "terminada"
         },
-        "actualizado": "2026-09-29T03:14:38.892874Z"
+        "actualizado": "2026-09-29T13:12:22.625818Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929032448",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -75.64769494745921,
+          3.8244844650096477,
+          17.0
+        ]
+      },
+      "properties": {
+        "id": "SGC2026tdsokf",
+        "deteccion_id": "DET20260929032448",
+        "registro": "en_vivo",
+        "time": "2026-09-29T03:24:05Z",
+        "mag": 3.3,
+        "magType": "MLr_2",
+        "depth": 17.0,
+        "place": "Chaparral - Tolima, Colombia",
+        "source": "SGC",
+        "status": "manual",
+        "nivel": "alta",
+        "prioridad": "informativa",
+        "primera_senal": "2026-09-29T03:24:48.328393Z",
+        "alerta": "2026-09-29T03:24:53.722419Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T03:24:19.398393Z",
+              "sta_lta": 14.2,
+              "distancia_epicentro_km": 366,
+              "desde_origen_s": 14.4,
+              "residuo_p_s": -36.3
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T03:24:39.798393Z",
+              "sta_lta": 5.0,
+              "distancia_epicentro_km": 554,
+              "desde_origen_s": 34.8,
+              "residuo_p_s": -39.5
+            },
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T03:24:48.328393Z",
+              "sta_lta": 17.9,
+              "distancia_epicentro_km": 263,
+              "desde_origen_s": 43.3,
+              "residuo_p_s": 5.4
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T03:24:59.818393Z",
+              "sta_lta": 10.9,
+              "distancia_epicentro_km": 964,
+              "desde_origen_s": 54.8,
+              "residuo_p_s": -70.7
+            },
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-29T03:25:01.218393Z",
+              "sta_lta": 5.6,
+              "distancia_epicentro_km": 856,
+              "desde_origen_s": 56.2,
+              "residuo_p_s": -55.8
+            },
+            {
+              "estacion": "TUM",
+              "red": "CM",
+              "disparo": "2026-09-29T03:25:07.438393Z",
+              "sta_lta": 7.2,
+              "distancia_epicentro_km": 408,
+              "desde_origen_s": 62.4,
+              "residuo_p_s": 6.4
+            }
+          ],
+          "ubicacion_fuente": "SGC",
+          "ubicacion_revisada_sgc": true,
+          "distancia_medellin_km": 270,
+          "llegada_p_medellin_s": 38.7,
+          "llegada_s_medellin_s": 67.6,
+          "alerta_desde_origen_s": 48.7,
+          "ventaja_sobre_onda_s_s": 18.9
+        },
+        "deteccion": {
+          "id": "DET20260929032448",
+          "first_onset": "2026-09-29T03:24:48.328393Z",
+          "detected_at": "2026-09-29T03:24:53.722419Z",
+          "stations": {
+            "RUS": {
+              "onset": "2026-09-29T03:24:19.398393Z",
+              "ratio": 14.2
+            },
+            "OCA": {
+              "onset": "2026-09-29T03:24:39.798393Z",
+              "ratio": 5.0
+            },
+            "HEL": {
+              "onset": "2026-09-29T03:24:48.328393Z",
+              "ratio": 17.9
+            },
+            "URI": {
+              "onset": "2026-09-29T03:24:59.818393Z",
+              "ratio": 10.9
+            },
+            "CRJC": {
+              "onset": "2026-09-29T03:25:01.218393Z",
+              "ratio": 5.6
+            },
+            "TUM": {
+              "onset": "2026-09-29T03:25:07.438393Z",
+              "ratio": 7.2
+            }
+          },
+          "level": "alta",
+          "message": "Sismo detectado en 3 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
+          "catalog": {
+            "SGC": {
+              "source": "SGC",
+              "id": "SGC2026tdsokf",
+              "time": "2026-09-29T03:24:05Z",
+              "lat": 3.8244844650096477,
+              "lon": -75.64769494745921,
+              "depth": 17.0,
+              "mag": 3.3,
+              "magtype": "MLr_2",
+              "place": "Chaparral - Tolima, Colombia",
+              "status": "manual",
+              "url": "https://www.sgc.gov.co/detallesismo/SGC2026tdsokf/resumen",
+              "priority": "informativa",
+              "distance_km": 270,
+              "hypo_km": 270
+            }
+          },
+          "priority": "informativa",
+          "search": "terminada"
+        },
+        "actualizado": "2026-09-29T13:12:22.627465Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929035634",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929035634",
+        "deteccion_id": "DET20260929035634",
+        "registro": "en_vivo",
+        "nivel": "alta",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T03:56:34.088393Z",
+        "alerta": "2026-09-29T03:57:20.296562Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:24.678393Z",
+              "sta_lta": 27.2
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:33.238393Z",
+              "sta_lta": 11.8
+            },
+            {
+              "estacion": "PRV",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:34.088393Z",
+              "sta_lta": 15.0
+            },
+            {
+              "estacion": "SMAR",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:41.498393Z",
+              "sta_lta": 7.5
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:44.088393Z",
+              "sta_lta": 15.0
+            },
+            {
+              "estacion": "ARGC",
+              "red": "CM",
+              "disparo": "2026-09-29T03:56:47.378393Z",
+              "sta_lta": 15.0
+            },
+            {
+              "estacion": "OTAV",
+              "red": "IU",
+              "disparo": "2026-09-29T03:56:55.219538Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T03:57:01.598393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-29T03:57:03.658393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "TUM",
+              "red": "CM",
+              "disparo": "2026-09-29T03:57:05.458393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "PUYO",
+              "red": "EC",
+              "disparo": "2026-09-29T03:57:06.618393Z",
+              "sta_lta": 30.0
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929035634",
+          "first_onset": "2026-09-29T03:56:34.088393Z",
+          "detected_at": "2026-09-29T03:57:20.296562Z",
+          "stations": {
+            "PRV": {
+              "onset": "2026-09-29T03:56:34.088393Z",
+              "ratio": 15.0
+            },
+            "SMAR": {
+              "onset": "2026-09-29T03:56:41.498393Z",
+              "ratio": 7.5
+            },
+            "PUYO": {
+              "onset": "2026-09-29T03:57:06.618393Z",
+              "ratio": 30.0
+            },
+            "HEL": {
+              "onset": "2026-09-29T03:56:24.678393Z",
+              "ratio": 27.2
+            },
+            "URI": {
+              "onset": "2026-09-29T03:56:33.238393Z",
+              "ratio": 11.8
+            },
+            "OTAV": {
+              "onset": "2026-09-29T03:56:55.219538Z",
+              "ratio": 30.0
+            },
+            "OCA": {
+              "onset": "2026-09-29T03:56:44.088393Z",
+              "ratio": 15.0
+            },
+            "RUS": {
+              "onset": "2026-09-29T03:57:01.598393Z",
+              "ratio": 30.0
+            },
+            "ARGC": {
+              "onset": "2026-09-29T03:56:47.378393Z",
+              "ratio": 15.0
+            },
+            "CRJC": {
+              "onset": "2026-09-29T03:57:03.658393Z",
+              "ratio": 30.0
+            },
+            "TUM": {
+              "onset": "2026-09-29T03:57:05.458393Z",
+              "ratio": 30.0
+            }
+          },
+          "level": "alta",
+          "message": "Sismo detectado en 10 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
+          "catalog": {},
+          "search": "terminada",
+          "discarded": "6 estaciones dispararon en 19 s estando hasta a 1504 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
+        },
+        "actualizado": "2026-09-29T13:13:01.109138Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929052812",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929052812",
+        "deteccion_id": "DET20260929052812",
+        "registro": "en_vivo",
+        "nivel": "alta",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T05:28:12.848393Z",
+        "alerta": "2026-09-29T05:28:27.595836Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T05:27:08.738393Z",
+              "sta_lta": 7.3
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T05:27:22.568393Z",
+              "sta_lta": 7.6
+            },
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T05:28:12.848393Z",
+              "sta_lta": 10.7
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T05:28:15.848393Z",
+              "sta_lta": 17.0
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929052812",
+          "first_onset": "2026-09-29T05:28:12.848393Z",
+          "detected_at": "2026-09-29T05:28:27.595836Z",
+          "stations": {
+            "RUS": {
+              "onset": "2026-09-29T05:27:08.738393Z",
+              "ratio": 7.3
+            },
+            "URI": {
+              "onset": "2026-09-29T05:27:22.568393Z",
+              "ratio": 7.6
+            },
+            "OCA": {
+              "onset": "2026-09-29T05:28:15.848393Z",
+              "ratio": 17.0
+            },
+            "HEL": {
+              "onset": "2026-09-29T05:28:12.848393Z",
+              "ratio": 10.7
+            }
+          },
+          "level": "alta",
+          "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
+          "catalog": {},
+          "search": "terminada"
+        },
+        "actualizado": "2026-09-29T13:12:22.632098Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929053503",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929053503",
+        "deteccion_id": "DET20260929053503",
+        "registro": "en_vivo",
+        "nivel": "baja",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T05:35:03.028393Z",
+        "alerta": "2026-09-29T05:35:06.176517Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T05:35:03.028393Z",
+              "sta_lta": 9.9
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929053503",
+          "first_onset": "2026-09-29T05:35:03.028393Z",
+          "detected_at": "2026-09-29T05:35:06.176517Z",
+          "stations": {
+            "HEL": {
+              "onset": "2026-09-29T05:35:03.028393Z",
+              "ratio": 9.9
+            }
+          },
+          "level": "baja",
+          "message": "Movimiento fuerte en HEL (Medellín), aún sin confirmación de otras estaciones",
+          "search": "terminada"
+        },
+        "actualizado": "2026-09-29T13:12:22.633633Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929123420",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929123420",
+        "deteccion_id": "DET20260929123420",
+        "registro": "en_vivo",
+        "nivel": "alta",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T12:34:20.698393Z",
+        "alerta": "2026-09-29T12:34:58.650150Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "PRV",
+              "red": "CM",
+              "disparo": "2026-09-29T12:33:59.338393Z",
+              "sta_lta": 107.2
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T12:33:59.448393Z",
+              "sta_lta": 451.6
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:20.698393Z",
+              "sta_lta": 10.0
+            },
+            {
+              "estacion": "OTAV",
+              "red": "IU",
+              "disparo": "2026-09-29T12:34:35.619538Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "TUM",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:40.718393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "SMAR",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:43.738393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "ARGC",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:45.878393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:46.768393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:49.438393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "PUYO",
+              "red": "EC",
+              "disparo": "2026-09-29T12:34:51.938393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T12:34:52.028393Z",
+              "sta_lta": 30.0
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929123420",
+          "first_onset": "2026-09-29T12:34:20.698393Z",
+          "detected_at": "2026-09-29T12:34:58.650150Z",
+          "stations": {
+            "SMAR": {
+              "onset": "2026-09-29T12:34:43.738393Z",
+              "ratio": 30.0
+            },
+            "PUYO": {
+              "onset": "2026-09-29T12:34:51.938393Z",
+              "ratio": 30.0
+            },
+            "RUS": {
+              "onset": "2026-09-29T12:34:20.698393Z",
+              "ratio": 10.0
+            },
+            "TUM": {
+              "onset": "2026-09-29T12:34:40.718393Z",
+              "ratio": 30.0
+            },
+            "OTAV": {
+              "onset": "2026-09-29T12:34:35.619538Z",
+              "ratio": 30.0
+            },
+            "OCA": {
+              "onset": "2026-09-29T12:34:46.768393Z",
+              "ratio": 30.0
+            },
+            "URI": {
+              "onset": "2026-09-29T12:33:59.448393Z",
+              "ratio": 451.6
+            },
+            "PRV": {
+              "onset": "2026-09-29T12:33:59.338393Z",
+              "ratio": 107.2
+            },
+            "ARGC": {
+              "onset": "2026-09-29T12:34:45.878393Z",
+              "ratio": 30.0
+            },
+            "CRJC": {
+              "onset": "2026-09-29T12:34:49.438393Z",
+              "ratio": 30.0
+            },
+            "HEL": {
+              "onset": "2026-09-29T12:34:52.028393Z",
+              "ratio": 30.0
+            }
+          },
+          "level": "alta",
+          "message": "Sismo detectado en 11 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
+          "catalog": {},
+          "search": "terminada",
+          "discarded": "8 estaciones dispararon en 16 s estando hasta a 1504 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
+        },
+        "actualizado": "2026-09-29T13:13:01.111191Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929130709",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929130709",
+        "deteccion_id": "DET20260929130709",
+        "registro": "en_vivo",
+        "nivel": "media",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T13:07:09.358393Z",
+        "alerta": "2026-09-29T13:07:47.689044Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "SMAR",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:09.358393Z",
+              "sta_lta": 8.1
+            },
+            {
+              "estacion": "ARGC",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:31.428393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:31.958393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "PRV",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:33.298393Z",
+              "sta_lta": 29.8
+            },
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:34.598393Z",
+              "sta_lta": 5.5
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:36.328393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "TUM",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:36.338393Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "OTAV",
+              "red": "IU",
+              "disparo": "2026-09-29T13:07:36.469538Z",
+              "sta_lta": 30.0
+            },
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:36.778393Z",
+              "sta_lta": 29.4
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T13:07:38.868393Z",
+              "sta_lta": 28.0
+            },
+            {
+              "estacion": "PUYO",
+              "red": "EC",
+              "disparo": "2026-09-29T13:07:42.448393Z",
+              "sta_lta": 30.0
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929130709",
+          "first_onset": "2026-09-29T13:07:09.358393Z",
+          "detected_at": "2026-09-29T13:07:47.689044Z",
+          "stations": {
+            "SMAR": {
+              "onset": "2026-09-29T13:07:09.358393Z",
+              "ratio": 8.1
+            },
+            "PUYO": {
+              "onset": "2026-09-29T13:07:42.448393Z",
+              "ratio": 30.0
+            },
+            "OCA": {
+              "onset": "2026-09-29T13:07:31.958393Z",
+              "ratio": 30.0
+            },
+            "ARGC": {
+              "onset": "2026-09-29T13:07:31.428393Z",
+              "ratio": 30.0
+            },
+            "HEL": {
+              "onset": "2026-09-29T13:07:34.598393Z",
+              "ratio": 5.5
+            },
+            "PRV": {
+              "onset": "2026-09-29T13:07:33.298393Z",
+              "ratio": 29.8
+            },
+            "URI": {
+              "onset": "2026-09-29T13:07:36.328393Z",
+              "ratio": 30.0
+            },
+            "TUM": {
+              "onset": "2026-09-29T13:07:36.338393Z",
+              "ratio": 30.0
+            },
+            "CRJC": {
+              "onset": "2026-09-29T13:07:36.778393Z",
+              "ratio": 29.4
+            },
+            "OTAV": {
+              "onset": "2026-09-29T13:07:36.469538Z",
+              "ratio": 30.0
+            },
+            "RUS": {
+              "onset": "2026-09-29T13:07:38.868393Z",
+              "ratio": 28.0
+            }
+          },
+          "level": "media",
+          "message": "Sismo detectado en 10 estaciones de Colombia y vecinos",
+          "catalog": {},
+          "search": "terminada",
+          "discarded": "9 estaciones dispararon en 11 s estando hasta a 1695 km entre sí; un sismo de la región no llega tan rápido. Probable hueco en la señal (reconexión o corte de red)."
+        },
+        "actualizado": "2026-09-29T13:13:01.113920Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929134534",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929134534",
+        "deteccion_id": "DET20260929134534",
+        "registro": "en_vivo",
+        "nivel": "media",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T13:45:34.108393Z",
+        "alerta": "2026-09-29T13:47:41.196401Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T13:45:34.108393Z",
+              "sta_lta": 16.8
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T13:45:41.448393Z",
+              "sta_lta": 14.8
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T13:47:23.648393Z",
+              "sta_lta": 28.8
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929134534",
+          "first_onset": "2026-09-29T13:45:34.108393Z",
+          "detected_at": "2026-09-29T13:47:41.196401Z",
+          "stations": {
+            "OCA": {
+              "onset": "2026-09-29T13:45:34.108393Z",
+              "ratio": 16.8
+            },
+            "URI": {
+              "onset": "2026-09-29T13:45:41.448393Z",
+              "ratio": 14.8
+            },
+            "RUS": {
+              "onset": "2026-09-29T13:47:23.648393Z",
+              "ratio": 28.8
+            }
+          },
+          "level": "media",
+          "message": "Sismo detectado en 3 estaciones de Colombia y vecinos",
+          "catalog": {},
+          "search": "terminada"
+        },
+        "actualizado": "2026-09-29T14:40:15.429385Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260929184107",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260929184107",
+        "deteccion_id": "DET20260929184107",
+        "registro": "en_vivo",
+        "nivel": "media",
+        "prioridad": null,
+        "primera_senal": "2026-09-29T18:41:07.788393Z",
+        "alerta": "2026-09-29T18:43:14.906459Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-29T17:46:33.858393Z",
+              "sta_lta": 18.9
+            },
+            {
+              "estacion": "URI",
+              "red": "CM",
+              "disparo": "2026-09-29T18:41:07.788393Z",
+              "sta_lta": 29.4
+            },
+            {
+              "estacion": "SMAR",
+              "red": "CM",
+              "disparo": "2026-09-29T18:42:27.198393Z",
+              "sta_lta": 6.5
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-29T18:42:29.388393Z",
+              "sta_lta": 25.4
+            },
+            {
+              "estacion": "OCA",
+              "red": "CM",
+              "disparo": "2026-09-29T18:42:58.888393Z",
+              "sta_lta": 10.2
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260929184107",
+          "first_onset": "2026-09-29T18:41:07.788393Z",
+          "detected_at": "2026-09-29T18:43:14.906459Z",
+          "stations": {
+            "URI": {
+              "onset": "2026-09-29T18:41:07.788393Z",
+              "ratio": 29.4
+            },
+            "SMAR": {
+              "onset": "2026-09-29T18:42:27.198393Z",
+              "ratio": 6.5
+            },
+            "RUS": {
+              "onset": "2026-09-29T18:42:29.388393Z",
+              "ratio": 25.4
+            },
+            "OCA": {
+              "onset": "2026-09-29T18:42:58.888393Z",
+              "ratio": 10.2
+            },
+            "CRJC": {
+              "onset": "2026-09-29T17:46:33.858393Z",
+              "ratio": 18.9
+            }
+          },
+          "level": "media",
+          "message": "Sismo detectado en 4 estaciones de Colombia y vecinos",
+          "catalog": {},
+          "search": "terminada"
+        },
+        "actualizado": "2026-09-29T19:35:13.641913Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DET20260930004248",
+      "geometry": null,
+      "properties": {
+        "id": "DET20260930004248",
+        "deteccion_id": "DET20260930004248",
+        "registro": "en_vivo",
+        "nivel": "alta",
+        "prioridad": null,
+        "primera_senal": "2026-09-30T00:42:48.728393Z",
+        "alerta": "2026-09-30T00:43:47.708009Z",
+        "reportes_sentido": null,
+        "resumen": {
+          "estaciones_en_orden": [
+            {
+              "estacion": "CRJC",
+              "red": "CM",
+              "disparo": "2026-09-30T00:41:58.338393Z",
+              "sta_lta": 6.5
+            },
+            {
+              "estacion": "TUM",
+              "red": "CM",
+              "disparo": "2026-09-30T00:42:14.448394Z",
+              "sta_lta": 5.7
+            },
+            {
+              "estacion": "HEL",
+              "red": "CM",
+              "disparo": "2026-09-30T00:42:48.728393Z",
+              "sta_lta": 25.4
+            },
+            {
+              "estacion": "RUS",
+              "red": "CM",
+              "disparo": "2026-09-30T00:44:05.658393Z",
+              "sta_lta": 10.2
+            },
+            {
+              "estacion": "ARGC",
+              "red": "CM",
+              "disparo": "2026-09-30T00:44:43.698393Z",
+              "sta_lta": 5.7
+            }
+          ]
+        },
+        "deteccion": {
+          "id": "DET20260930004248",
+          "first_onset": "2026-09-30T00:42:48.728393Z",
+          "detected_at": "2026-09-30T00:43:47.708009Z",
+          "stations": {
+            "CRJC": {
+              "onset": "2026-09-30T00:41:58.338393Z",
+              "ratio": 6.5
+            },
+            "TUM": {
+              "onset": "2026-09-30T00:42:14.448394Z",
+              "ratio": 5.7
+            },
+            "HEL": {
+              "onset": "2026-09-30T00:42:48.728393Z",
+              "ratio": 25.4
+            },
+            "RUS": {
+              "onset": "2026-09-30T00:44:05.658393Z",
+              "ratio": 10.2
+            },
+            "ARGC": {
+              "onset": "2026-09-30T00:44:43.698393Z",
+              "ratio": 5.7
+            }
+          },
+          "level": "alta",
+          "message": "Sismo detectado en 2 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
+          "catalog": {},
+          "search": "buscando"
+        },
+        "actualizado": "2026-09-30T00:44:56.868785Z"
       }
     }
   ]
