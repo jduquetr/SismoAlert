@@ -344,28 +344,57 @@ function restyleSgc() {
   sgcLayer.eachLayer((m) => { const s = sgcStyle(m._depth); m.setStyle(s); });
 }
 
+// El SGC bloquea las IPs de centros de datos (Azure responde 403), pero su API permite CORS:
+// si el servidor no puede traer el catálogo, el navegador lo consulta directamente.
+async function fetchSgcDirect(days = 30) {
+  const bogota = (ms) => new Date(ms - 5 * 3600000).toISOString().slice(0, 19);  // la API usa hora local
+  const end = Date.now(), windows = [];
+  for (let t = end - days * 86400000; t < end; t += 14 * 86400000) windows.push([t, Math.min(t + 14 * 86400000, end)]);
+  const parts = await Promise.all(windows.map(async ([a, b]) => {
+    const url = `https://api.sgc.gov.co/biweekly/biweekly_earthquakes?startdate=${bogota(a)}&enddate=${bogota(b)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`SGC HTTP ${res.status}`);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    return d.features || [];
+  }));
+  const byId = new Map();
+  parts.flat().forEach((f) => {
+    const p = f.properties, [lon, lat, depth] = f.geometry.coordinates;
+    byId.set(f.id, [Math.round(lon * 1000) / 1000, Math.round(lat * 1000) / 1000, depth, p.mag,
+      p.utcTime.replace(" ", "T") + "Z", p.place, p.status, f.id]);
+  });
+  const events = [...byId.values()].sort((x, y) => (x[4] < y[4] ? -1 : 1));
+  return { available: true, days, generated: new Date().toISOString(), refresh_s: 1800,
+    count: events.length, fields: ["lon", "lat", "depth", "mag", "time", "place", "status", "id"], events };
+}
+
 async function loadSgc() {
   const el = document.getElementById("sgc-count");
   try {
-    if (typeof SGC_SNAPSHOT !== "undefined") {
-      sgcData = SGC_SNAPSHOT;
-    } else {
-      if (el && !sgcData) el.textContent = "Consultando el catálogo del SGC…";
-      const res = await fetch(`/sgc-sismos?dias=30`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      sgcData = await res.json();
+    if (el && !sgcData) el.textContent = "Consultando el catálogo del SGC…";
+    let data = null;
+    if (typeof SGC_SNAPSHOT === "undefined") {
+      try {
+        const res = await fetch(`/sgc-sismos?dias=30`, { cache: "no-store" });
+        if (res.ok) data = await res.json();
+      } catch (e) { /* se intenta directo */ }
     }
+    if (!data || data.available === false || !data.count) {
+      try {
+        data = await fetchSgcDirect(30);
+      } catch (e) {
+        if (typeof SGC_SNAPSHOT === "undefined") throw e;
+        data = SGC_SNAPSHOT;  // copia estática: la del momento de publicar
+      }
+    }
+    sgcData = data;
     drawSgc();
   } catch (e) {
-    // 404: la página es nueva pero el servidor que corre es anterior a esta función
-    const hint = /404/.test(e.message) ? ": reinicia el servidor para activarlo"
-      : /502/.test(e.message) ? ": el servidor no pudo consultar al SGC (revisa server.log)" : "";
-    if (el) el.textContent = `Catálogo del SGC no disponible (${e.message})${hint}`;
+    if (el) el.textContent = `Catálogo del SGC no disponible (${e.message})`;
   }
-  if (typeof SGC_SNAPSHOT === "undefined") {
-    clearTimeout(sgcTimer);
-    sgcTimer = setTimeout(loadSgc, ((sgcData && sgcData.refresh_s) || 1800) * 1000);
-  }
+  clearTimeout(sgcTimer);
+  sgcTimer = setTimeout(loadSgc, ((sgcData && sgcData.refresh_s) || 1800) * 1000);
 }
 
 const SgcControl = L.Control.extend({
