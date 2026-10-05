@@ -1,0 +1,47 @@
+# Revisión automática de cada push y PR. La actualización diaria de la máquina que vigila
+# (linux/actualizar.sh) solo instala un commit si esta revisión pasó.
+name: Verificar
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: El código Python compila y carga
+        run: |
+          python -m compileall -q -x '(\.venv|docs)/' .
+          python -c "import config, detector, sources, store, traveltime, server, copia_estatica, informe_diario"
+
+      - name: Pruebas rápidas (sin red)
+        run: python tests/prueba_rapida.py
+
+      - name: Los scripts de shell no tienen errores de sintaxis
+        run: for f in *.sh linux/*.sh mac/*.sh; do sh -n "$f" && echo "ok $f"; done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: El JavaScript de la página no tiene errores de sintaxis
+        run: |
+          python - <<'EOF'
+          import re
+          html = open("static/index.html", encoding="utf-8").read()
+          scripts = re.findall(r"<script(?![^>]*src)[^>]*>(.*?)</script>", html, re.S)
+          open("pagina.js", "w", encoding="utf-8").write("\n;\n".join(scripts))
+          EOF
+          node --check pagina.js

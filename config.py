@@ -72,6 +72,11 @@ MATCH_TOLERANCE_S = 15
 SGC_BACKGROUND_MAX_DAYS = 30
 SGC_BACKGROUND_REFRESH_S = 30 * 60
 
+# Consultar la API del SGC desde el servidor (confirmación de detecciones y sismicidad de
+# fondo). El SGC bloquea las IPs de centros de datos (Azure: 403): en esas máquinas conviene
+# False en config_local.py; el mapa la consulta entonces desde el navegador.
+USE_SGC = True
+
 # Feed de archive.sgc.gov.co: trae eventos preliminares, pero bloquea clientes
 # que no son navegador. Mantener apagado hasta tener autorización del SGC.
 USE_SGC_ARCHIVE_FEED = False
@@ -84,3 +89,11 @@ HTTP_PORT = 8765
 VISOR_ORIGINS = (r"^https://sismos-3d-colombia(-[a-z0-9-]+)?\.vercel\.app$"
                  r"|^https://jduquetr\.github\.io$"
                  r"|^http://(localhost|127\.0\.0\.1)(:\d+)?$")
+
+# Ajustes propios de cada máquina (p. ej. USE_SGC = False en Azure, otro puerto): van en
+# config_local.py, que git ignora. Así la actualización diaria (git pull) nunca choca con
+# ellos y cada máquina conserva los suyos.
+try:
+    from config_local import *  # noqa: F401,F403
+except ImportError:
+    pass

@@ -105,7 +105,9 @@ def emsc_search(start, end):
 
 
 def catalog_sources():
-    srcs = [("SGC", sources.sgc_biweekly), ("USGS", sources.usgs), ("EMSC", emsc_search)]
+    srcs = [("USGS", sources.usgs), ("EMSC", emsc_search)]
+    if config.USE_SGC:
+        srcs.insert(0, ("SGC", sources.sgc_biweekly))
     if config.USE_SGC_ARCHIVE_FEED:
         srcs.insert(0, ("SGC-feed", sources.sgc_archive))
     return srcs
@@ -351,6 +353,9 @@ def refresh_sgc_background():
 
 
 def sgc_background_loop():
+    if not config.USE_SGC:
+        log.info("SGC desactivado (config.USE_SGC): el mapa lo consultará desde el navegador")
+        return
     while True:
         try:
             refresh_sgc_background()
@@ -441,6 +446,10 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, body, "application/geo+json; charset=utf-8", cors=True)
         elif path == "/sgc-sismos":
             days = parse_qs(urlparse(self.path).query).get("dias", ["30"])[0]
+            if not config.USE_SGC:
+                # La página lo consulta entonces directamente desde el navegador
+                self._send(200, json.dumps({"available": False, "reason": "SGC desactivado en este servidor"}))
+                return
             try:
                 data = sgc_background(days)
             except Exception as e:

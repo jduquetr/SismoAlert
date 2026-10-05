@@ -12,3 +12,7 @@ publicar.log
 
 .vercel
 .env*
+
+# Ajustes propios de cada máquina (ver el final de config.py)
+config_local.py
+actualizar.log

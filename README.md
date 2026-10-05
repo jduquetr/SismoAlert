@@ -162,6 +162,29 @@ tiene además un control de volumen para la alerta. Ambos se recuerdan en cada n
 botón "Sismos sentidos (SPAlert)" del visor sismos-3d-colombia lo usa como respaldo cuando no
 alcanza el servidor en vivo.
 
+## Cómo trabajamos: push a main y actualización diaria
+
+Las tres personas con acceso hacen push a `main`. La máquina que vigila baja lo nuevo una
+vez al día y lo pone a correr. Para que un error no tumbe el sistema de alertas:
+
+1. **Revisión automática en GitHub** (`.github/workflows/verificar.yml`). En cada push
+   comprueba que el código cargue, corre `tests/prueba_rapida.py` y revisa la sintaxis de
+   los scripts y del JavaScript de la página. Si falla, el commit muestra una ❌ en GitHub.
+   Antes de hacer push, corre `python tests/prueba_rapida.py`.
+2. **Actualización diaria** (`linux/actualizar.sh`, todos los días a las 7 a. m.):
+   - solo instala un commit si su revisión pasó;
+   - instala dependencias si cambiaron;
+   - reinicia el servidor y comprueba que vuelvan a llegar datos de las estaciones;
+   - si algo falla, **vuelve sola a la versión anterior**.
+
+   Avisa por Telegram en cada actualización y en cada fallo, y deja el registro en
+   `actualizar.log`. Se instala una vez con `sh linux/instalar_actualizacion.sh`; para
+   actualizar en el momento, `sudo systemctl start sismoalert-actualizar`.
+3. **Ajustes propios de cada máquina en `config_local.py`**, que git ignora. En Azure, por
+   ejemplo, `USE_SGC = False`, porque el SGC bloquea esas IPs y el mapa lo consulta desde el
+   navegador. Nunca se editan a mano los archivos del repositorio en la máquina: el `git
+   pull` chocaría y el actualizador se detendría con un aviso.
+
 ## Sismicidad de fondo del SGC en el mapa
 
 El servidor consulta cada 30 minutos el catálogo del SGC de los últimos 30 días y lo entrega
