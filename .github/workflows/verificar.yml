@@ -24,7 +24,7 @@ jobs:
       - name: El código Python compila y carga
         run: |
           python -m compileall -q -x '(\.venv|docs)/' .
-          python -c "import config, detector, sources, store, traveltime, server, copia_estatica, informe_diario"
+          python -c "import config, detector, sources, store, traveltime, server, copia_estatica, informe_diario, rectificar"
 
       - name: Pruebas rápidas (sin red)
         run: python tests/prueba_rapida.py

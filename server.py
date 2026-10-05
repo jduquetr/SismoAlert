@@ -148,10 +148,15 @@ def arrival_misfit(det, ev):
     rechazar el sismo real. Y no se empareja un sismo pequeño y lejano de minutos antes.
     Sin disparos fuertes (alerta solo de catálogo) no hay nada que comprobar y devuelve 0.
     """
-    strong = [(v["onset"], s) for s, v in det.get("stations", {}).items()
-              if v["ratio"] >= config.MIN_RATIO and s in config.STATIONS]
+    stations = [(v["onset"], s, v["ratio"]) for s, v in det.get("stations", {}).items()
+                if s in config.STATIONS]
+    if not stations:
+        return 0.0  # alerta solo de catálogo: no hay disparos con qué comparar
+    strong = [(t, s) for t, s, r in stations if r >= config.MIN_RATIO]
     if not strong:
-        return 0.0
+        # Sin disparos fuertes se comparan todos: antes se aceptaba cualquier sismo de la
+        # ventana y se emparejaban sismos pequeños y lejanos que no pudieron registrarse
+        strong = [(t, s) for t, s, _ in stations]
     depth = ev.get("depth") or 0
     max_km = max_detection_km(ev.get("mag"))
     misfits = []
