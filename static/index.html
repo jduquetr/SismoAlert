@@ -497,7 +497,10 @@ async function initFaultLayer() {
     const data = typeof FAULTS_SNAPSHOT !== "undefined" ? FAULTS_SNAPSHOT
       : await (await fetch("/fallas-gem.json")).json();
     data.fallas.forEach((f) => {
-      const tasa = f.tasa ? ` · ${f.tasa} mm/año` : "";
+      // tasa: [preferida, mínima, máxima] en mm/año, con huecos en null
+      const [pref, lo, hi] = Array.isArray(f.tasa) ? f.tasa : [f.tasa];
+      const rate = pref ?? lo ?? hi;
+      const tasa = rate != null ? ` · ${rate} mm/año${lo != null && hi != null ? ` (${lo}–${hi})` : ""}` : "";
       L.polyline(f.traza.map(([lon, lat]) => [lat, lon]), {
         pane: "fallas", color: faultColor(f.tipo), weight: f.tipo === "Subduction_Thrust" ? 2.5 : 1.4, opacity: 0.75,
       }).bindTooltip(`<b>${esc(f.nombre || "Falla sin nombre")}</b><br>Tipo: ${esc(faultLabel(f.tipo))}${esc(tasa)}<br>` +

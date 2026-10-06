@@ -201,10 +201,12 @@ La página se refresca con el mismo ritmo, y la copia estática incluye esos dat
 
 ## Fallas activas y avisos de GDACS
 
-- **Fallas activas (GEM):** `static/fallas-gem.json` tiene 532 fallas de la base GEM Global
-  Active Faults (Styron y Pagani, 2020; licencia CC BY-SA 4.0), recortadas a Colombia y
-  alrededores. Es el mismo archivo que usa el visor sismos-3d-colombia. Se dibujan coloreadas
-  por tipo: inversa, de rumbo, normal y subducción.
+- **Fallas activas (GEM):** `static/fallas-gem.json` tiene 1.215 trazas de **Sur y
+  Centroamérica, con el Caribe y el sur de México**, de la base GEM Global Active Faults
+  (Styron y Pagani, 2020; licencia CC BY-SA 4.0). Usa los catálogos con nombres de falla:
+  Andes, SARA y Centroamérica–Caribe. Se dibujan coloreadas por tipo: inversa, de rumbo,
+  normal y subducción. `python tools/extraer_fallas.py` las regenera desde un commit fijo de
+  GEM.
 - **Avisos de GDACS:** el servidor consulta cada 10 minutos la API de GDACS, el sistema de
   alertas de desastres de la ONU y la Comisión Europea, y entrega los sismos grandes del mundo
   de los últimos 30 días con su nivel de alerta de impacto en `/gdacs`. La página los muestra
