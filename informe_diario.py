@@ -26,6 +26,7 @@ from obspy import UTCDateTime
 
 import config
 import sources
+from detector import LEVEL_LABELS
 from traveltime import p_time, s_time
 
 DIR = Path(__file__).parent
@@ -189,7 +190,7 @@ def build(hours):
             lag = alert - ev["s_medellin"]
             how = (", ".join(f"{s} {r:+.0f}s" for s, r in hits) if hits else "por catálogo")
             mark = "✅" if lag < 0 else "⚠️"
-            lines.append(f"   {mark} Alerta {bogota(alert)} ({e(d.get('nivel') or '')}; {how}): "
+            lines.append(f"   {mark} Alerta {bogota(alert)} ({e(LEVEL_LABELS.get(d.get('nivel'), d.get('nivel') or ''))}; {how}): "
                          f"<b>{fmt_lag(lag)}</b>")
     lines.append("")
 
@@ -200,7 +201,7 @@ def build(hours):
         lines.append(f"Sin sismo en catálogo (posibles falsas): {len(unmatched)}")
         for d in unmatched[:12]:
             sts = ", ".join(s["estacion"] for s in d["resumen"].get("estaciones_en_orden", []))
-            lines.append(f"   · {bogota(d['alerta'])} {e(d.get('nivel') or '')} ({sts})")
+            lines.append(f"   · {bogota(d['alerta'])} {e(LEVEL_LABELS.get(d.get('nivel'), d.get('nivel') or ''))} ({sts})")
         if len(unmatched) > 12:
             lines.append(f"   · … y {len(unmatched) - 12} más")
     lines.append("")

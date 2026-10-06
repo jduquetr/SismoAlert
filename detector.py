@@ -97,6 +97,18 @@ class StationTrigger:
         }
 
 
+# Lo que ve la gente en la página, las notificaciones y Telegram. El nivel interno (alta,
+# media, baja, catálogo) no cambia para no romper los registros guardados. El nivel dice qué
+# tan seguro está el sistema de que hay un sismo y si se registró en Medellín; no dice qué
+# tan fuerte es (eso es la prioridad, que llega con la confirmación de un catálogo).
+LEVEL_LABELS = {
+    "alta": "Probablemente sentido en Medellín",
+    "media": "Sismo lejos de Medellín",
+    "baja": "Posible sismo, sin confirmar",
+    "catálogo": "Reportado por un catálogo",
+}
+
+
 def simultaneous_artifact(det):
     """Motivo si la detección parece un artefacto de la señal y no un sismo, si no None.
 
@@ -204,12 +216,13 @@ class Associator:
         n = len(sts)
         if n_groups(sts) >= config.MIN_STATIONS and config.LOCAL_STATION in sts:
             det["level"] = "alta"
-            det["message"] = (f"Sismo detectado en {n} estaciones, incluida HEL (Medellín): "
-                              "probablemente se sintió en Medellín")
+            det["message"] = (f"{LEVEL_LABELS['alta']}: la estación de Medellín (HEL) y {n - 1} "
+                              f"{'estación' if n - 1 == 1 else 'estaciones'} más registraron una sacudida fuerte")
         elif n_groups(sts) >= config.MIN_STATIONS_REMOTE:
             det["level"] = "media"
-            det["message"] = f"Sismo detectado en {n} estaciones de Colombia y vecinos"
+            det["message"] = (f"{LEVEL_LABELS['media']}: {n} estaciones lo registraron, "
+                              "pero no la de Medellín (HEL)")
         else:
             det["level"] = "baja"
-            det["message"] = ("Movimiento fuerte en HEL (Medellín), aún sin confirmación "
-                              "de otras estaciones")
+            det["message"] = (f"{LEVEL_LABELS['baja']}: solo la estación de Medellín (HEL) registró "
+                              "una sacudida; puede ser ruido local")

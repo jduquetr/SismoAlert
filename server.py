@@ -22,7 +22,7 @@ import config
 import sources
 import store
 import traveltime
-from detector import Associator, StationTrigger, simultaneous_artifact
+from detector import LEVEL_LABELS, Associator, StationTrigger, simultaneous_artifact
 from emsc import EmscStream
 from seedlink import SeedLinkClient
 
@@ -289,8 +289,8 @@ def on_emsc_event(ev, action):
         "detected_at": UTCDateTime(),
         "stations": {},
         "level": "catálogo",
-        "message": (f"Reportado por EMSC sin detección de las estaciones: M{ev['mag']} "
-                    f"{ev['place']}, a {dist} km de Medellín"),
+        "message": (f"{LEVEL_LABELS['catálogo']}: el EMSC publicó un M{ev['mag']} en {ev['place']}, "
+                    f"a {dist} km de Medellín; las estaciones no lo detectaron"),
     }
     on_detection(det)
 
