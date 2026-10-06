@@ -104,6 +104,7 @@
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 8px; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 2px solid #fff; box-shadow: 0 0 0 1px #0004; }
+  .ln { width: 16px; height: 3px; display: inline-block; border-radius: 2px; margin-left: 4px; }
   .sw.tri { border-radius: 2px; }
   .ring-label { background: transparent; border: 0; box-shadow: none; color: #555; font-size: 11px; font-weight: 600; }
   .ring-label::before { display: none; }
@@ -147,8 +148,20 @@
     <span>Círculos: distancia a Medellín</span>
     <span><i class="sw" style="background:transparent;border-color:#2563eb"></i>Onda P</span>
     <span><i class="sw" style="background:transparent;border-color:#dc2626"></i>Onda S</span>
+    <span>Fallas (GEM):
+      <i class="ln" style="background:#b45309"></i>inversa
+      <i class="ln" style="background:#7c3aed"></i>de rumbo
+      <i class="ln" style="background:#1d4ed8"></i>normal
+      <i class="ln" style="background:#b91c1c"></i>subducción</span>
+    <span>GDACS:
+      <i class="sw" style="background:#dc2626"></i>roja
+      <i class="sw" style="background:#ea580c"></i>naranja
+      <i class="sw" style="background:#16a34a"></i>verde</span>
   </div>
   <div id="qinfo" class="qinfo" hidden></div>
+
+  <h2>Sismos grandes en el mundo (GDACS)</h2>
+  <div id="gdacs" class="qinfo"><div class="muted">Consultando GDACS…</div></div>
 
   <h2>Estaciones (SeedLink IRIS: red CM del SGC, IU y EC de Ecuador)</h2>
   <div id="stations" class="stations"></div>
@@ -440,6 +453,118 @@ function initSgcLayer() {
   loadSgc();
 }
 
+// ---- Capas superpuestas que se activan en el selector de capas (se recuerda cada una)
+let layersControl;
+const OVERLAY_KEY = "sismos-capas";
+function overlayOn(name, byDefault) {
+  try { const s = JSON.parse(localStorage.getItem(OVERLAY_KEY) || "{}"); return name in s ? s[name] : byDefault; }
+  catch (e) { return byDefault; }
+}
+function rememberOverlays() {
+  map.on("overlayadd overlayremove", (e) => {
+    try {
+      const s = JSON.parse(localStorage.getItem(OVERLAY_KEY) || "{}");
+      s[e.name] = e.type === "overlayadd";
+      localStorage.setItem(OVERLAY_KEY, JSON.stringify(s));
+    } catch (err) { /* sin almacenamiento */ }
+  });
+}
+
+// ---- Fallas activas: GEM Global Active Faults Database (Styron y Pagani, 2020), recortada
+// a Colombia y alrededores; licencia CC BY-SA 4.0
+const FAULT_COLORS = { Reverse: "#b45309", Subduction_Thrust: "#b91c1c", Normal: "#1d4ed8",
+  Dextral: "#7c3aed", Sinistral: "#7c3aed", "Strike-Slip": "#7c3aed" };
+const FAULT_NAMES = { Reverse: "inversa", Subduction_Thrust: "subducción", Normal: "normal",
+  Dextral: "dextral (de rumbo)", Sinistral: "sinestral (de rumbo)", "Strike-Slip": "de rumbo" };
+function faultColor(tipo) {
+  if (!tipo) return "#6b7280";
+  if (FAULT_COLORS[tipo]) return FAULT_COLORS[tipo];
+  return tipo.includes("Reverse") ? FAULT_COLORS.Reverse : tipo.includes("Normal") ? FAULT_COLORS.Normal : "#7c3aed";
+}
+function faultLabel(tipo) {
+  if (!tipo) return "sin tipo";
+  return FAULT_NAMES[tipo] || tipo.split("-").map((t) => FAULT_NAMES[t] || t.toLowerCase()).join(" e ");
+}
+
+async function initFaultLayer() {
+  map.createPane("fallas");
+  map.getPane("fallas").style.zIndex = 360;  // sobre los sismos del SGC, bajo estaciones y epicentros
+  const layer = L.layerGroup();
+  const name = "Fallas activas (GEM)";
+  layersControl.addOverlay(layer, name);
+  if (overlayOn(name, true)) layer.addTo(map);
+  try {
+    const data = typeof FAULTS_SNAPSHOT !== "undefined" ? FAULTS_SNAPSHOT
+      : await (await fetch("/fallas-gem.json")).json();
+    data.fallas.forEach((f) => {
+      const tasa = f.tasa ? ` · ${f.tasa} mm/año` : "";
+      L.polyline(f.traza.map(([lon, lat]) => [lat, lon]), {
+        pane: "fallas", color: faultColor(f.tipo), weight: f.tipo === "Subduction_Thrust" ? 2.5 : 1.4, opacity: 0.75,
+      }).bindTooltip(`<b>${esc(f.nombre || "Falla sin nombre")}</b><br>Tipo: ${esc(faultLabel(f.tipo))}${esc(tasa)}<br>` +
+        `<span style="color:#888">GEM Global Active Faults · ${esc(f.catalogo || "")}</span>`, { sticky: true }).addTo(layer);
+    });
+    map.attributionControl.addAttribution('Fallas: <a href="https://github.com/GEMScienceTools/gem-global-active-faults" target="_blank" rel="noopener">GEM</a> (CC BY-SA 4.0)');
+  } catch (e) {
+    console.warn("No se pudieron cargar las fallas de GEM", e);
+  }
+}
+
+// ---- Avisos de GDACS: sismos grandes del mundo con nivel de alerta de impacto
+const GDACS_COLORS = { Red: "#dc2626", Orange: "#ea580c", Green: "#16a34a" };
+const GDACS_NAMES = { Red: "roja", Orange: "naranja", Green: "verde" };
+let gdacsLayer, gdacsData = null;
+
+function renderGdacs() {
+  const box = document.getElementById("gdacs");
+  if (!box || !gdacsData) return;
+  gdacsLayer.clearLayers();
+  const events = gdacsData.events || [];
+  events.forEach((e) => {
+    L.circleMarker([e.lat, e.lon], { radius: 4 + Math.max(0, (e.mag || 0) - 4) * 3, color: "#fff", weight: 1.5,
+      fillColor: GDACS_COLORS[e.alert] || "#6b7280", fillOpacity: 0.9 })
+      .bindPopup(`<b>M${esc(e.mag)}</b> · ${esc(e.name)}<br>${fmtTime(e.time)}<br>` +
+        `Profundidad ${e.depth != null ? Math.round(e.depth) + " km" : "—"} · alerta ${esc(GDACS_NAMES[e.alert] || e.alert)}` +
+        `<br><a href="${esc(e.url)}" target="_blank" rel="noopener">Informe de GDACS</a>`)
+      .addTo(gdacsLayer);
+  });
+  const important = events.filter((e) => e.alert !== "Green");
+  const rows = (important.length ? important : events.slice(0, 5)).slice(0, 12).map((e) => `
+    <tr><td><span class="tag" style="background:${GDACS_COLORS[e.alert] || "#6b7280"}">${esc(GDACS_NAMES[e.alert] || e.alert)}</span></td>
+      <td><b>M${esc(e.mag)}</b></td><td><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.name)}</a>
+      <br><span class="muted">${fmtTime(e.time)} · prof. ${e.depth != null ? Math.round(e.depth) + " km" : "—"}</span></td></tr>`).join("");
+  box.innerHTML = `<div class="muted" style="margin-bottom:6px">${events.length} sismos en ${gdacsData.days} días;
+      ${important.length} con alerta naranja o roja${important.length ? "" : " (se muestran los más recientes)"}.
+      Actualizado ${gdacsData.generated ? fmtTime(gdacsData.generated) : "—"}.</div>
+    <div class="table-wrap"><table>${rows || '<tr><td class="muted">Sin sismos en GDACS.</td></tr>'}</table></div>`;
+}
+
+async function loadGdacs() {
+  try {
+    gdacsData = typeof GDACS_SNAPSHOT !== "undefined" ? GDACS_SNAPSHOT : await (await fetch("/gdacs", { cache: "no-store" })).json();
+    renderGdacs();
+  } catch (e) {
+    const box = document.getElementById("gdacs");
+    if (box) box.innerHTML = `<div class="muted">GDACS no disponible (${esc(e.message)})</div>`;
+  }
+  if (typeof GDACS_SNAPSHOT === "undefined") setTimeout(loadGdacs, 10 * 60 * 1000);
+}
+
+function initGdacsLayer() {
+  gdacsLayer = L.layerGroup();
+  const name = "Avisos GDACS (sismos grandes)";
+  layersControl.addOverlay(gdacsLayer, name);
+  if (overlayOn(name, true)) gdacsLayer.addTo(map);
+  rememberOverlays();
+  loadGdacs();
+}
+
+// Aviso nuevo empujado por el servidor (alerta naranja/roja en el mundo o sismo en la región)
+function handleGdacs(e) {
+  notify(`gdacs:${e.id}:${e.alert}`, `GDACS: alerta ${GDACS_NAMES[e.alert] || e.alert} · M${e.mag}`,
+    `${e.name} · ${fmtTime(e.time)}`, e.alert === "Red" || e.alert === "Orange" ? "alta" : "media");
+  loadGdacs();
+}
+
 function initMap() {
   map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
   const layers = baseLayers();
@@ -451,7 +576,7 @@ function initMap() {
   // Reloj arriba a la derecha (antes que las capas, para que quede encima)
   new ClockControl({ position: "topright" }).addTo(map);
   // Plegado: se muestra como un ícono de capas y se despliega al pasar el cursor o tocarlo
-  L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
+  layersControl = L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
   map.on("baselayerchange", (e) => {
     map.getContainer().classList.toggle("basemap", e.name.startsWith("Contornos"));
     try { localStorage.setItem(BASE_MAP_KEY, e.name); } catch (err) { /* sin almacenamiento: no se recuerda */ }
@@ -466,6 +591,8 @@ function initMap() {
     .addTo(map).bindTooltip("Medellín", { permanent: true, direction: "right", offset: [8, 0] });
   quakeLayer = L.layerGroup().addTo(map);
   initSgcLayer();
+  initFaultLayer();
+  initGdacsLayer();
 }
 
 // Modelo regional de tiempos de viaje (mismas constantes que traveltime.py): la primera
@@ -858,6 +985,7 @@ function connect() {
   es.onerror = () => { $("#conn").textContent = "Sin conexión con el servidor local, reintentando…"; $("#conn-dot").className = "dot"; lastBeat = 0; };
   es.addEventListener("stations", (m) => { renderStations(JSON.parse(m.data)); heartbeat(); });
   es.addEventListener("log", (m) => addLog(JSON.parse(m.data)));
+  es.addEventListener("gdacs", (m) => handleGdacs(JSON.parse(m.data)));
   ["detection", "update", "catalog"].forEach((k) => es.addEventListener(k, (m) => handleDet(JSON.parse(m.data), k)));
 }
 

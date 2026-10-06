@@ -72,6 +72,13 @@ MATCH_TOLERANCE_S = 15
 SGC_BACKGROUND_MAX_DAYS = 30
 SGC_BACKGROUND_REFRESH_S = 30 * 60
 
+# Avisos de GDACS (sismos grandes del mundo con nivel de alerta de impacto): cada cuánto se
+# consulta, cuántos días se muestran y qué avisa la página. Se notifica toda alerta de esos
+# niveles en cualquier parte del mundo, y cualquier sismo de GDACS dentro de REGION.
+GDACS_REFRESH_S = 10 * 60
+GDACS_DAYS = 30
+GDACS_NOTIFY_LEVELS = ("Orange", "Red")
+
 # Consultar la API del SGC desde el servidor (confirmación de detecciones y sismicidad de
 # fondo). El SGC bloquea las IPs de centros de datos (Azure: 403): en esas máquinas conviene
 # False en config_local.py; el mapa la consulta entonces desde el navegador.

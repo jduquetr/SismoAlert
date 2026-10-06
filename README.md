@@ -199,6 +199,21 @@ izquierda:
 
 La página se refresca con el mismo ritmo, y la copia estática incluye esos datos.
 
+## Fallas activas y avisos de GDACS
+
+- **Fallas activas (GEM):** `static/fallas-gem.json` tiene 532 fallas de la base GEM Global
+  Active Faults (Styron y Pagani, 2020; licencia CC BY-SA 4.0), recortadas a Colombia y
+  alrededores. Es el mismo archivo que usa el visor sismos-3d-colombia. Se dibujan coloreadas
+  por tipo: inversa, de rumbo, normal y subducción.
+- **Avisos de GDACS:** el servidor consulta cada 10 minutos la API de GDACS, el sistema de
+  alertas de desastres de la ONU y la Comisión Europea, y entrega los sismos grandes del mundo
+  de los últimos 30 días con su nivel de alerta de impacto en `/gdacs`. La página los muestra
+  en el mapa y en un panel, y **avisa con sonido y notificación** cuando aparece una alerta
+  naranja o roja en cualquier parte del mundo, o cualquier sismo de GDACS dentro de `REGION`.
+  Los parámetros son `GDACS_REFRESH_S`, `GDACS_DAYS` y `GDACS_NOTIFY_LEVELS`.
+
+Las dos capas se activan y desactivan en el selector de capas del mapa.
+
 ## Visor de sismos (evento especial SPAlert)
 
 El servidor entrega el registro en `http://127.0.0.1:8765/sismos-detectados.geojson`, con

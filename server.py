@@ -394,6 +394,41 @@ def sgc_background(days):
                 "fields": SGC_FIELDS, "events": rows}
 
 
+# ----------------------------------------------------------- avisos de GDACS (sismos grandes)
+_gdacs = {"generated": None, "events": [], "seen": {}}  # seen: id -> nivel de alerta
+_gdacs_lock = threading.Lock()
+
+
+def gdacs_relevant(ev):
+    """¿Avisar de este sismo? Alerta naranja/roja en el mundo, o cualquiera en la región."""
+    r = config.REGION
+    in_region = r["minlat"] <= ev["lat"] <= r["maxlat"] and r["minlon"] <= ev["lon"] <= r["maxlon"]
+    return ev.get("alert") in config.GDACS_NOTIFY_LEVELS or in_region
+
+
+def gdacs_loop():
+    first = True
+    while True:
+        try:
+            events = sources.gdacs(config.GDACS_DAYS)
+            new = []
+            with _gdacs_lock:
+                for ev in events:
+                    old = _gdacs["seen"].get(ev["id"])
+                    if not first and old != ev["alert"]:  # nuevo, o cambió su nivel de alerta
+                        new.append(ev)
+                    _gdacs["seen"][ev["id"]] = ev["alert"]
+                _gdacs.update(generated=UTCDateTime(), events=events)
+            for ev in new:
+                if gdacs_relevant(ev):
+                    hub.note(f"GDACS: alerta {ev['alert']} · M{ev['mag']} {ev['name']} ({ev['time'][:16]} UTC)")
+                    hub.publish("gdacs", ev)
+            first = False
+        except Exception as e:
+            log.warning("No se pudo consultar GDACS: %s", e)
+        time.sleep(config.GDACS_REFRESH_S)
+
+
 def station_info():
     """Estado de cada estación junto con su red y ubicación (para la lista y el mapa)."""
     out = []
@@ -449,6 +484,13 @@ class Handler(BaseHTTPRequestHandler):
             body = (store.GEOJSON.read_bytes() if store.GEOJSON.exists()
                     else '{"type": "FeatureCollection", "features": []}')
             self._send(200, body, "application/geo+json; charset=utf-8", cors=True)
+        elif path == "/gdacs":
+            with _gdacs_lock:
+                data = {"generated": _gdacs["generated"], "days": config.GDACS_DAYS,
+                        "notify_levels": config.GDACS_NOTIFY_LEVELS, "events": _gdacs["events"]}
+            self._send(200, json.dumps(data, default=to_json, ensure_ascii=False))
+        elif path == "/fallas-gem.json":
+            self._send(200, (STATIC / "fallas-gem.json").read_bytes(), "application/json; charset=utf-8")
         elif path == "/sgc-sismos":
             days = parse_qs(urlparse(self.path).query).get("dias", ["30"])[0]
             if not config.USE_SGC:
@@ -525,6 +567,7 @@ def main():
     threading.Thread(target=seedlink_loop, daemon=True).start()
     emsc_stream.start()
     threading.Thread(target=sgc_background_loop, daemon=True).start()
+    threading.Thread(target=gdacs_loop, daemon=True).start()
     threading.Thread(target=status_loop, daemon=True).start()
     server = ThreadingHTTPServer((config.HTTP_HOST, config.HTTP_PORT), Handler)
     server.daemon_threads = True

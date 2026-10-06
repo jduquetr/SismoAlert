@@ -62,6 +62,36 @@ def emsc(start, end):
     return out
 
 
+def gdacs(days):
+    """Sismos de GDACS (ONU + Comisión Europea) de los últimos `days` días, con su nivel de
+    alerta de impacto (Green, Orange, Red). GDACS solo publica sismos grandes del mundo."""
+    end = UTCDateTime()
+    q = dict(eventlist="EQ", fromdate=(end - days * 86400).strftime("%Y-%m-%d"),
+             todate=(end + 86400).strftime("%Y-%m-%d"), alertlevel="Green;Orange;Red")
+    d = _get_json("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?"
+                  + urllib.parse.urlencode(q), timeout=60)
+    out = []
+    for f in (d or {}).get("features", []):
+        p = f["properties"]
+        lon, lat = f["geometry"]["coordinates"][:2]
+        sev = p.get("severitydata") or {}
+        text = sev.get("severitytext") or ""
+        depth = None
+        if "Depth:" in text:
+            try:
+                depth = float(text.split("Depth:")[1].replace("km", "").strip())
+            except ValueError:
+                pass
+        out.append({
+            "id": f"{p['eventid']}-{p.get('episodeid')}", "eventid": p["eventid"],
+            "time": p["fromdate"] + "Z", "lat": lat, "lon": lon, "mag": sev.get("severity"),
+            "depth": depth, "alert": p.get("alertlevel"), "score": p.get("alertscore"),
+            "country": p.get("country"), "name": p.get("name"),
+            "url": (p.get("url") or {}).get("report"),
+        })
+    return sorted(out, key=lambda e: e["time"], reverse=True)
+
+
 def emsc_felt_reports(unid):
     """Número de personas que reportaron haber sentido el sismo en EMSC (LastQuake)."""
     req = urllib.request.Request(
