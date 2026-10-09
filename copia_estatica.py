@@ -110,6 +110,9 @@ def build(state, sgc=None, gdacs=None):
     start = html.index('$("#test").onclick = () => fetch("/test')
     end = html.index("});", start) + 3
     html = html[:start] + TEST_HANDLER + html[end:]
+    start = html.index('$("#test-panama").onclick = () => fetch("/test')
+    end = html.index("});", start) + 3
+    html = html[:start] + TEST_HANDLER_PANAMA + html[end:]
     html = replace(html, "<main>", '<main>\n  <div class="copy-banner"><b>Copia para compartir.</b> '
                    "Así se veía la página de alertas en el equipo local; los datos no se actualizan. "
                    "Toca una detección para ver en el mapa las estaciones que la registraron y la llegada "
@@ -133,6 +136,35 @@ TEST_HANDLER = """$("#test").onclick = () => {
     det.catalog = ref.catalog; det.priority = ref.priority;
     handleDet(det, "catalog");
     addLog({ t: new Date().toISOString(), text: `SGC, USGS y EMSC confirman ${det.id}: M4.3 Istmina - Chocó, Colombia, a 235 km de Medellín` });
+  }, 1500);
+};"""
+
+# Mw7.7 de Panamá del 9-oct: disparos reales de la repetición; la confirmación es la de USGS
+TEST_HANDLER_PANAMA = """$("#test-panama").onclick = () => {
+  const now = new Date().toISOString();
+  const det = {
+    id: "PRUEBA-" + Date.now(), test: true, first_onset: "2026-10-09T17:56:55.778Z", detected_at: now,
+    level: "alta", message: "Probablemente sentido en Medellín: la estación de Medellín (HEL) y 8 estaciones más registraron una sacudida fuerte",
+    stations: { TUM: { onset: "2026-10-09T17:56:55.778Z", ratio: 11.9 },
+                HEL: { onset: "2026-10-09T17:57:26.968Z", ratio: 27.3 },
+                PRV: { onset: "2026-10-09T17:57:30.778Z", ratio: 29.5 },
+                ARGC: { onset: "2026-10-09T17:57:48.118Z", ratio: 29.4 },
+                SMAR: { onset: "2026-10-09T17:57:54.638Z", ratio: 27.4 },
+                OCA: { onset: "2026-10-09T17:57:55.388Z", ratio: 25.9 },
+                RUS: { onset: "2026-10-09T17:58:01.688Z", ratio: 29.3 },
+                CRJC: { onset: "2026-10-09T17:58:09.158Z", ratio: 29.5 },
+                URI: { onset: "2026-10-09T17:58:24.578Z", ratio: 28.5 } },
+  };
+  handleDet(det, "detection");
+  addLog({ t: now, text: `DETECCIÓN ${det.id} [alta]: ${det.message}` });
+  setTimeout(() => {
+    det.catalog = { USGS: { source: "USGS", id: "us6000u18k", time: "2026-10-09T17:56:06.036Z",
+      lat: 7.5868, lon: -80.769, depth: 12.6, mag: 7.7, magtype: "mww",
+      place: "12 km WSW of Pitaloza Arriba, Panama", status: "reviewed",
+      distance_km: 593, priority: "crítica" } };
+    det.priority = "crítica";
+    handleDet(det, "catalog");
+    addLog({ t: new Date().toISOString(), text: `USGS confirma ${det.id}: Mw7.7 12 km WSW of Pitaloza Arriba, Panama` });
   }, 1500);
 };"""
 

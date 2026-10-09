@@ -139,6 +139,7 @@
         <output id="volume-value" for="volume">60%</output>
       </label>
       <button id="test">Probar con el sismo de Istmina</button>
+      <button id="test-panama">Probar con el sismo de Panamá</button>
     </div>
   </header>
 
@@ -1049,6 +1050,21 @@ $("#test").onclick = () => fetch("/test?t=2026-09-27T21:58:25.998Z", {
     HEL: { onset: "2026-09-27T21:58:25.998Z", ratio: 29.6 },
     RUS: { onset: "2026-09-27T21:58:53.018Z", ratio: 27.9 },
     OCA: { onset: "2026-09-27T21:59:07.968Z", ratio: 19.5 },
+  } }),
+});
+// Prueba con el Mw7.7 de Panamá del 9-oct (17:56:06 UTC): disparos reales de la repetición
+$("#test-panama").onclick = () => fetch("/test?t=2026-10-09T17:56:55.778Z", {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ stations: {
+    TUM: { onset: "2026-10-09T17:56:55.778Z", ratio: 11.9 },
+    HEL: { onset: "2026-10-09T17:57:26.968Z", ratio: 27.3 },
+    PRV: { onset: "2026-10-09T17:57:30.778Z", ratio: 29.5 },
+    ARGC: { onset: "2026-10-09T17:57:48.118Z", ratio: 29.4 },
+    SMAR: { onset: "2026-10-09T17:57:54.638Z", ratio: 27.4 },
+    OCA: { onset: "2026-10-09T17:57:55.388Z", ratio: 25.9 },
+    RUS: { onset: "2026-10-09T17:58:01.688Z", ratio: 29.3 },
+    CRJC: { onset: "2026-10-09T17:58:09.158Z", ratio: 29.5 },
+    URI: { onset: "2026-10-09T17:58:24.578Z", ratio: 28.5 },
   } }),
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) document.title = "Alertas de sismos"; });
