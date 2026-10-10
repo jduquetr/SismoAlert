@@ -102,6 +102,11 @@
   .leaflet-control-layers-base label { margin: 2px 0; }
   @media (max-width: 600px) { #map { height: 380px; } }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .stations-toggle { display: flex; align-items: center; gap: 6px; padding: 5px 9px; font: 600 12px system-ui, sans-serif;
+    background: var(--panel); color: var(--text); border: none; border-radius: 4px; cursor: pointer; }
+  .stations-toggle:hover { background: var(--bg); }
+  .stations-toggle svg polygon { fill: var(--off); stroke: var(--panel); stroke-width: 1.5; }
+  .stations-toggle[aria-pressed="true"] svg polygon { fill: var(--ok); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 2px solid #fff; box-shadow: 0 0 0 1px #0004; }
   .ln { width: 16px; height: 3px; display: inline-block; border-radius: 2px; margin-left: 4px; }
@@ -488,6 +493,43 @@ function rememberOverlays() {
   });
 }
 
+// ---- Estaciones en el mapa: se encienden y apagan con el botón del mapa o con la casilla del
+// selector de capas. Las dos quedan sincronizadas porque Leaflet avisa overlayadd/overlayremove
+// también cuando la capa cambia desde código, y la elección se recuerda como las demás capas.
+// Apagarlas solo las oculta: la detección y la lista de estaciones siguen igual.
+const STATIONS_OVERLAY = "Estaciones sísmicas";
+let stationLayer;
+
+const StationsToggle = L.Control.extend({
+  onAdd() {
+    const b = L.DomUtil.create("button", "leaflet-bar stations-toggle");
+    b.type = "button";
+    b.id = "toggle-stations";
+    b.title = "Mostrar u ocultar en el mapa las estaciones que usa el sistema";
+    b.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true">' +
+      '<polygon points="10,2 19,18 1,18"/></svg><span></span>';
+    L.DomEvent.disableClickPropagation(b);
+    L.DomEvent.on(b, "click", () => {
+      if (map.hasLayer(stationLayer)) map.removeLayer(stationLayer); else stationLayer.addTo(map);
+    });
+    return b;
+  },
+});
+
+function initStationLayer() {
+  stationLayer = L.layerGroup();
+  layersControl.addOverlay(stationLayer, STATIONS_OVERLAY);
+  if (overlayOn(STATIONS_OVERLAY, true)) stationLayer.addTo(map);
+  const btn = new StationsToggle({ position: "topleft" }).addTo(map).getContainer();
+  const sync = () => {
+    const on = map.hasLayer(stationLayer);
+    btn.setAttribute("aria-pressed", String(on));
+    btn.querySelector("span").textContent = on ? "Ocultar estaciones" : "Mostrar estaciones";
+  };
+  map.on("overlayadd overlayremove", (e) => { if (e.layer === stationLayer) sync(); });
+  sync();
+}
+
 // ---- Fallas activas: GEM Global Active Faults Database (Styron y Pagani, 2020), recortada
 // a Colombia y alrededores; licencia CC BY-SA 4.0
 const FAULT_COLORS = { Reverse: "#b45309", Subduction_Thrust: "#b91c1c", Normal: "#1d4ed8",
@@ -611,6 +653,7 @@ function initMap() {
   L.circleMarker(MEDELLIN, { radius: 6, color: "#fff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1 })
     .addTo(map).bindTooltip("Medellín", { permanent: true, direction: "right", offset: [8, 0] });
   quakeLayer = L.layerGroup().addTo(map);
+  initStationLayer();
   initSgcLayer();
   initFaultLayer();
   initGdacsLayer();
@@ -665,7 +708,7 @@ function mapStations(list) {
       ${inDet ? `<br><b>Disparó en esta detección</b> (STA/LTA ${sel.stations[s.station].ratio})` : ""}`;
     let m = stMarkers[s.station];
     if (!m) {
-      m = L.marker([s.lat, s.lon], { icon: stationIcon(color, inDet, order) }).addTo(map)
+      m = L.marker([s.lat, s.lon], { icon: stationIcon(color, inDet, order) }).addTo(stationLayer)
         .bindTooltip(s.station, { direction: "top", offset: [0, -8] }).bindPopup(popup);
       stMarkers[s.station] = m;
     } else {
