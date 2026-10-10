@@ -103,6 +103,20 @@ if len(obs) == 3:
         a.trigger(s, t0 + 10 * i, 25.0)
     check("3 en observación solas no abren detección", not dets)
 
+    # Un bloque de disparos solo de observación no hace descartar un sismo real
+    lejanas = sorted(config.OBSERVATION_STATIONS,
+                     key=lambda s: config.STATIONS[s][4])  # de oeste a este: separadas
+    bloque = lejanas[:4] + lejanas[-4:]
+    real2 = {"stations": dict(real["stations"], **{s: {"onset": str(t0 + i), "ratio": 30.0}
+                                                   for i, s in enumerate(bloque)})}
+    check("ruido de observación no convierte un sismo en artefacto", simultaneous_artifact(real2) is None)
+
+    # El emparejamiento con catálogos ignora las de observación
+    solo_obs = {"stations": {s: {"onset": str(t0 + 30), "ratio": 30.0} for s in obs}}
+    check("emparejamiento ignora estaciones de observación",
+          server.arrival_misfit(solo_obs, {"lat": 6.0, "lon": -75.0, "depth": 10, "mag": 5.0,
+                                           "time": t0}) == 0.0)
+
     guardadas = config.OBSERVATION_STATIONS
     config.OBSERVATION_STATIONS = set()  # como REGIONAL_STATIONS_VOTE = True
     try:

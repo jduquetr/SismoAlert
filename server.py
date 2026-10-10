@@ -22,7 +22,7 @@ import config
 import sources
 import store
 import traveltime
-from detector import LEVEL_LABELS, Associator, StationTrigger, simultaneous_artifact
+from detector import LEVEL_LABELS, Associator, StationTrigger, simultaneous_artifact, votes
 from emsc import EmscStream
 from seedlink import SeedLinkClient
 
@@ -148,8 +148,10 @@ def arrival_misfit(det, ev):
     rechazar el sismo real. Y no se empareja un sismo pequeño y lejano de minutos antes.
     Sin disparos fuertes (alerta solo de catálogo) no hay nada que comprobar y devuelve 0.
     """
+    # Las de observación no cuentan: basta con que una estación encaje, y su ruido haría
+    # encajar sismos que no tienen nada que ver con la detección.
     stations = [(v["onset"], s, v["ratio"]) for s, v in det.get("stations", {}).items()
-                if s in config.STATIONS]
+                if s in config.STATIONS and votes(s)]
     if not stations:
         return 0.0  # alerta solo de catálogo: no hay disparos con qué comparar
     strong = [(t, s) for t, s, r in stations if r >= config.MIN_RATIO]

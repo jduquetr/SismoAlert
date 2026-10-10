@@ -112,6 +112,10 @@ LEVEL_LABELS = {
 def simultaneous_artifact(det):
     """Motivo si la detección parece un artefacto de la señal y no un sismo, si no None.
 
+    Solo cuentan las estaciones que votan: el ruido de las de observación (en la VM, ~170
+    disparos en 5 min entre todas) podría armar un bloque así por casualidad y hacer
+    descartar un sismo real.
+
     Un sismo de la región no llega casi a la vez a estaciones separadas por cientos de km:
     la onda más rápida (Pn, 8 km/s) tarda más de 100 s en recorrer 800 km, así que las
     estaciones se van sumando de a poco. Cuando un bloque de 6 o más estaciones dispara
@@ -121,7 +125,7 @@ def simultaneous_artifact(det):
     """
     import math
     strong = sorted((UTCDateTime(v["onset"]), s) for s, v in det.get("stations", {}).items()
-                    if v["ratio"] >= config.MIN_RATIO and s in config.STATIONS)
+                    if v["ratio"] >= config.MIN_RATIO and s in config.STATIONS and votes(s))
     best = []
     for i, (t_i, _) in enumerate(strong):
         block = [(t, s) for t, s in strong[i:] if t - t_i <= 20]

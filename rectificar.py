@@ -22,7 +22,7 @@ import config
 import sources
 import store
 import traveltime
-from detector import simultaneous_artifact
+from detector import simultaneous_artifact, votes
 from server import PRIORITY_ORDER, best_match, detection_window
 
 # Retraso típico de SeedLink: si la detección no trae hora de alerta se estima con él
@@ -97,7 +97,7 @@ def consistent_stations(det, ev):
     from server import max_detection_km
     depth, n = ev.get("depth") or 0, 0
     for s, v in det.get("stations", {}).items():
-        if s not in config.STATIONS:
+        if s not in config.STATIONS or not votes(s):  # las de observación no confirman
             continue
         d = sources.distance_km(ev["lat"], ev["lon"], *config.STATIONS[s][3:5])
         obs = UTCDateTime(v["onset"]) - ev["time"]
@@ -119,7 +119,7 @@ def timing_status(det, ev, rel):
     if not det.get("stations"):
         return "alerta solo de catálogo"
     nearest = min(sources.distance_km(ev["lat"], ev["lon"], *config.STATIONS[s][3:5])
-                  for s in det["stations"] if s in config.STATIONS)
+                  for s in det["stations"] if s in config.STATIONS and votes(s))
     if rel < traveltime.p_time(nearest, ev.get("depth") or 0) - 2:
         return "alerta por ruido (antes de que llegara la onda P)"
     if rel > 600:
