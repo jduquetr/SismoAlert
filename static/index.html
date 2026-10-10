@@ -55,6 +55,11 @@
   .st { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .st b { display: flex; align-items: center; gap: 6px; }
   .st small { color: var(--muted); display: block; }
+  .st.obs { padding: 6px 10px; }
+  .st.obs b { font-size: 13px; }
+  .stations-obs { margin-top: 12px; }
+  .stations-obs summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .stations-note { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
   .det { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--off);
          border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
   .det.alta { border-left-color: var(--alta); } .det.media { border-left-color: var(--media); }
@@ -154,6 +159,7 @@
     <span><i class="sw tri" style="background:#15803d"></i>Estación recibiendo datos</span>
     <span><i class="sw tri" style="background:#c62828"></i>Estación disparada</span>
     <span><i class="sw tri" style="background:#9ca3af"></i>Sin datos</span>
+    <span>Triángulo pequeño: estación de la región en observación (no decide alertas)</span>
     <span><i class="sw" style="background:#c62828"></i>Epicentro revisado por el SGC</span>
     <span><i class="sw" style="background:#fff;border-color:#d97706;border-style:dashed"></i>Epicentro preliminar u otra agencia</span>
     <span>Círculos: distancia a Medellín</span>
@@ -174,8 +180,15 @@
   <h2>Sismos grandes en el mundo (GDACS)</h2>
   <div id="gdacs" class="qinfo"><div class="muted">Consultando GDACS…</div></div>
 
-  <h2>Estaciones (SeedLink IRIS: red CM del SGC, IU y EC de Ecuador)</h2>
+  <h2>Estaciones (SeedLink: EarthScope y GEOFON)</h2>
+  <p class="stations-note">Las principales deciden el nivel de alerta. Las de la región (de México al norte
+    de Perú) están en observación: se reciben y aparecen en las detecciones, pero no deciden.
+    EarthScope entrega con unos 15–25 s de retraso; cada estación muestra el suyo.</p>
   <div id="stations" class="stations"></div>
+  <details id="stations-obs" class="stations-obs" hidden>
+    <summary></summary>
+    <div id="stations-obs-list" class="stations"></div>
+  </details>
 
   <h2>Detecciones · toca una para verla en el mapa</h2>
   <details class="levels-guide">
@@ -683,8 +696,8 @@ const fmtS = (s) => Math.abs(s) >= 90 ? `${(s / 60).toFixed(1)} min` : `${Math.r
 
 // Triángulo SVG para las estaciones (símbolo sismológico habitual); lleva el número de
 // orden cuando la estación se ilumina en la animación
-function stationIcon(color, highlight, order) {
-  const size = order ? 26 : highlight ? 22 : 16;
+function stationIcon(color, highlight, order, small) {
+  const size = order ? 26 : highlight ? 22 : small ? 11 : 16;
   const stroke = highlight || order ? "#111" : "#fff";
   const num = order ? `<text x="10" y="16" text-anchor="middle" font-size="9" font-weight="700" fill="#fff" font-family="system-ui">${order}</text>` : "";
   return L.divIcon({
@@ -703,19 +716,21 @@ function mapStations(list) {
     const color = order ? "#e11d48" : s.triggered ? "#c62828" : alive ? "#15803d" : "#9ca3af";
     const inDet = sel && sel.stations && s.station in sel.stations;
     const lat = s.latency_s === null ? "sin datos" : `retraso ${Math.round(s.latency_s)} s`;
+    const obs = s.role === "observación";
     const popup = `<b>${s.network}.${s.station}</b> · ${s.channel}<br>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}<br>
       ${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}${s.group ? `<br>Grupo: ${s.group}` : ""}
+      ${obs ? "<br>En observación: no decide alertas" : ""}${s.server ? `<br>SeedLink: ${s.server}` : ""}
       ${inDet ? `<br><b>Disparó en esta detección</b> (STA/LTA ${sel.stations[s.station].ratio})` : ""}`;
     let m = stMarkers[s.station];
     if (!m) {
-      m = L.marker([s.lat, s.lon], { icon: stationIcon(color, inDet, order) }).addTo(stationLayer)
+      m = L.marker([s.lat, s.lon], { icon: stationIcon(color, inDet, order, obs) }).addTo(stationLayer)
         .bindTooltip(s.station, { direction: "top", offset: [0, -8] }).bindPopup(popup);
       stMarkers[s.station] = m;
     } else {
-      m.setIcon(stationIcon(color, inDet, order));
+      m.setIcon(stationIcon(color, inDet, order, obs));
       m.setPopupContent(popup);
     }
-    m.setZIndexOffset(order ? 1000 : 0);
+    m.setZIndexOffset(order ? 1000 : obs ? -100 : 0);  // las principales encima de las regionales
   });
 }
 
@@ -921,13 +936,27 @@ function renderStations(list) {
   const lags = list.map((s) => s.latency_s).filter((a) => a !== null && a !== undefined);
   if (ages.length) freshest = { age: Math.min(...ages), lag: lags.length ? Math.min(...lags) : null, at: Date.now() };
   tickClock();
-  $("#stations").innerHTML = list.map((s) => {
+  const tile = (s, extra) => {
     const alive = s.last_packet_age_s !== null && s.last_packet_age_s < 120;
     const cls = s.triggered ? "trig" : alive ? "ok" : "";
     const lat = s.latency_s === null ? "sin datos" : `retraso ${Math.round(s.latency_s)} s`;
-    return `<div class="st"><b><span class="dot ${cls}"></span>${s.station}${s.station === "HEL" ? " · Medellín" : ""}</b>
-      <small>${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}</small></div>`;
-  }).join("");
+    return `<div class="st${extra}"><b><span class="dot ${cls}"></span>${s.station}${s.station === "HEL" ? " · Medellín" : ""}</b>
+      <small>${extra ? `${s.network} · ` : ""}${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}</small></div>`;
+  };
+  const core = list.filter((s) => s.role !== "observación");
+  const obs = list.filter((s) => s.role === "observación");
+  $("#stations").innerHTML = core.map((s) => tile(s, "")).join("");
+  $("#stations-obs").hidden = !obs.length;
+  if (obs.length) {
+    const vivas = obs.filter((s) => s.last_packet_age_s !== null && s.last_packet_age_s < 120).length;
+    const disparadas = obs.filter((s) => s.triggered).length;
+    $("#stations-obs summary").textContent = `En observación: ${obs.length} estaciones de la región · ` +
+      `${vivas} recibiendo datos${disparadas ? ` · ${disparadas} disparada${disparadas > 1 ? "s" : ""} ahora` : ""}`;
+    // El orden por red y estación no cambia: así la lista no salta cada 5 s
+    $("#stations-obs-list").innerHTML = obs.slice()
+      .sort((a, b) => (a.network + a.station).localeCompare(b.network + b.station))
+      .map((s) => tile(s, " obs")).join("");
+  }
 }
 
 // Nivel de alerta en palabras (las mismas que detector.LEVEL_LABELS). El nivel dice qué tan
