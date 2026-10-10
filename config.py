@@ -2,10 +2,12 @@
 
 MEDELLIN = (6.2476, -75.5658)  # lat, lon
 
-# SeedLink público de IRIS/EarthScope
+# SeedLink público de IRIS/EarthScope. Entrega con 15-25 s de retraso respecto al
+# instante del dato (medido el 9-oct con CM.RUS); la página muestra el de cada estación.
 SEEDLINK_SERVER = "rtserve.iris.washington.edu:18000"
+# Estaciones principales: deciden el nivel de alerta.
 # Estación -> (red, ubicación, canal vertical, lat, lon)
-STATIONS = {
+CORE_STATIONS = {
     # Red CM del SGC
     "HEL": ("CM", "00", "HHZ", 6.1909, -75.529),     # Santa Elena, Medellín (8 km)
     "RUS": ("CM", "00", "HHZ", 5.8927, -73.0828),    # La Rusia, Boyacá
@@ -25,7 +27,17 @@ STATIONS = {
 LOCAL_STATION = "HEL"  # estación de Medellín
 # Estaciones muy cercanas entre sí cuentan como una sola confirmación. Así un sismo
 # local o actividad volcánica en Ecuador no produce una alerta por sí solo.
-STATION_GROUPS = {"OTAV": "ecuador", "PUYO": "ecuador"}
+CORE_GROUPS = {"OTAV": "ecuador", "PUYO": "ecuador"}
+
+# Estaciones de la región (México - norte de Perú) que transmiten en abierto: la lista
+# está en estaciones_region.py, generada por tools/estaciones_region.py. Entran en modo
+# observación: se reciben, pasan por el STA/LTA, aparecen en el mapa y en las detecciones,
+# pero no deciden el nivel. Con 150 estaciones repartidas en miles de km, el ruido de alguna
+# coincidiría casi siempre con un disparo de HEL dentro de la ventana de asociación y daría
+# falsos "probablemente sentido en Medellín". Para probar que voten:
+# REGIONAL_STATIONS_VOTE = True en config_local.py.
+USE_REGIONAL_STATIONS = True
+REGIONAL_STATIONS_VOTE = False
 
 # Detector STA/LTA
 BANDPASS = (2.0, 10.0)  # Hz
@@ -104,3 +116,17 @@ try:
     from config_local import *  # noqa: F401,F403
 except ImportError:
     pass
+
+# ---- Listas combinadas: después de config_local, para que sus ajustes cuenten
+try:
+    from estaciones_region import REGIONAL_GROUPS, REGIONAL_SERVERS, REGIONAL_STATIONS
+except ImportError:
+    REGIONAL_STATIONS, REGIONAL_SERVERS, REGIONAL_GROUPS = {}, {}, {}
+if not USE_REGIONAL_STATIONS:
+    REGIONAL_STATIONS, REGIONAL_SERVERS, REGIONAL_GROUPS = {}, {}, {}
+STATIONS = {**CORE_STATIONS, **REGIONAL_STATIONS}
+STATION_GROUPS = {**CORE_GROUPS, **REGIONAL_GROUPS}
+# Servidor SeedLink de cada estación que no sale del principal
+STATION_SERVERS = dict(REGIONAL_SERVERS)
+# Estaciones que se ven pero no deciden el nivel de alerta
+OBSERVATION_STATIONS = set() if REGIONAL_STATIONS_VOTE else set(REGIONAL_STATIONS)

@@ -48,6 +48,30 @@ class SeedLinkClient:
             data.extend(chunk)
         return bytes(data)
 
+    def _select_all(self):
+        """Pide todas las estaciones de una vez y lee las respuestas después.
+
+        Esperar el OK de cada orden antes de la siguiente cuesta una ida y vuelta por orden:
+        con 130 estaciones son ~400 y casi un minuto en cada reconexión. Las respuestas
+        llegan en el mismo orden. Una estación rechazada se anota y se sigue con las demás:
+        antes, un solo canal rechazado tumbaba la conexión entera.
+        """
+        cmds = []
+        for net, sta, sel in self.streams:
+            cmds += [(f"STATION {sta} {net}", sta), (f"SELECT {sel}.D", sta), ("DATA", sta)]
+        self.sock.sendall("".join(c + "\r\n" for c, _ in cmds).encode("ascii"))
+        rejected = {}
+        for cmd, sta in cmds:
+            resp = self._readline()
+            if resp != "OK":
+                rejected.setdefault(sta, f"'{cmd}' -> {resp}")
+        if rejected:
+            log.warning("SeedLink %s:%s rechazó %d estaciones: %s", *self.addr, len(rejected),
+                        "; ".join(f"{s}: {r}" for s, r in rejected.items()))
+        if len(rejected) == len(self.streams):
+            raise ConnectionError("el servidor rechazó todas las estaciones")
+        self.rejected = sorted(rejected)
+
     def run(self):
         self.sock = socket.create_connection(self.addr, timeout=30)
         self.sock.settimeout(self.timeout)
@@ -55,10 +79,7 @@ class SeedLinkClient:
             self.sock.sendall(b"HELLO\r\n")
             banner = [self._readline(), self._readline()]
             log.info("SeedLink: %s", " / ".join(banner))
-            for net, sta, sel in self.streams:
-                self._cmd(f"STATION {sta} {net}")
-                self._cmd(f"SELECT {sel}.D")
-                self._cmd("DATA")
+            self._select_all()
             self._cmd("END", expect_ok=False)
             while True:
                 head = self._recv_exact(self.HEADER)

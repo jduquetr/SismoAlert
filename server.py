@@ -317,16 +317,25 @@ def on_trace(trace):
         assoc.peak(sta, trig.peak_ratio)
 
 
-def seedlink_loop():
+def seedlink_streams():
+    """Estaciones agrupadas por servidor SeedLink: {servidor: [(red, estación, selector)]}."""
+    out = {}
+    for sta, (net, loc, cha, *_) in config.STATIONS.items():
+        server = config.STATION_SERVERS.get(sta, config.SEEDLINK_SERVER)
+        out.setdefault(server, []).append((net, sta, loc + cha))
+    return out
+
+
+def seedlink_loop(server, streams):
+    """Una conexión por servidor; cada una se reconecta por su cuenta."""
     delay = 5
-    streams = [(net, sta, loc + cha) for sta, (net, loc, cha, *_) in config.STATIONS.items()]
     while True:
-        hub.note(f"Conectando a {config.SEEDLINK_SERVER}")
+        hub.note(f"Conectando a {server} ({len(streams)} estaciones)")
         connected_at = time.time()
         try:
-            SeedLinkClient(config.SEEDLINK_SERVER, streams, on_trace).run()
+            SeedLinkClient(server, streams, on_trace).run()
         except Exception as e:
-            hub.note(f"SeedLink desconectado: {e}. Reintento en {delay} s")
+            hub.note(f"SeedLink {server} desconectado: {e}. Reintento en {delay} s")
         # Si la conexión duró, volver a empezar con espera corta
         delay = 5 if time.time() - connected_at > 300 else min(delay * 2, 300)
         time.sleep(delay)
@@ -434,7 +443,9 @@ def station_info():
     out = []
     for sta, (net, loc, cha, lat, lon) in config.STATIONS.items():
         out.append(dict(triggers[sta].status(), network=net, channel=f"{loc}.{cha}".lstrip("."),
-                        lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta)))
+                        lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta),
+                        role="observación" if sta in config.OBSERVATION_STATIONS else "principal",
+                        server=config.STATION_SERVERS.get(sta, config.SEEDLINK_SERVER).split(":")[0]))
     return out
 
 
@@ -564,7 +575,8 @@ def main():
         hub.detections = {d["id"]: d for d in saved}
     if saved:
         log.info("Cargadas %d detecciones guardadas en %s", len(saved), store.GEOJSON)
-    threading.Thread(target=seedlink_loop, daemon=True).start()
+    for server, streams in seedlink_streams().items():
+        threading.Thread(target=seedlink_loop, args=(server, streams), daemon=True).start()
     emsc_stream.start()
     threading.Thread(target=sgc_background_loop, daemon=True).start()
     threading.Thread(target=gdacs_loop, daemon=True).start()

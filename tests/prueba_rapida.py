@@ -76,6 +76,44 @@ with tempfile.TemporaryDirectory() as tmp:
 
 check("config.USE_SGC existe", isinstance(config.USE_SGC, bool))
 
+# Estaciones regionales (estaciones_region.py): coherentes con las principales
+reg = config.REGIONAL_STATIONS
+check("estaciones regionales sin chocar con las principales", not set(reg) & set(config.CORE_STATIONS))
+check("estaciones regionales dentro de la región",
+      all(-8 <= v[3] <= 24 and -105 <= v[4] <= -61 for v in reg.values()))
+check("servidores solo de estaciones conocidas", set(config.STATION_SERVERS) <= set(config.STATIONS))
+
+# Modo observación: las regionales acompañan pero no deciden el nivel
+from detector import Associator  # noqa: E402
+
+obs = sorted(config.OBSERVATION_STATIONS)[:3]
+if len(obs) == 3:
+    dets = []
+    a = Associator(lambda d: dets.append(d), lambda d: None)
+    t0 = T("2026-10-09T12:00:00")
+    a.trigger("HEL", t0, 20.0)
+    a.trigger(obs[0], t0 + 20, 25.0)
+    a.trigger(obs[1], t0 + 30, 25.0)
+    check("HEL + 2 en observación no suben a 'alta'", dets and dets[0]["level"] == "baja"
+          and obs[0] in dets[0]["stations"], f"nivel {dets and dets[0]['level']}")
+
+    dets = []
+    a = Associator(lambda d: dets.append(d), lambda d: None)
+    for i, s in enumerate(obs):
+        a.trigger(s, t0 + 10 * i, 25.0)
+    check("3 en observación solas no abren detección", not dets)
+
+    guardadas = config.OBSERVATION_STATIONS
+    config.OBSERVATION_STATIONS = set()  # como REGIONAL_STATIONS_VOTE = True
+    try:
+        dets = []
+        a = Associator(lambda d: dets.append(d), lambda d: None)
+        a.trigger("HEL", t0, 20.0)
+        a.trigger(obs[0], t0 + 20, 25.0)
+        check("con voto, HEL + regional sí sube a 'alta'", dets and dets[0]["level"] == "alta")
+    finally:
+        config.OBSERVATION_STATIONS = guardadas
+
 print()
 if failures:
     print(f"{len(failures)} prueba(s) fallaron: {', '.join(failures)}")

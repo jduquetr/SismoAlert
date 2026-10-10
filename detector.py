@@ -139,6 +139,13 @@ def simultaneous_artifact(det):
             "(reconexión o corte de red).")
 
 
+def votes(station):
+    """Si la estación decide el nivel de alerta. Las de observación (las regionales mientras
+    no se les deje votar, ver config.REGIONAL_STATIONS_VOTE) se suman a las detecciones pero
+    no abren una ni cambian su nivel."""
+    return station not in config.OBSERVATION_STATIONS
+
+
 def n_groups(stations):
     """Cuenta confirmaciones independientes (las estaciones agrupadas valen por una)."""
     return len({config.STATION_GROUPS.get(s, s) for s in stations})
@@ -185,7 +192,7 @@ class Associator:
         local = self.pending.get(config.LOCAL_STATION)
         local_strong = (config.ALERT_LOCAL_ONLY and local is not None
                         and local["ratio"] >= config.LOCAL_ONLY_MIN_RATIO)
-        strong = [s for s, p in self.pending.items() if p["ratio"] >= config.MIN_RATIO]
+        strong = [s for s, p in self.pending.items() if p["ratio"] >= config.MIN_RATIO and votes(s)]
         needed = (config.MIN_STATIONS if config.LOCAL_STATION in strong
                   else config.MIN_STATIONS_REMOTE)
         if n_groups(strong) >= needed or local_strong:
@@ -212,7 +219,7 @@ class Associator:
 
     @staticmethod
     def _set_level(det):
-        sts = {s: p for s, p in det["stations"].items() if p["ratio"] >= config.MIN_RATIO}
+        sts = {s: p for s, p in det["stations"].items() if p["ratio"] >= config.MIN_RATIO and votes(s)}
         n = len(sts)
         if n_groups(sts) >= config.MIN_STATIONS and config.LOCAL_STATION in sts:
             det["level"] = "alta"
