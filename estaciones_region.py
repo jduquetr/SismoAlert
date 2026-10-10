@@ -1,6 +1,6 @@
 """Estaciones de la región que transmiten en abierto (generado por tools/estaciones_region.py).
 
-Foto del 2026-10-10 04:17 UTC: canal vertical con dato de hace menos de 10 min en
+Foto del 2026-10-10 04:29 UTC: canal vertical con dato de hace menos de 10 min en
 el SeedLink de EarthScope o de GEOFON. No editar a mano: regenerar.
 Rectángulo: norte 23.631, sur -7.29, este -61.992, oeste -104.883.
 """
@@ -30,7 +30,7 @@ REGIONAL_STATIONS = {
     "HDC": ("G", "00", "BHZ", 10.002, -84.1114),  # Heredia, Costa Rica
     "UNM": ("G", "00", "BHZ", 19.3297, -99.1781),  # Unam - Mexico, Mexico
     "BOAB": ("GE", "", "HHZ", 12.4493, -85.6659),  # INETER/GEOFON Station Boaco, Nicaragua
-    "JTS": ("II", "10", "BHZ", 10.2908, -84.9525),  # Las Juntas de Abangares, Costa Rica
+    "JTS": ("II", "00", "BHZ", 10.2908, -84.9525),  # Las Juntas de Abangares, Costa Rica
     "TEIG": ("IU", "00", "BHZ", 20.2262, -88.2763),  # Tepich, Yucatan, Mexico
     "GWJB": ("JM", "00", "HHZ", 18.0742, -76.728),  # Greenwich, St.Andrew, Jamaica
     "HOJB": ("JM", "00", "HHZ", 18.0048, -76.7491),  # UWI Mona, St. Andrew, Jamaica
@@ -57,8 +57,6 @@ REGIONAL_STATIONS = {
     "TLIG": ("MX", "", "BHZ", 17.5627, -98.5665),  # TLAPA
     "ZAIG": ("MX", "", "BHZ", 22.7692, -102.5671),  # ZACATECAS
     "SEUS": ("NA", "", "HHZ", 17.4928, -62.9814),  # St Eustatius, Netherlands Antilles Seismic Netwo
-    "CNGN": ("NU", "00", "EHZ", 12.5, -86.6985),  # Station Cerro Negro, Nicaragua
-    "ESTN": ("NU", "00", "EHZ", 13.1017, -86.3692),  # Station Esteli, Nicaragua
     "HERN": ("NU", "00", "EHZ", 12.6093, -86.831),  # Volcan Telica, Leon, Nicaragua
     "MASN": ("NU", "00", "EHZ", 11.9889, -86.1577),  # Volcan Masaya, Masaya, Nicaragua
     "SIUN": ("NU", "10", "HHZ", 13.7162, -84.7735),  # Universidad URACAN, Siuna, Nicaragua
@@ -124,7 +122,6 @@ REGIONAL_STATIONS = {
     "TCS1": ("TC", "", "HHZ", 10.0421, -84.2998),  # Tacares, Grecia, Alajuela
     "TEXA": ("TC", "", "HHZ", 10.383, -84.618),  # Soltis Center
     "UPAL": ("TC", "", "EHZ", 10.8972, -85.0123),  # Upala
-    "ABDR": ("ZC", "", "BHZ", 18.8121, -70.6267),  # Alta Bandera, DR
     "CADR": ("ZC", "", "BHZ", 19.667, -69.9398),  # Cabo Frances, DR
     "JIDR": ("ZC", "", "BHZ", 18.4914, -71.8642),  # Jimani, DR
     "SODR": ("ZC", "", "BHZ", 19.7524, -70.5763),  # Sosua, DR
@@ -132,13 +129,10 @@ REGIONAL_STATIONS = {
 
 # Las que no salen del SeedLink de EarthScope (el de config.SEEDLINK_SERVER)
 REGIONAL_SERVERS = {
-    "CNGN": "geofon.gfz-potsdam.de:18000",
-    "ESTN": "geofon.gfz-potsdam.de:18000",
 }
 
 # Estaciones a menos de 150 km entre sí (o de una principal) valen por una
 REGIONAL_GROUPS = {
-    "ABDR": "LOLU",
     "AGPR": "QBPR",
     "ANTS": "ecuador",
     "AOPR": "QBPR",
@@ -152,14 +146,12 @@ REGIONAL_GROUPS = {
     "CG01": "QBPR",
     "CHSH": "ecuador",
     "CLS1": "QBPR",
-    "CNGN": "HERN",
     "COM1": "QBPR",
     "CRPR": "QBPR",
     "CUPR": "TBVI",
     "DRK0": "LCR2",
     "ECPR": "QBPR",
     "ELI1": "UPAL",
-    "ESTN": "TGUH",
     "FAPR": "TBVI",
     "GBPR": "QBPR",
     "GCPR": "QBPR",

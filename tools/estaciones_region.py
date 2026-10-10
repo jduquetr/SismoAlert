@@ -9,7 +9,9 @@ Por qué así:
   servidor SeedLink: a INFO STREAMS responde, canal por canal, la hora del último dato.
   Entra la estación cuyo canal vertical tiene un dato de hace menos de VIVA_MIN minutos.
 - Servidores públicos: EarthScope (rtserve, el mismo que ya usa el detector) y GEOFON.
-  Raspberry Shake no ofrece SeedLink público.
+  Raspberry Shake no ofrece SeedLink público. Solo se usan los que hablan SeedLink 3.1, que
+  es lo que entiende seedlink.py: GEOFON anuncia solo la versión 4, responde OK a las
+  órdenes 3.1 pero no manda datos (probado el 9-oct) y su conexión se caía cada 2 min.
 - Canal: el vertical de mayor muestreo que esté en vivo (HHZ, luego BHZ...). El
   acelerómetro (HNZ/ENZ) solo si no hay otro.
 - No toca las estaciones principales de config.CORE_STATIONS.
@@ -51,7 +53,11 @@ def info_streams(servidor):
     s.settimeout(120)
     f = s.makefile("rb")
     s.sendall(b"HELLO\r\n")
-    f.readline(), f.readline()
+    banner = f.readline().decode("latin-1")
+    f.readline()
+    if "SLPROTO:3.1" not in banner:
+        s.close()
+        return None
     s.sendall(b"INFO STREAMS\r\n")
     trozos = []
     while True:
@@ -107,6 +113,9 @@ def main():
 
     for servidor, fdsn in SERVIDORES:
         xml = info_streams(servidor)
+        if xml is None:
+            print(f"{servidor}: no habla SeedLink 3.1; se omite", file=sys.stderr)
+            continue
         meta = coordenadas(fdsn, rect)
         vivas = 0
         for m in re.finditer(r'<station name="([^"]+)" network="([^"]+)"[^>]*>(.*?)</station>', xml, re.S):
