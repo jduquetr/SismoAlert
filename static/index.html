@@ -981,7 +981,9 @@ function stationAge(s, now = Date.now()) {
   return s.last_packet_age_s + elapsed;
 }
 function stationAlive(s) {
-  return !isSnapshot && connectionState === "live" && stationAge(s) < 120;
+  const elapsed = Math.max(0, (Date.now() - lastStationsAt) / 1000);
+  return !isSnapshot && connectionState === "live" && stationAge(s) < 120
+    && Number.isFinite(s.latency_s) && s.latency_s + elapsed < 120;
 }
 function refreshSummary() {
   if (!hasState) return;
@@ -1102,8 +1104,10 @@ function handleDet(d, kind) {
   }
   if (kind === "catalog") {
     for (const [src, e] of Object.entries(d.catalog || {})) {
-      if (e.priority === "silenciosa") continue;
-      notify(`${d.id}:${src}:${e.id}:${e.mag}`,
+      if (!["informativa", "crítica"].includes(e.priority)) continue;
+      const key = `${d.id}:${src}:${e.id}:${e.mag}`;
+      if (e.priority !== "crítica" && notified.has(`${key}:crítica`)) continue;
+      notify(`${key}:${e.priority}`,
         `${pre}M${e.mag} · ${e.place}`,
         `${src}: a ${e.distance_km} km de Medellín, profundidad ${Math.round(e.depth ?? 0)} km. Prioridad ${e.priority}.` +
           (e.felt_reports ? ` ${e.felt_reports} personas lo sintieron (EMSC).` : ""),
@@ -1123,7 +1127,7 @@ function addLog(e) {
 }
 function rememberNotifications(d) {
   notified.add(`${d.id}:${d.level}`);
-  for (const [src, e] of Object.entries(d.catalog || {})) notified.add(`${d.id}:${src}:${e.id}:${e.mag}`);
+  for (const [src, e] of Object.entries(d.catalog || {})) notified.add(`${d.id}:${src}:${e.id}:${e.mag}:${e.priority}`);
 }
 async function load() {
   if (loadController) loadController.abort();
