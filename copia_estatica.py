@@ -19,6 +19,7 @@ ROOT = Path(__file__).parent
 CACHE = ROOT / "datos" / "cache"
 SERVER_STATE = "http://127.0.0.1:8765/state"
 SERVER_SGC = "http://127.0.0.1:8765/sgc-sismos?dias=30"
+LEAFLET_JS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
 LEAFLET_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
 NATURAL_EARTH = ("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/"
                  "geojson/ne_50m_admin_0_countries.geojson")
@@ -76,61 +77,27 @@ def replace(html, old, new):
     return html.replace(old, new, 1)
 
 
-def build(state, sgc=None):
+def build(state, sgc=None, *, taken=None):
     html = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
-    taken = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    taken = taken or datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    html = replace(html, "<title>Alertas de sismos</title>", "<title>Alertas Sísmicas Medellín</title>")
-    # Estilos de Leaflet incluidos: algunos visores solo permiten hojas de estilo propias
+    # The page handles snapshot mode itself, so live handlers and local tests stay shared.
     html = replace(html, f'<link rel="stylesheet" href="{LEAFLET_CSS}">',
                    "<style>" + cached("leaflet.min.css", LEAFLET_CSS) + "</style>")
-    html = replace(html, "  #map { height: 520px;", "  .copy-banner { background: var(--panel); "
-                   "border: 1px solid var(--line); border-left: 4px solid var(--media); border-radius: 8px; "
-                   "padding: 10px 14px; font-size: 14px; margin-bottom: 14px; }\n  #map { height: 520px;")
+    html = replace(html, f'<script src="{LEAFLET_JS}"></script>',
+                   "<script>" + cached("leaflet.min.js", LEAFLET_JS) + "</script>")
+    def script_json(value):
+        # Prevent catalog text from closing the inline script element.
+        return json.dumps(value, ensure_ascii=False).replace("<", "\\u003c")
+    payload = (f"const SNAPSHOT = {script_json(state)};\n"
+               f"const SNAPSHOT_TAKEN = {script_json(taken)};\n"
+               f"const BASEMAP = {script_json(json.loads(basemap()))};\n"
+               f"const CITIES = {script_json(CITIES)};\n"
+               f"const SGC_SNAPSHOT = {script_json(sgc)};\n")
     html = replace(html, "<script>\nconst $ = (s) => document.querySelector(s);",
-                   "<script>\n// ---- Copia estática con los datos del servidor en este momento ----\n"
-                   f"const SNAPSHOT = {json.dumps(state, ensure_ascii=False)};\n"
-                   f'const SNAPSHOT_TAKEN = "{taken}";\n'
-                   f"const BASEMAP = {basemap()};\n"
-                   f"const CITIES = {json.dumps(CITIES, ensure_ascii=False)};\n"
-                   + (f"const SGC_SNAPSHOT = {json.dumps(sgc, ensure_ascii=False)};\n" if sgc else "")
-                   + "const $ = (s) => document.querySelector(s);")
-    html = replace(html, '  const s = await (await fetch("/state")).json();', "  const s = SNAPSHOT;")
-    html = replace(html, 'function connect() {\n  const es = new EventSource("/events");',
-                   "function connect() {\n"
-                   "  $(\"#conn\").textContent = `Copia estática · datos del ${fmtTime(SNAPSHOT_TAKEN)} · no se actualiza`;\n"
-                   '  $("#conn-dot").className = "dot";\n'
-                   "  load();\n}\n\n"
-                   'function connectLive() {\n  const es = new EventSource("/events");')
-    # Sin servidor, la prueba se simula en la página con los datos reales del sismo de Istmina
-    start = html.index('$("#test").onclick = () => fetch("/test')
-    end = html.index("});", start) + 3
-    html = html[:start] + TEST_HANDLER + html[end:]
-    html = replace(html, "<main>", '<main>\n  <div class="copy-banner"><b>Copia para compartir.</b> '
-                   "Así se veía la página de alertas en el equipo local; los datos no se actualizan. "
-                   "Toca una detección para ver en el mapa las estaciones que la registraron y la llegada "
-                   "de las ondas. Cambia el mapa base con el control de capas del mapa.</div>")
+                   "<script>\n" + payload + "const $ = (s) => document.querySelector(s);")
     return html
 
-
-TEST_HANDLER = """$("#test").onclick = () => {
-  const ref = SNAPSHOT.detections.find((d) => d.test && d.catalog && d.catalog.SGC);
-  const now = new Date().toISOString();
-  const det = {
-    id: "PRUEBA-" + Date.now(), test: true, first_onset: "2026-09-27T21:58:25.998Z", detected_at: now,
-    level: "alta", message: "Sismo detectado en 3 estaciones, incluida HEL (Medellín): probablemente se sintió en Medellín",
-    stations: { HEL: { onset: "2026-09-27T21:58:25.998Z", ratio: 29.6 },
-                RUS: { onset: "2026-09-27T21:58:53.018Z", ratio: 27.9 },
-                OCA: { onset: "2026-09-27T21:59:07.968Z", ratio: 19.5 } },
-  };
-  handleDet(det, "detection");
-  addLog({ t: now, text: `DETECCIÓN ${det.id} [alta]: ${det.message}` });
-  if (ref) setTimeout(() => {
-    det.catalog = ref.catalog; det.priority = ref.priority;
-    handleDet(det, "catalog");
-    addLog({ t: new Date().toISOString(), text: `SGC, USGS y EMSC confirman ${det.id}: M4.3 Istmina - Chocó, Colombia, a 235 km de Medellín` });
-  }, 1500);
-};"""
 
 
 def main():

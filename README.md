@@ -70,7 +70,8 @@ py -m venv .venv
 
 En la página, pulsa **Activar notificaciones y sonido** y acepta el permiso del navegador.
 El botón **Probar con el sismo de Istmina** simula una detección del M4.3 del 27-sep-2026
-y busca ese sismo real en los tres catálogos.
+con los datos históricos incluidos. La simulación funciona solo en este navegador: no consulta
+catálogos ni envía avisos a Telegram, y no se cuenta como una detección real.
 
 ## Uso en macOS (computador que vigila)
 
@@ -175,8 +176,9 @@ SISMOALERT_URL=https://sismo-alert-blue.vercel.app
 `telegram.py` avisa de cada detección (con sonido si es alta o media), de la primera
 confirmación en un catálogo y de cada subida de prioridad, de las estaciones que dejan de
 enviar datos más de 10 minutos (`TELEGRAM_STALE_S`) y manda un resumen diario a las 7:00 de
-Colombia (`TELEGRAM_DAILY_HOUR`). Sin esas variables no envía nada. El botón de prueba de la
-página también llega a Telegram, marcado como PRUEBA.
+Colombia (`TELEGRAM_DAILY_HOUR`). Sin esas variables no envía nada. El botón de prueba de la página es local y no envía mensajes. El endpoint técnico
+`POST /test` conserva su comportamiento de integración y sí puede generar avisos marcados
+como PRUEBA; no se invoca desde la interfaz.
 
 **Catálogo del SGC desde la nube.** `api.sgc.gov.co` responde 403 a las IP de Azure: desde
 ahí las detecciones se confirman con USGS y EMSC, y el mapa queda sin la sismicidad de fondo
@@ -202,8 +204,12 @@ git push
 ```
 
 El mapa tiene un selector de mapa base, plegado en un ícono arriba a la derecha: calles,
-topográfico, satélite, relieve sombreado, claro, oscuro y contornos sin conexión. La página
-tiene además un control de volumen para la alerta. Ambos se recuerdan en cada navegador.
+topográfico, satélite, relieve sombreado, claro, oscuro y contornos sin conexión. La página incluye filtros por lugar, estación, fuente y estado de confirmación, selección
+de estaciones, ajustes de volumen y tema claro/oscuro. El mapa base, volumen y tema se
+recuerdan en cada navegador. Los ajustes y la prueba local están en el botón de ajustes
+junto a «Activar avisos». Los contadores resumen las detecciones cargadas en memoria
+(hasta 30 al conectar), no todo el archivo histórico. Si se interrumpe la conexión, las
+estaciones pasan a estado sin verificar y se conservan los eventos recibidos.
 
 `copia_estatica.py` también publica `docs/sismos-detectados.geojson`, con CORS abierto. El
 botón "Sismos sentidos (SPAlert)" del visor sismos-3d-colombia lo usa como respaldo cuando no
@@ -247,6 +253,7 @@ no constituye una medida de falsas alarmas por día. Reproducir con
 `.venv/bin/python tools/calibrate.py --offline` (omitir `--offline` para descargar ondas).
 
 Pruebas sin red ni mensajes reales: `.venv/bin/python -m unittest discover -s tests -v`.
+Interfaz: `node tests/test_ui.js && node tests/test_dashboard.js`.
 
 ## Pendiente
 
