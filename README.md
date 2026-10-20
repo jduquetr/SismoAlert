@@ -204,7 +204,10 @@ git push
 ```
 
 El mapa tiene un selector de mapa base, plegado en un ícono arriba a la derecha: calles,
-topográfico, satélite, relieve sombreado, claro, oscuro y contornos sin conexión. La página incluye filtros por lugar, estación, fuente y estado de confirmación, selección
+topográfico, satélite, relieve sombreado y contornos sin conexión en la copia estática.
+La página en vivo usa OpenStreetMap por defecto, sin clave de API. Las preferencias
+guardadas de CARTO se migran automáticamente; cambiar el tema no cambia el mapa base.
+La página incluye filtros por lugar, estación, fuente y estado de confirmación, selección
 de estaciones, ajustes de volumen y tema claro/oscuro. El mapa base, volumen y tema se
 recuerdan en cada navegador. Los ajustes y la prueba local están en el botón de ajustes
 junto a «Activar avisos». Los contadores resumen las detecciones cargadas en memoria
