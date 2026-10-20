@@ -1,12 +1,12 @@
 # Alertas de sismos · Medellín (prototipo)
 
 Detecta sismos en tiempo real con estaciones del SGC (red CM) que retransmite el SeedLink
-público de IRIS. Busca cada detección en los catálogos del SGC, USGS y EMSC, y avisa con
+público de EarthScope. Busca cada detección en los catálogos del SGC, USGS y EMSC, y avisa con
 notificaciones del navegador.
 
 ## Flujo
 
-1. **SeedLink** (`rtserve.iris.washington.edu:18000`): 9 estaciones CM del SGC más IU.OTAV
+1. **SeedLink** (`rtserve.earthscope.org:18000`): 9 estaciones CM del SGC más IU.OTAV
    y EC.PUYO en Ecuador, con unos 10–30 s de retraso. HEL (Santa Elena) está a 8 km de
    Medellín. Las dos de Ecuador cuentan como una sola confirmación. PULU y ANTS no se usan:
    son estaciones volcánicas y dan demasiado ruido.
@@ -212,7 +212,11 @@ de estaciones, ajustes de volumen y tema claro/oscuro. El mapa base, volumen y t
 recuerdan en cada navegador. Los ajustes y la prueba local están en el botón de ajustes
 junto a «Activar avisos». Los contadores resumen las detecciones cargadas en memoria
 (hasta 30 al conectar), no todo el archivo histórico. Si se interrumpe la conexión, las
-estaciones pasan a estado sin verificar y se conservan los eventos recibidos.
+estaciones pasan a estado sin verificar y se conservan los eventos recibidos. Para
+mostrar una estación con datos recientes se comprueban tanto la llegada del paquete
+como la antigüedad de sus muestras. Una revisión de catálogo que sube a prioridad
+crítica emite un aviso nuevo aunque mantenga la misma magnitud; los duplicados y
+las bajadas de prioridad no repiten el aviso.
 
 `copia_estatica.py` también publica `docs/sismos-detectados.geojson`, con CORS abierto. El
 botón "Sismos sentidos (SPAlert)" del visor sismos-3d-colombia lo usa como respaldo cuando no

@@ -24,15 +24,17 @@ function setup(extra={}) {
   assert.equal(c.safeUrl('https://www.sgc.gov.co/a'),'https://www.sgc.gov.co/a');
   assert.equal(c.stationAlive({last_packet_age_s:undefined}),false);
   assert.equal(c.stationAlive({last_packet_age_s:null}),false);
-  assert.equal(c.stationAlive({last_packet_age_s:10}),true);
+  assert.equal(c.stationAlive({last_packet_age_s:10,latency_s:5}),true);
+  assert.equal(c.stationAlive({last_packet_age_s:1,latency_s:700}),false,'new packets with old samples are not live data');
+  assert.equal(c.stationAlive({last_packet_age_s:1,latency_s:null}),false);
   c.lastStationsAt=Date.now()-121000;
-  assert.equal(c.stationAlive({last_packet_age_s:0}),false);
+  assert.equal(c.stationAlive({last_packet_age_s:0,latency_s:0}),false);
   c.lastStationsAt=Date.now();c.connectionState='offline';
-  assert.equal(c.stationAlive({last_packet_age_s:1}),false);
+  assert.equal(c.stationAlive({last_packet_age_s:1,latency_s:1}),false);
   c.connectionState='live';c.isSnapshot=true;
-  assert.equal(c.stationAlive({last_packet_age_s:1}),false);
+  assert.equal(c.stationAlive({last_packet_age_s:1,latency_s:1}),false);
   c.isSnapshot=false;
-  const event={id:'a',first_onset:'2026-10-20T12:00:00Z',stations:{HEL:{}},catalog:{SGC:{place:'Istmina - Chocó',url:'https://www.sgc.gov.co/',id:'SGC1',mag:4.3}}};
+  const event={id:'a',first_onset:'2026-10-20T12:00:00Z',stations:{HEL:{}},catalog:{SGC:{place:'Istmina - Chocó',url:'https://www.sgc.gov.co/',id:'SGC1',mag:4.3,priority:'informativa'}}};
   c.dets.set('a',event);c.dets.set('b',{...event,id:'b',catalog:{}});c.dets.set('c',{...event,id:'c',test:true});c.dets.set('d',{...event,id:'d',discarded:'artefacto'});
   assert.equal(c.visibleDetections().length,3);
   c.controls['#search'].value='choco';assert.equal(c.visibleDetections().length,2);
@@ -52,7 +54,7 @@ function setup(extra={}) {
   assert.equal(asyncContext.dets.get('a').message,'newer SSE event','SSE newer than snapshot must win');
   const request2=asyncContext.load();
   pending.shift()({stations:[],log:[],detections:[event]});await request2;
-  assert.ok(asyncContext.notified.has('a:SGC:SGC1:4.3'),'reconnection must seed catalogue notification deduplication');
+  assert.ok(asyncContext.notified.has('a:SGC:SGC1:4.3:informativa'),'reconnection must seed catalogue notification deduplication');
   let notice='';asyncContext.fetchJson=async()=>{throw new Error('HTTP 500')};asyncContext.showDataNotice=s=>notice=s;
   await asyncContext.load();assert.match(notice,/No se pudo cargar/);
   // A local simulation must not reach fetch, notifications, Telegram, or real data counters.
