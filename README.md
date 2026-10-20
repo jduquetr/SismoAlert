@@ -10,6 +10,14 @@ notificaciones del navegador.
    y EC.PUYO en Ecuador, con unos 10–30 s de retraso. HEL (Santa Elena) está a 8 km de
    Medellín. Las dos de Ecuador cuentan como una sola confirmación. PULU y ANTS no se usan:
    son estaciones volcánicas y dan demasiado ruido.
+   Además se reciben cinco estaciones **en observación**: EC.TULM y EC.CHSH
+   (Ecuador), TC.PIRO y G.HDC (Costa Rica), y PR.ACPR (Aruba). Se ven en el mapa
+   con la indicación «Observación · sin alertas». No alimentan el detector, no
+   cuentan como confirmaciones y no alteran los avisos de salud por Telegram,
+   que siguen correspondiendo a las 11 estaciones del detector. Incorporarlas a
+   las alertas requiere validar ruido, eventos y grupos de estaciones cercanas.
+   Todos los canales comparten una única conexión SeedLink. La disponibilidad
+   depende del proveedor; una estación configurada puede estar sin señal.
 2. **Detector STA/LTA** por estación: banda 2–10 Hz, STA 1 s, LTA 30 s, umbral 5.
 3. **Asociación**, con tres niveles de alerta:
    - **alta**: 2 o más estaciones con STA/LTA ≥ 10 y HEL entre ellas (coincidencia de señales; no mide intensidad sentida).

@@ -152,6 +152,8 @@ h3{margin:0;font-size:14px}
 .st:hover{border-color:var(--accent)}
 .station-code{display:flex;gap:6px;align-items:center}
 .station-role{font-size:8px;font-weight:500;color:var(--accent);letter-spacing:0}
+.station-mode{display:block;margin-top:7px;font-size:9px;color:var(--muted)}
+.st.observation{border-style:dashed}
 .qinfo{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;margin-top:18px}
 .qgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
 .qgrid .k{display:block;font-size:10px;color:var(--muted);margin-bottom:3px}
@@ -344,7 +346,7 @@ h1{font-size:24px}
     </section>
   </div>
   <div id="qinfo" class="qinfo" aria-label="Detalle de la detección" hidden></div>
-  <section class="station-section" id="red" aria-labelledby="stations-title"><div class="section-heading"><div><h2 id="stations-title">Estado de las estaciones</h2><p>Señales recibidas por SeedLink · selecciona una estación para ubicarla</p></div><div class="station-actions"><span>CM · Colombia &nbsp; / &nbsp; IU, EC · Ecuador</span><button id="reconnect" title="Volver a conectar y consultar las estaciones">Reconectar</button></div></div><div id="stations" class="stations"><div class="empty">Esperando estaciones…</div></div></section>
+  <section class="station-section" id="red" aria-labelledby="stations-title"><div class="section-heading"><div><h2 id="stations-title">Estado de las estaciones</h2><p id="station-coverage">Señales recibidas por SeedLink · selecciona una estación para ubicarla</p></div><div class="station-actions"><span>Colombia y redes regionales</span><button id="reconnect" title="Volver a conectar y consultar las estaciones">Reconectar</button></div></div><div id="stations" class="stations"><div class="empty">Esperando estaciones…</div></div></section>
   <details class="technical" id="registro"><summary>Registro de actividad <span>Conexiones, detecciones y actualizaciones</span></summary><div id="log" tabindex="0" aria-label="Registro de actividad"></div></details>
   <footer class="app-footer"><span>Prototipo experimental. Una detección no confirma un sismo ni su intensidad sentida.</span><a href="https://www.sgc.gov.co/" target="_blank" rel="noopener noreferrer">Servicio Geológico Colombiano ↗</a></footer>
 </main>
@@ -761,6 +763,7 @@ function mapStations(list) {
     const lat = s.latency_s === null ? "sin datos" : `retraso ${Math.round(s.latency_s)} s`;
     const popup = `<b>${esc(s.network)}.${esc(s.station)}</b> · ${esc(s.channel)}<br>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}<br>
       ${lat}${s.triggered ? ` · STA/LTA ${s.peak_ratio}` : ""}${s.group ? `<br>Grupo: ${esc(s.group)}` : ""}
+      ${s.alerts_enabled === false ? "<br><b>Observación</b> · no participa en alertas" : ""}
       ${inDet ? `<br><b>Disparó en esta detección</b> (STA/LTA ${sel.stations[s.station].ratio})` : ""}`;
     let m = stMarkers[s.station];
     if (!m) {
@@ -1002,12 +1005,16 @@ function refreshSummary() {
 }
 function drawStations() {
   const focusedStation = document.activeElement?.closest("[data-station]")?.dataset.station;
+  const observationCount = lastStations.filter(s => s.alerts_enabled === false).length;
+  $("#station-coverage").textContent = `${lastStations.length - observationCount} estaciones del detector · ${observationCount} en observación (sin alertas). Selecciona una para ubicarla.`;
   $("#stations").innerHTML = lastStations.map(s => {
     const alive = stationAlive(s), trigger = alive && s.triggered;
     const cls = trigger ? "trig" : alive ? "ok" : "";
     const state = isSnapshot ? "Registro histórico" : connectionState !== "live" ? "Sin verificar" : trigger ? "Disparo detectado" : alive ? "Recibiendo datos" : "Sin datos recientes";
     const lag = alive && Number.isFinite(s.latency_s) ? `Señal: ${fmtS(s.latency_s + (Date.now() - lastStationsAt) / 1000)} atrás` : `${esc(s.network)} · ${esc(s.channel)}`;
-    return `<button class="st${s.station === "HEL" ? " local" : ""}" data-station="${esc(s.station)}" aria-label="Ubicar estación ${esc(s.station)}: ${state}"><b><span class="station-code"><span class="dot ${cls}"></span>${esc(s.station)}</span>${s.station === "HEL" ? '<span class="station-role">LOCAL</span>' : ""}</b><small>${lag}</small><span class="station-state">${state}</span></button>`;
+    const observation = s.alerts_enabled === false;
+    const mode = observation ? "Observación · sin alertas" : "Detección";
+    return `<button class="st${s.station === "HEL" ? " local" : ""}${observation ? " observation" : ""}" data-station="${esc(s.station)}" aria-label="Ubicar estación ${esc(s.station)}: ${state}. ${mode}"><b><span class="station-code"><span class="dot ${cls}"></span>${esc(s.station)}</span>${s.station === "HEL" ? '<span class="station-role">LOCAL</span>' : ""}</b><small>${lag}</small><span class="station-state">${state}</span><span class="station-mode">${mode}</span></button>`;
   }).join("") || '<div class="empty">No hay estaciones disponibles.</div>';
   if (focusedStation) [...document.querySelectorAll("[data-station]")].find(el => el.dataset.station === focusedStation)?.focus({preventScroll:true});
   mapStations(lastStations);

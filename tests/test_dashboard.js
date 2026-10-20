@@ -34,6 +34,17 @@ function setup(extra={}) {
   c.connectionState='live';c.isSnapshot=true;
   assert.equal(c.stationAlive({last_packet_age_s:1,latency_s:1}),false);
   c.isSnapshot=false;
+  // Observation stations must be visibly distinguished, including absent signal.
+  c.controls['#stations']={};c.controls['#station-coverage']={};
+  c.document={activeElement:null};c.esc=String;c.fmtS=x=>`${x} s`;
+  c.mapStations=()=>{};c.refreshSummary=()=>{};
+  c.lastStations=[{station:'HEL',network:'CM',channel:'00.HHZ',alerts_enabled:true,last_packet_age_s:1,latency_s:5},
+    {station:'TULM',network:'EC',channel:'HHZ',alerts_enabled:false,last_packet_age_s:1,latency_s:5}];
+  vm.runInContext(code('drawStations'),c);c.drawStations();
+  assert.match(c.controls['#station-coverage'].textContent,/1 estaciones del detector · 1 en observación/);
+  assert.match(c.controls['#stations'].innerHTML,/class="st observation"[^]*Observación · sin alertas/);
+  c.lastStations[1].latency_s=700;c.drawStations();
+  assert.match(c.controls['#stations'].innerHTML,/TULM: Sin datos recientes. Observación · sin alertas/);
   const event={id:'a',first_onset:'2026-10-20T12:00:00Z',stations:{HEL:{}},catalog:{SGC:{place:'Istmina - Chocó',url:'https://www.sgc.gov.co/',id:'SGC1',mag:4.3,priority:'informativa'}}};
   c.dets.set('a',event);c.dets.set('b',{...event,id:'b',catalog:{}});c.dets.set('c',{...event,id:'c',test:true});c.dets.set('d',{...event,id:'d',discarded:'artefacto'});
   assert.equal(c.visibleDetections().length,3);
