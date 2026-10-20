@@ -24,6 +24,17 @@ STATIONS = {
     "OTAV": ("IU", "00", "BHZ", 0.2376, -78.4508),   # Otavalo, Ecuador
     "PUYO": ("EC", "", "HHZ", -1.4930, -78.0249),    # Puyo, Ecuador
 }
+# Canales recibidos y comprobados desde Azure el 20-oct-2026. Se muestran en el
+# mapa, pero NO entran en el detector ni cuentan como confirmaciones de alertas.
+# Incorporarlos al detector requiere validar ruido, eventos y grupos cercanos.
+OBSERVATION_STATIONS = {
+    "TULM": ("EC", "", "HHZ", 0.7161, -77.786903),   # Ecuador, frontera con Colombia
+    "PIRO": ("TC", "", "HHZ", 8.4109, -83.319504),   # Costa Rica
+    "ACPR": ("PR", "00", "HHZ", 12.505711, -70.00108),  # Aruba
+    "CHSH": ("EC", "", "HHZ", -1.49385, -78.869331), # Ecuador
+    "HDC": ("G", "00", "BHZ", 10.00207, -84.11139),  # Costa Rica
+}
+ALL_STATIONS = {**STATIONS, **OBSERVATION_STATIONS}
 LOCAL_STATION = "HEL"  # estación de Medellín
 # Estaciones muy cercanas entre sí cuentan como una sola confirmación. Así un sismo
 # local o actividad volcánica en Ecuador no produce una alerta por sí solo.

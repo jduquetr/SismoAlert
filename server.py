@@ -1,6 +1,6 @@
 """Alertas de sismos para Medellín.
 
-Escucha estaciones del SGC por el SeedLink público de IRIS, detecta sismos con STA/LTA,
+Escucha estaciones del SGC por el SeedLink público de EarthScope, detecta sismos con STA/LTA,
 busca el evento en los catálogos del SGC, USGS y EMSC, y envía las alertas a una página
 web local con notificaciones del navegador.
 
@@ -28,6 +28,7 @@ import traveltime
 from detector import Associator, StationTrigger, simultaneous_artifact
 from emsc import EmscStream
 from seedlink import SeedLinkClient
+from station_monitor import StationMonitor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("sismos")
@@ -94,6 +95,7 @@ class Hub:
 
 hub = Hub()
 triggers = {s: StationTrigger(s) for s in config.STATIONS}
+observations = {s: StationMonitor(s) for s in config.OBSERVATION_STATIONS}
 
 
 # ---------------------------------------------------------------- búsqueda en catálogos
@@ -365,6 +367,12 @@ assoc = Associator(on_detection, on_update, lock=catalog_lock)
 # ---------------------------------------------------------------------------- SeedLink
 def on_trace(trace):
     sta = trace.stats.station
+    expected = config.ALL_STATIONS.get(sta)
+    if not expected or (trace.stats.network, trace.stats.location, trace.stats.channel) != expected[:3]:
+        return  # Un código de estación por sí solo no identifica la señal.
+    if sta in observations:
+        observations[sta].add(trace)
+        return  # Las estaciones en observación nunca alimentan el asociador.
     trig = triggers.get(sta)
     if not trig:
         return
@@ -382,7 +390,7 @@ def on_trace(trace):
 
 def seedlink_loop():
     delay = 5
-    streams = [(net, sta, loc + cha) for sta, (net, loc, cha, *_) in config.STATIONS.items()]
+    streams = [(net, sta, loc + cha) for sta, (net, loc, cha, *_) in config.ALL_STATIONS.items()]
     while True:
         hub.note(f"Conectando a {config.SEEDLINK_SERVER}")
         connected_at = time.time()
@@ -461,10 +469,17 @@ def sgc_background(days):
 def station_info():
     """Estado de cada estación junto con su red y ubicación (para la lista y el mapa)."""
     out = []
-    for sta, (net, loc, cha, lat, lon) in config.STATIONS.items():
-        out.append(dict(triggers[sta].status(), network=net, channel=f"{loc}.{cha}".lstrip("."),
-                        lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta)))
+    for sta, (net, loc, cha, lat, lon) in config.ALL_STATIONS.items():
+        monitor = triggers[sta] if sta in triggers else observations[sta]
+        out.append(dict(monitor.status(), network=net, channel=f"{loc}.{cha}".lstrip("."),
+                        lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta),
+                        alerts_enabled=sta in config.STATIONS))
     return out
+
+
+def detector_station_info():
+    """La salud de las alertas depende de sus estaciones, no de las de observación."""
+    return [s for s in station_info() if s["alerts_enabled"]]
 
 
 def recent_detections(seconds):
@@ -597,7 +612,7 @@ def main():
     emsc_stream.start()
     threading.Thread(target=sgc_background_loop, daemon=True).start()
     threading.Thread(target=status_loop, daemon=True).start()
-    telegram.start(station_info, recent_detections)
+    telegram.start(detector_station_info, recent_detections)
     server = ThreadingHTTPServer((config.HTTP_HOST, config.HTTP_PORT), Handler)
     server.daemon_threads = True
     hub.note(f"Página de alertas en http://{config.HTTP_HOST}:{config.HTTP_PORT}")
