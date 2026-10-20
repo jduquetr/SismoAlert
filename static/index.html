@@ -142,6 +142,7 @@ h3{margin:0;font-size:14px}
 .section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
 .section-heading p{margin:2px 0 0;color:var(--muted);font-size:11px}
 .section-heading span{color:var(--muted);font-size:10px}
+.station-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .stations{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
 .st{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:13px 12px;font-size:11px;display:block;text-align:left;min-height:92px;font-weight:400}
 .st b{display:flex;align-items:center;justify-content:space-between;font-size:12px;letter-spacing:.4px;margin-bottom:6px}
@@ -343,7 +344,7 @@ h1{font-size:24px}
     </section>
   </div>
   <div id="qinfo" class="qinfo" aria-label="Detalle de la detección" hidden></div>
-  <section class="station-section" id="red" aria-labelledby="stations-title"><div class="section-heading"><div><h2 id="stations-title">Estado de las estaciones</h2><p>Señales recibidas por SeedLink · selecciona una estación para ubicarla</p></div><span>CM · Colombia &nbsp; / &nbsp; IU, EC · Ecuador</span></div><div id="stations" class="stations"><div class="empty">Esperando estaciones…</div></div></section>
+  <section class="station-section" id="red" aria-labelledby="stations-title"><div class="section-heading"><div><h2 id="stations-title">Estado de las estaciones</h2><p>Señales recibidas por SeedLink · selecciona una estación para ubicarla</p></div><div class="station-actions"><span>CM · Colombia &nbsp; / &nbsp; IU, EC · Ecuador</span><button id="reconnect" title="Volver a conectar y consultar las estaciones">Reconectar</button></div></div><div id="stations" class="stations"><div class="empty">Esperando estaciones…</div></div></section>
   <details class="technical" id="registro"><summary>Registro de actividad <span>Conexiones, detecciones y actualizaciones</span></summary><div id="log" tabindex="0" aria-label="Registro de actividad"></div></details>
   <footer class="app-footer"><span>Prototipo experimental. Una detección no confirma un sismo ni su intensidad sentida.</span><a href="https://www.sgc.gov.co/" target="_blank" rel="noopener noreferrer">Servicio Geológico Colombiano ↗</a></footer>
 </main>
@@ -1156,6 +1157,7 @@ async function load() {
   } finally { clearTimeout(timeout); }
 }
 let lastBeat = 0;
+let eventStream = null, streamStartedAt = 0;
 function heartbeat() {
   lastBeat = Date.now();
   setConnection("live", "Conexión activa");
@@ -1165,28 +1167,41 @@ function receive(message, callback) {
   try { callback(JSON.parse(message.data)); }
   catch (_) { toast("Llegó una actualización no válida. Se solicitará el estado de nuevo."); load(); }
 }
-function connect() {
+function connect(reconnecting = false) {
   if (isSnapshot) {
     setConnection("snapshot", "Copia histórica");
     showDataNotice(`Vista previa con datos históricos del ${fmtTime(SNAPSHOT_TAKEN)}. No es monitoreo en vivo.`);
     load(); return;
   }
-  const es = new EventSource("/events");
-  es.onopen = () => { heartbeat(); clearTimeout(stateRetry); load(); };
+  if (eventStream) eventStream.close();
+  lastBeat = 0; streamStartedAt = Date.now();
+  setConnection("loading", reconnecting ? "Reconectando…" : "Conectando…");
+  if (reconnecting) showDataNotice("Recuperando la conexión. La señal se verificará cuando lleguen nuevas actualizaciones.");
+  if (hasState) drawStations();
+  tickClock();
+  const es = eventStream = new EventSource("/events");
+  es.onopen = () => {
+    if (eventStream !== es) return;
+    // A successful handshake is not proof that station frames are arriving.
+    setConnection("loading", "Esperando señal…");
+    clearTimeout(stateRetry); load();
+  };
   es.onerror = () => {
+    if (eventStream !== es) return;
     setConnection("offline", "Reconectando…");
     showDataNotice("Conexión interrumpida. Los últimos datos se conservan; el estado actual de las estaciones no está verificado.");
     drawStations();
   };
-  es.addEventListener("stations", m => receive(m, list => { if (!Array.isArray(list)) throw new Error(); heartbeat(); hasState = true; renderStations(list); }));
-  es.addEventListener("log", m => receive(m, addLog));
-  ["detection", "update", "catalog"].forEach(k => es.addEventListener(k, m => receive(m, d => handleDet(d,k))));
+  const current = callback => m => { if (eventStream === es) receive(m, callback); };
+  es.addEventListener("stations", current(list => { if (!Array.isArray(list)) throw new Error(); heartbeat(); hasState = true; renderStations(list); }));
+  es.addEventListener("log", current(addLog));
+  ["detection", "update", "catalog"].forEach(k => es.addEventListener(k, current(d => handleDet(d,k))));
   load();
 }
 setInterval(() => {
-  if (!isSnapshot && connectionState === "live" && lastBeat && Date.now() - lastBeat > 20000) {
-    setConnection("stale", "Datos sin actualizar");
-    showDataNotice("El servidor dejó de enviar actualizaciones. Se conserva el último estado recibido.");
+  if (!isSnapshot && Date.now() - Math.max(lastBeat, streamStartedAt) > 20000) {
+    // Also recover CONNECTING/CLOSED sources and sockets left hanging after sleep.
+    connect(true);
   }
   if (hasState) drawStations();
 }, 5000);
@@ -1264,7 +1279,19 @@ document.querySelectorAll('.nav-link').forEach(el => el.addEventListener("click"
   if (el.id === "help-link") return;
   document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active',link === el));
 }));
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { document.title = PAGE_TITLE; if (!isSnapshot) load(); } });
+$("#reconnect").hidden = isSnapshot;
+$("#reconnect").onclick = () => connect(true);
+function resumeConnection() {
+  if (document.hidden) return;
+  document.title = PAGE_TITLE; tickClock();
+  if (!isSnapshot) {
+    if (!eventStream || Date.now() - Math.max(lastBeat, streamStartedAt) > 20000) connect(true);
+    else load();
+  }
+}
+document.addEventListener("visibilitychange", resumeConnection);
+window.addEventListener("pageshow", resumeConnection);
+window.addEventListener("online", () => { if (!isSnapshot) connect(true); });
 try { initMap(); } catch (_) {
   if (map) { map.remove(); map = null; }
   $("#map").innerHTML = '<div class="map-fallback"><strong>Mapa no disponible</strong><p>Las detecciones y estaciones siguen disponibles.</p></div>';

@@ -260,7 +260,13 @@ no constituye una medida de falsas alarmas por día. Reproducir con
 `.venv/bin/python tools/calibrate.py --offline` (omitir `--offline` para descargar ondas).
 
 Pruebas sin red ni mensajes reales: `.venv/bin/python -m unittest discover -s tests -v`.
-Interfaz: `node tests/test_ui.js && node tests/test_dashboard.js`.
+Interfaz: `node tests/test_ui.js && node tests/test_dashboard.js && node tests/test_basemap.js && node tests/test_notifications.js && node tests/test_connection.js`.
+
+Si la página deja de recibir actualizaciones de estaciones durante 20 segundos, reemplaza
+la conexión y vuelve a consultar el estado. También comprueba la conexión al regresar a
+una pestaña suspendida y al recuperar la red. El botón **Reconectar**, junto al estado de
+las estaciones, permite hacerlo manualmente. «Conexión activa» solo aparece después de
+recibir una actualización de estaciones, aunque todas puedan estar sin señal sísmica.
 
 ## Pendiente
 
