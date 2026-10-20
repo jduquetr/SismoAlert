@@ -441,18 +441,14 @@ const stMarkers = {};
 const BASE_MAP_KEY = "sismos-mapa-base";
 function baseLayers() {
   const layers = {
-    "Calles · OpenStreetMap": L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18, attribution: "&copy; OpenStreetMap" }),
+    "Calles · OpenStreetMap": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>' }),
     "Topográfico · OpenTopoMap": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
       maxZoom: 17, attribution: "&copy; OpenStreetMap, SRTM · estilo &copy; OpenTopoMap (CC-BY-SA)" }),
     "Satélite · Esri": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 18, attribution: "Imágenes &copy; Esri, Maxar, Earthstar Geographics" }),
     "Relieve sombreado · Esri": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 18, maxNativeZoom: 13, attribution: "Relieve &copy; Esri" }),
-    "Claro · CARTO": L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap &copy; CARTO" }),
-    "Oscuro · CARTO": L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19, subdomains: "abcd", attribution: "&copy; OpenStreetMap &copy; CARTO" }),
   };
   // La copia estática trae además un mapa de contornos incluido en la página, que funciona
   // sin conexión y donde no se permiten mosaicos externos
@@ -469,6 +465,16 @@ function baseLayers() {
     layers["Contornos · sin conexión"] = group;
   }
   return layers;
+}
+
+function initialBaseMap(layers) {
+  let saved = null;
+  try { saved = localStorage.getItem(BASE_MAP_KEY); } catch (_) { /* almacenamiento bloqueado */ }
+  const fallback = isSnapshot && layers["Contornos · sin conexión"] ? "Contornos · sin conexión" : "Calles · OpenStreetMap";
+  const name = Object.prototype.hasOwnProperty.call(layers, saved) ? saved : fallback;
+  // También reemplaza preferencias de proveedores retirados, sin pedir borrar el navegador.
+  try { localStorage.setItem(BASE_MAP_KEY, name); } catch (_) { /* sin almacenamiento */ }
+  return name;
 }
 
 // ---- Reloj: hora de Bogotá (la de la lista de detecciones), UTC (la del archivo y los
@@ -678,10 +684,7 @@ function initMap() {
   }
   map = L.map("map", { zoomSnap: 0.5 }).setView([6.0, -75.5], 5.5);
   const layers = baseLayers();
-  let saved = null;
-  try { saved = localStorage.getItem(BASE_MAP_KEY); } catch (e) { /* almacenamiento bloqueado */ }
-  const defaultLayer = document.documentElement.dataset.theme === "dark" ? "Oscuro · CARTO" : "Claro · CARTO";
-  const first = layers[saved] ? saved : (isSnapshot && layers["Contornos · sin conexión"] ? "Contornos · sin conexión" : defaultLayer);
+  const first = initialBaseMap(layers);
   mapLayers = layers; currentBaseLayer = layers[first];
   currentBaseLayer.addTo(map);
   let tileFailures = 0;
@@ -1234,9 +1237,6 @@ $("#theme").onclick = () => {
     mapLayers["Contornos · sin conexión"].eachLayer(layer => {
       if (layer instanceof L.GeoJSON) layer.setStyle({fillColor:css.getPropertyValue("--land").trim(),color:css.getPropertyValue("--border").trim()});
     });
-  }
-  if (map && mapLayers && [mapLayers["Claro · CARTO"],mapLayers["Oscuro · CARTO"]].includes(currentBaseLayer)) {
-    map.removeLayer(currentBaseLayer); currentBaseLayer = mapLayers[theme === "dark" ? "Oscuro · CARTO" : "Claro · CARTO"]; currentBaseLayer.addTo(map);
   }
 };
 $("#search").addEventListener("input", renderDets);
