@@ -55,6 +55,43 @@ ALERT_LOCAL_ONLY = True
 # Relación STA/LTA mínima en HEL para alertar sin confirmación de otras estaciones
 LOCAL_ONLY_MIN_RATIO = 8.0
 
+# Ubicador y asociador bayesianos (ubicador.py, asociador.py), adaptados del método IPF de
+# Japón (Tamaribuchi et al., 2014). Valores del artículo entre paréntesis.
+UBICADOR_PASO_GRADOS = 0.2
+UBICADOR_PROFUNDIDADES_KM = (5, 15, 30, 50, 75, 100, 125, 150, 175, 200)
+# Error típico de un disparo frente al tiempo P teórico (1,5 s). Medido con los sismos
+# confirmados del 25-sep al 10-oct: ~4 s (disparos STA/LTA y modelo 1D)
+UBICADOR_SIGMA_S = 4.0
+# Un disparo es del sismo si cae dentro de ±A·σ de lo esperado (A = 3)
+UBICADOR_A = 3
+# Qué tan rápido sube el piso de datos anómalos con la distancia, en número de estaciones
+# (c2 = 10). Con 3 subía tan rápido que un epicentro junto a una estación ruidosa
+# "explicaba" su disparo y descontaba a todas las demás por lejanas
+UBICADOR_C2 = 10
+# Tope del piso (en el original llega a 1) y peso de la sismicidad previa (1): con ~10
+# estaciones los datos pesan poco y sin esto la sismicidad previa decidía sola
+UBICADOR_PISO_MAX = 0.2
+UBICADOR_PESO_PREVIA = 0.5
+# Ancho (km) con que se suaviza la zona de Voronoi de la primera estación (c1 = 10 en una
+# red de decenas de km; aquí las estaciones están a cientos de km) y su piso, por si el
+# primer disparo fue ruido
+UBICADOR_C1_KM = 100
+UBICADOR_PISO_VORONOI = 0.05
+# Piso de los disparos débiles (STA/LTA < MIN_RATIO): con 0,5 casi no mueven la solución
+UBICADOR_PISO_DEBIL = 0.5
+# Estaciones calladas: se penalizan si ya pasaron UBICADOR_NYAD_MARGEN_S desde que les debió
+# llegar la P (1 s) y están más cerca que la segunda estación que disparó con fuerza
+UBICADOR_NYAD_MARGEN_S = 3.0
+# Un disparo nuevo se suma a un sismo en curso si lo explica al menos esta fracción de los
+# epicentros posibles
+ASOCIADOR_P_MIN = 0.2
+# Dos sismos en curso se funden si, ubicados juntos, encaja al menos esta fracción de sus
+# disparos fuertes (y más que con cada uno por separado)
+ASOCIADOR_FUSION_MIN = 0.75
+# Un sismo en curso se cierra si no recibe disparos en tanto tiempo, o a esta edad
+ASOCIADOR_SILENCIO_S = 120
+ASOCIADOR_EDAD_MAX_S = 400
+
 # Búsqueda en catálogos tras una detección
 SEARCH_INTERVAL_S = 60
 SEARCH_DURATION_S = 30 * 60
