@@ -1,0 +1,160 @@
+{
+ "fuente": "USGS M>=3 hasta 2026-10-22; señal de EarthScope",
+ "banda_vel_hz": [
+  2.0,
+  10.0
+ ],
+ "banda_desp_hz": [
+  0.2,
+  5.0
+ ],
+ "sensibilidad": {
+  "HEL": 994013000.0,
+  "RUS": 488968000.0,
+  "OCA": 837757000.0,
+  "ARGC": 621146000.0,
+  "SMAR": 624494000.0,
+  "TUM": 627316000.0,
+  "CRJC": 618418000.0,
+  "URI": 497561000.0,
+  "PRV": 835815000.0,
+  "OTAV": 4085300000.0,
+  "PUYO": 314195000.0
+ },
+ "tipos": {
+  "desp": {
+   "5": {
+    "medidas": 475,
+    "sismos": 209,
+    "a": 0.887,
+    "b": 1.704,
+    "c": 5.829,
+    "sigma": 0.5,
+    "correccion": {
+     "HEL": 0.14,
+     "RUS": -0.03,
+     "OCA": -0.07,
+     "ARGC": -0.4,
+     "SMAR": 0.03,
+     "TUM": -0.52,
+     "CRJC": -0.2,
+     "URI": -0.14,
+     "PRV": -0.13,
+     "PUYO": -0.2
+    }
+   },
+   "30": {
+    "medidas": 766,
+    "sismos": 285,
+    "a": 0.809,
+    "b": 1.824,
+    "c": 4.769,
+    "sigma": 0.35,
+    "correccion": {
+     "HEL": 0.17,
+     "RUS": 0.02,
+     "OCA": -0.08,
+     "ARGC": -0.13,
+     "SMAR": 0.19,
+     "TUM": -0.03,
+     "CRJC": 0.07,
+     "URI": -0.02,
+     "PRV": 0.05,
+     "PUYO": -0.1
+    }
+   }
+  },
+  "vel": {
+   "5": {
+    "medidas": 1374,
+    "sismos": 407,
+    "a": 0.491,
+    "b": 1.575,
+    "c": 3.208,
+    "sigma": 0.47,
+    "correccion": {
+     "HEL": 0.14,
+     "RUS": 0.04,
+     "OCA": -0.24,
+     "ARGC": -0.12,
+     "SMAR": -0.02,
+     "TUM": 0.03,
+     "CRJC": -0.16,
+     "URI": -0.04,
+     "PRV": -0.05,
+     "PUYO": -0.13
+    }
+   },
+   "30": {
+    "medidas": 1781,
+    "sismos": 497,
+    "a": 0.502,
+    "b": 1.528,
+    "c": 3.3,
+    "sigma": 0.46,
+    "correccion": {
+     "HEL": 0.18,
+     "RUS": 0.11,
+     "OCA": -0.27,
+     "ARGC": -0.06,
+     "SMAR": 0.03,
+     "TUM": 0.12,
+     "CRJC": -0.09,
+     "URI": 0.02,
+     "PRV": 0.05,
+     "PUYO": -0.14
+    }
+   }
+  }
+ },
+ "validacion": {
+  "5": {
+   "sismos": 181,
+   "sesgo": -0.1,
+   "desviacion": 0.34,
+   "dentro_05": 0.9,
+   "por_magnitud": {
+    "M3-4": {
+     "sismos": 3,
+     "sesgo": 0.57
+    },
+    "M4-5": {
+     "sismos": 160,
+     "sesgo": -0.08
+    },
+    "M5-6": {
+     "sismos": 14,
+     "sesgo": -0.13
+    },
+    "M6-10": {
+     "sismos": 4,
+     "sesgo": -0.92
+    }
+   }
+  },
+  "30": {
+   "sismos": 195,
+   "sesgo": -0.02,
+   "desviacion": 0.24,
+   "dentro_05": 0.97,
+   "por_magnitud": {
+    "M3-4": {
+     "sismos": 3,
+     "sesgo": 0.53
+    },
+    "M4-5": {
+     "sismos": 172,
+     "sesgo": -0.0
+    },
+    "M5-6": {
+     "sismos": 16,
+     "sesgo": -0.2
+    },
+    "M6-10": {
+     "sismos": 4,
+     "sesgo": -0.5
+    }
+   }
+  }
+ }
+}

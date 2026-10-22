@@ -24,7 +24,9 @@ Fuentes:
 | `tiempos_p.json` | Tiempos de la onda P (modelo IASP91) por distancia y profundidad. Lo genera `tools/tabla_tiempos.py`. |
 | `sismicidad_previa.json` | 65.863 sismos del USGS (M≥2,5 desde 1990) contados en celdas de 0,5° × 50 km. Lo genera `tools/sismicidad_previa.py`. |
 | `tools/evaluar_asociador.py` | Pasa los disparos de un registro por los dos asociadores y los compara contra los catálogos. |
-| `tests/prueba_japon.py` | Pruebas sintéticas (en el CI): ubicación, disparo de ruido, dos sismos simultáneos. |
+| `magnitud.py` | Magnitud preliminar: amplitud máxima en los primeros 5 y 30 s de cada disparo, magnitud por estación y mediana de las más cercanas. |
+| `magnitud.json` | Coeficientes calibrados y sensibilidad de cada sensor. Lo genera `tools/calibrar_magnitud.py`. |
+| `tests/prueba_japon.py` | Pruebas sintéticas (en el CI): ubicación, disparo de ruido, dos sismos simultáneos, magnitud. |
 
 **Cómo activarlo**: en `config_local.py` de la máquina, `ASOCIADOR = "bayesiano"` (por
 omisión es `"ventana"`, el de siempre) y reiniciar el servicio. Cada detección guarda entonces
@@ -80,13 +82,31 @@ km. Varios parámetros del artículo no sirven tal cual (medido con nuestros dat
   ubica mal y ninguna explica a la otra; juntas sí encajan.
 - **Depuración**: con 3 o más disparos fuertes que encajan, los que no encajan salen del sismo.
 
+## Magnitud preliminar (22-oct-2026)
+
+Como en la JMA, cada estación da una magnitud con su amplitud máxima y su distancia, y la del
+sismo es la mediana de las 5 más cercanas al epicentro, sin las que estén más de 150 km más
+lejos que la más cercana ni a más de 700 km (el falso M7,3 de Torishima de 2020 salió de
+estaciones lejanas). Va en `det["magnitud"]` (`valor`, `n`, `incertidumbre`, `estaciones`) y en
+el mensaje, y se recalcula cada 5 s mientras llega la parte fuerte de la señal.
+
+- **Desplazamiento en 0,2-5 Hz**, como la JMA. La velocidad en la banda del detector (2-10 Hz)
+  se satura: daba M5,1 para el Mw7,7 de Panamá del 9-oct. Si el desplazamiento no supera 3
+  veces el ruido (sismos pequeños) se usa la velocidad, también como la JMA.
+- **Calibración propia** (`tools/calibrar_magnitud.py`): 1.633 sismos del USGS (M≥3, un año)
+  con la señal de EarthScope de nuestras estaciones y la sensibilidad de cada sensor.
+- **Validación** con el 25 % más reciente de los sismos (no usado para ajustar): a los 30 s,
+  desviación 0,24 y 97 % dentro de ±0,5; a los 5 s, 0,34 y 90 %. Los de M≥6 salen bajos
+  (−0,5 a los 30 s): Panamá llega a 6,6 a los 2 min y el Mw7,5 de Venezuela de junio a 6,4.
+  Casi no hay sismos menores de M4 en la validación: ahí la magnitud no está comprobada.
+
 ## Pendiente
 
 1. Correrlo en la VM de prueba (desde el 22-oct-2026) y comparar con `disparos.jsonl` y los
    catálogos.
-2. Amplitudes en unidades físicas (sensibilidad de cada sensor) para el término de amplitud del
-   IPF y una magnitud preliminar: mediana de las 5 más cercanas, sin estaciones a más de
-   150 km de la más cercana ni a más de 700 km (lecciones del falso M7,3 de Torishima, 2020).
+2. Término de amplitud en la verosimilitud del ubicador (sigma 0,7 en el IPF) y en la prueba
+   de "mismo sismo": ya hay amplitudes en unidades físicas. Evaluarlo con amplitudes medidas
+   desde la señal archivada de los disparos de la VM.
 3. Nivel "baja" (HEL sola): el bayesiano da más (231 frente a 86) porque ya no esconde disparos
    de HEL dentro de otras detecciones; la mitad son sismos reales. Decidir cómo avisarlos.
 4. PLUM para Medellín: intensidad en tiempo real en HEL (a 8 km) como segundo camino de alerta.

@@ -97,6 +97,20 @@ ASOCIADOR_FUSION_MIN = 0.75
 ASOCIADOR_SILENCIO_S = 120
 ASOCIADOR_EDAD_MAX_S = 400
 
+# Magnitud preliminar (magnitud.py, coeficientes en magnitud.json). Ventanas (s desde el
+# disparo) en que se mide la amplitud máxima; la de 5 s es la del IPF.
+MAGNITUD_VENTANAS_S = (5, 30)
+# Banda del desplazamiento con que se mide (la de 2-10 Hz del detector se satura en M5,5) y
+# cuántas veces el ruido debe superar para usarlo; si no, se usa la velocidad
+MAGNITUD_BANDA_DESP_HZ = (0.2, 5.0)
+MAGNITUD_SNR_MIN = 3
+# Como la JMA: mediana de las MAGNITUD_ESTACIONES más cercanas al epicentro, sin las que estén
+# más de MAGNITUD_MARGEN_KM más lejos que la más cercana (otro sismo o ruido) ni a más de
+# MAGNITUD_MAX_KM (el falso M7,3 de Torishima de 2020 salió de estaciones lejanas)
+MAGNITUD_ESTACIONES = 5
+MAGNITUD_MARGEN_KM = 150
+MAGNITUD_MAX_KM = 700
+
 # Búsqueda en catálogos tras una detección
 SEARCH_INTERVAL_S = 60
 SEARCH_DURATION_S = 30 * 60

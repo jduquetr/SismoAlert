@@ -13,6 +13,8 @@ terminan en una misma detección. Aquí, como en Tamaribuchi et al. (2014):
    cada mitad se ubica mal, también se funden si ubicados juntos encajan (_same_quake).
 4. Un sismo se declara detección con las mismas reglas de siempre (MIN_STATIONS,
    MIN_STATIONS_REMOTE, HEL sola), pero contando solo sus propios disparos.
+5. Cada detección lleva una magnitud preliminar con la velocidad máxima de sus estaciones
+   más cercanas (magnitud.py), si se le pasan las amplitudes (amps).
 
 Tiene la misma interfaz que detector.Associator, así que el servidor puede usar uno u otro.
 """
@@ -23,6 +25,7 @@ from obspy import UTCDateTime
 
 import config
 from detector import Associator, n_groups
+from magnitud import Magnitud
 from ubicador import Malla, ubicar
 
 
@@ -42,12 +45,16 @@ class _Sismo:
 
 
 class BayesAssociator:
-    def __init__(self, on_detection, on_update, malla=None, alive=None, clock=None):
+    def __init__(self, on_detection, on_update, malla=None, alive=None, clock=None,
+                 amps=None, magnitud=None):
         self.on_detection = on_detection
         self.on_update = on_update
         self.malla = malla or Malla()
         self.alive = alive or (lambda: list(self.malla.stations))  # estaciones con datos
         self.clock = clock or UTCDateTime  # en pruebas: la hora simulada
+        # amps(estación) -> (hora del disparo, {ventana: cuentas}) del último disparo
+        self.amps = amps
+        self.magnitud = magnitud or Magnitud()
         self.lock = threading.Lock()
         self.open = []  # sismos en curso
 
@@ -79,6 +86,21 @@ class BayesAssociator:
                 if p and ratio > p["ratio"] + 0.5:
                     p["ratio"] = float(ratio)
                     self._decide(ev, quiet=True)
+
+    def refresh(self):
+        """Vuelve a calcular la magnitud de las detecciones en curso (cada pocos segundos).
+
+        La velocidad máxima sigue subiendo después del disparo, cuando ya no llegan disparos
+        nuevos que obliguen a recalcular; se avisa si la magnitud cambió.
+        """
+        with self.lock:
+            for ev in self.open:
+                if ev.det is None:
+                    continue
+                mag = self._magnitude(ev)
+                old = (ev.det.get("magnitud") or {}).get("valor")
+                if mag and mag["valor"] != old:
+                    self._decide(ev)
 
     def _locate(self, ev, now):
         """Ubica el sismo y saca los disparos que no encajan, si ya hay con qué juzgarlos.
@@ -157,6 +179,16 @@ class BayesAssociator:
                     break
         return changed
 
+    def _magnitude(self, ev):
+        if not self.amps or not self.magnitud.ok:
+            return None
+        for s, p in ev.picks.items():
+            a = self.amps(s)
+            if a and a[0] == p["onset"]:
+                p["amps"] = dict(a[1])  # copia: el próximo disparo de la estación la reemplaza
+        amps = {s: (p["onset"], p["amps"]) for s, p in ev.picks.items() if p.get("amps")}
+        return self.magnitud.estimar(amps, ev.loc, self.clock())
+
     def _decide(self, ev, quiet=False):
         """Declara la detección cuando sus disparos propios cumplen las reglas de siempre."""
         strong = [s for s, p in ev.picks.items() if p["ratio"] >= config.MIN_RATIO]
@@ -179,6 +211,10 @@ class BayesAssociator:
                            for s, p in sorted(ev.picks.items(), key=lambda x: x[1]["onset"])}
         det["ubicacion"] = ev.loc.to_dict()
         Associator._set_level(det)
+        mag = self._magnitude(ev)
+        if mag:
+            det["magnitud"] = mag
+            det["message"] += f". Magnitud preliminar ≈ {mag['valor']}"
         if new:
             self.on_detection(det)
         elif not quiet or det["level"] != old_level:

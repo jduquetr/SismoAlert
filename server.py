@@ -304,11 +304,17 @@ def alive_stations():
     return [s for s, t in triggers.items() if t.last_packet and now - t.last_packet < 120]
 
 
+def amplitudes(sta):
+    """Amplitudes máximas del último disparo de una estación (para la magnitud)."""
+    t = triggers.get(sta)
+    return (t.onset, t.amps) if t and t.onset is not None else None
+
+
 def make_associator():
     if config.ASOCIADOR == "bayesiano":
         from asociador import BayesAssociator
         log.info("Asociador bayesiano (JAPON.md)")
-        return BayesAssociator(on_detection, on_update, alive=alive_stations)
+        return BayesAssociator(on_detection, on_update, alive=alive_stations, amps=amplitudes)
     return Associator(on_detection, on_update)
 
 
@@ -326,6 +332,16 @@ def log_pick(sta, onset, ratio):
                                 "ratio": round(float(ratio), 1)}) + "\n")
     except OSError:
         log.exception("No se pudo guardar el disparo de %s", sta)
+
+
+def refresh_loop():
+    """La magnitud preliminar sigue subiendo tras los disparos: recalcularla cada 5 s."""
+    while True:
+        time.sleep(5)
+        try:
+            assoc.refresh()
+        except Exception:
+            log.exception("Error al recalcular la magnitud")
 
 
 # ---------------------------------------------------------------------------- SeedLink
@@ -599,6 +615,8 @@ def main():
     if saved:
         log.info("Cargadas %d detecciones guardadas en %s", len(saved), store.GEOJSON)
     threading.Thread(target=seedlink_loop, daemon=True).start()
+    if hasattr(assoc, "refresh"):
+        threading.Thread(target=refresh_loop, daemon=True).start()
     emsc_stream.start()
     threading.Thread(target=sgc_background_loop, daemon=True).start()
     threading.Thread(target=gdacs_loop, daemon=True).start()

@@ -4,16 +4,21 @@ Uso: python tests/prueba_japon.py
 Con sismos sintéticos: los disparos son la P de IASP91 más un retraso como el de nuestros
 disparos STA/LTA. Usa una malla gruesa (0,5°) para que corra en segundos.
 """
+import math
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import numpy as np  # noqa: E402
+from obspy import Trace  # noqa: E402
 from obspy import UTCDateTime as T  # noqa: E402
 
 import config  # noqa: E402
 import sources  # noqa: E402
 from asociador import BayesAssociator  # noqa: E402
+from detector import StationTrigger  # noqa: E402
+from magnitud import Magnitud  # noqa: E402
 from ubicador import Malla, TiemposP, ubicar  # noqa: E402
 
 failures = []
@@ -99,6 +104,57 @@ check("las estaciones del norte quedan juntas en la de La Guajira",
 # Dos disparos sueltos a 1.500 km (OTAV y PRV, 28-sep): no es detección
 dets = replay([(t0, "OTAV", 9.0), (t0 + 57, "PRV", 9.0)])
 check("OTAV y PRV sueltos no dan detección", not dets, f"{len(dets)} detecciones")
+
+# Magnitud preliminar, con coeficientes inventados (los reales salen de calibrar):
+# M = log10(A) + 1,5·log10(R) + 6
+K = {"a": 1.0, "b": 1.5, "c": 6.0, "sigma": 0.3, "correccion": {}}
+mag = Magnitud.__new__(Magnitud)
+mag.ok, mag.sens = True, {s: 1e9 for s in config.STATIONS}
+mag.coef = {t: {5: K, 30: K} for t in ("desp", "vel")}
+
+
+def amps_for(m, sta, q=quake, ruido=1.0):
+    """Amplitudes (cuentas) que daría un sismo de magnitud m en (q) en la estación sta."""
+    d = sources.distance_km(q[0], q[1], *config.STATIONS[sta][3:5])
+    a = 10 ** (m - K["c"] - K["b"] * math.log10(math.hypot(d, q[2]))) * 1e9
+    return {"desp": {5: a, 30: a}, "vel": {5: a, 30: a}, "ruido": {"desp": ruido, "vel": ruido}}
+
+
+class _Loc:
+    lat, lon, depth = quake
+
+
+amps = {s: (t, amps_for(4.5, s)) for s, t in picks.items()}
+m = mag.estimar(amps, _Loc, max(picks.values()) + 40)
+check("magnitud de un M4,5 sintético", m and abs(m["valor"] - 4.5) < 0.05, m)
+amps["PRV"] = (t0 + 60, amps_for(7.0, "PRV"))
+m = mag.estimar(amps, _Loc, max(picks.values()) + 40)
+check("una estación a más de 700 km no cuenta (Torishima, 2020)",
+      m and "PRV" not in m["estaciones"] and abs(m["valor"] - 4.5) < 0.05, m)
+near = min(picks, key=lambda s: sources.distance_km(quake[0], quake[1], *config.STATIONS[s][3:5]))
+far = {s for s in picks if sources.distance_km(quake[0], quake[1], *config.STATIONS[s][3:5])
+       > sources.distance_km(quake[0], quake[1], *config.STATIONS[near][3:5]) + 150}
+check("tampoco las que están más de 150 km más lejos que la más cercana",
+      m and not far & set(m["estaciones"]), f"{m} lejanas {far}")
+a = amps_for(4.5, "HEL", ruido=1e12)
+a["ruido"]["vel"] = 1.0
+check("si el desplazamiento no supera el ruido se usa la velocidad", mag.tipo(a, 30) == "vel")
+
+# El detector mide las amplitudes de los primeros 5 y 30 s del disparo
+trig = StationTrigger("HEL")
+rng = np.random.default_rng(0)
+data = rng.normal(0, 10, 100 * 90)
+data[100 * 60:100 * 62] += 3000 * np.sin(2 * np.pi * 5 * np.arange(200) / 100)  # P
+data[100 * 70:100 * 75] += 9000 * np.sin(2 * np.pi * 4 * np.arange(500) / 100)  # S, 10 s después
+tr = Trace(data.astype(np.int32), header={"station": "HEL", "sampling_rate": 100.0,
+                                          "starttime": t0})
+onsets = [trig.add(tr.slice(t0 + i, t0 + i + 1 - 0.01)) for i in range(90)]
+check("dispara en la P", any(onsets) and abs([o for o in onsets if o][0] - (t0 + 60)) < 1)
+v = trig.amps.get("vel", {})
+check("velocidad de 5 s: la P; de 30 s: la S", 2000 < v.get(5, 0) < 4000 and v.get(30, 0) > 6000,
+      trig.amps)
+check("la señal supera bien el ruido de antes del disparo",
+      v.get(5, 0) > 20 * trig.amps.get("ruido", {}).get("vel", 1e9), trig.amps)
 
 print()
 if failures:

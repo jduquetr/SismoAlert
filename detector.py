@@ -6,6 +6,7 @@ from obspy import Stream, UTCDateTime
 from obspy.signal.trigger import classic_sta_lta
 
 import config
+import magnitud
 
 
 class StationTrigger:
@@ -21,6 +22,9 @@ class StationTrigger:
         self.last_checked = None  # último instante ya evaluado
         self.last_packet = None   # hora de llegada del último paquete (reloj local)
         self.last_sample = None   # hora del último dato (UTCDateTime)
+        # Amplitudes máximas del último disparo (magnitud.medir): con ellas se estima la
+        # magnitud (magnitud.py)
+        self.amps = {}
 
     def reset(self):
         """Descarta la señal acumulada; el STA/LTA se vuelve a estabilizar (~35 s)."""
@@ -28,6 +32,7 @@ class StationTrigger:
         self.triggered = False
         self.onset = None
         self.peak_ratio = 0.0
+        self.amps = {}
         self.off_since = None
         self.last_checked = None
 
@@ -83,6 +88,10 @@ class StationTrigger:
                 if v <= config.THR_OFF:
                     self.triggered = False
                     self.off_since = t
+        # Amplitudes para la magnitud, hasta que se completa la ventana más larga
+        if self.onset is not None and (new_onset or tr.stats.endtime - self.onset
+                                       <= max(config.MAGNITUD_VENTANAS_S) + 10):
+            self.amps = magnitud.medir(self.stream[0], self.onset)
         return new_onset
 
     def status(self):
