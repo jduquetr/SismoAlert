@@ -6,7 +6,7 @@ notificaciones del navegador.
 
 ## Flujo
 
-1. **SeedLink** (`rtserve.iris.washington.edu:18000`): 9 estaciones CM del SGC más IU.OTAV
+1. **SeedLink** (`rtserve.earthscope.org:18000`): 9 estaciones CM del SGC más IU.OTAV
    y EC.PUYO en Ecuador, con unos 10–30 s de retraso. HEL (Santa Elena) está a 8 km de
    Medellín. Las dos de Ecuador cuentan como una sola confirmación. PULU y ANTS no se usan:
    son estaciones volcánicas y dan demasiado ruido.

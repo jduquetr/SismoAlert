@@ -1,7 +1,8 @@
 #!/bin/sh
-# Actualización diaria desde GitHub (rama main), pensada para la máquina que vigila.
+# Actualización diaria desde GitHub, pensada para la máquina que vigila. Sigue la rama que
+# tenga la máquina (main en la de producción; otra, p. ej. Japon, en una de prueba).
 #
-# 1. Si main no cambió, no hace nada.
+# 1. Si la rama no cambió, no hace nada.
 # 2. Solo actualiza si la revisión automática de GitHub (Actions) pasó para ese commit.
 # 3. Instala dependencias si cambió requirements.txt y comprueba que el código cargue.
 # 4. Reinicia el servidor y verifica que vuelvan a llegar datos de las estaciones.
@@ -47,9 +48,10 @@ restart_and_check() {
   sudo systemctl restart "$SERVICE" && healthy
 }
 
-git fetch -q origin main || fail "no se pudo consultar GitHub"
+BRANCH=$(git symbolic-ref --short HEAD) || fail "la máquina no está en ninguna rama"
+git fetch -q origin "$BRANCH" || fail "no se pudo consultar GitHub (rama $BRANCH)"
 OLD=$(git rev-parse HEAD)
-NEW=$(git rev-parse origin/main)
+NEW=$(git rev-parse "origin/$BRANCH")
 if [ "$OLD" = "$NEW" ]; then
   log "sin cambios ($(git log -1 --format=%h))"
   exit 0
@@ -85,7 +87,7 @@ if ! git diff --quiet "$OLD" "$NEW" -- requirements.txt; then
 fi
 
 # Que el código cargue antes de reiniciar el servicio
-if ! .venv/bin/python -c "import config, detector, sources, store, traveltime, server" >> "$LOG" 2>&1; then
+if ! .venv/bin/python -c "import config, detector, sources, store, traveltime, ubicador, asociador, server" >> "$LOG" 2>&1; then
   git reset -q --hard "$OLD"
   fail "el código nuevo no carga (ver $LOG); se volvió a $(git rev-parse --short "$OLD")"
 fi

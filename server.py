@@ -296,7 +296,36 @@ def on_emsc_event(ev, action):
 
 
 emsc_stream = EmscStream(on_emsc_event, note=hub.note)
-assoc = Associator(on_detection, on_update)
+
+
+def alive_stations():
+    """Estaciones que enviaron datos en los últimos 2 minutos."""
+    now = time.time()
+    return [s for s, t in triggers.items() if t.last_packet and now - t.last_packet < 120]
+
+
+def make_associator():
+    if config.ASOCIADOR == "bayesiano":
+        from asociador import BayesAssociator
+        log.info("Asociador bayesiano (JAPON.md)")
+        return BayesAssociator(on_detection, on_update, alive=alive_stations)
+    return Associator(on_detection, on_update)
+
+
+assoc = make_associator()
+# Todos los disparos, también los que no llegan a detección: con ellos se puede volver a
+# pasar un periodo por cualquiera de los dos asociadores (tools/evaluar_asociador.py)
+PICKS_LOG = store.DATA / "disparos.jsonl"
+
+
+def log_pick(sta, onset, ratio):
+    try:
+        store.DATA.mkdir(parents=True, exist_ok=True)
+        with PICKS_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"station": sta, "onset": str(onset),
+                                "ratio": round(float(ratio), 1)}) + "\n")
+    except OSError:
+        log.exception("No se pudo guardar el disparo de %s", sta)
 
 
 # ---------------------------------------------------------------------------- SeedLink
@@ -305,11 +334,16 @@ def on_trace(trace):
     trig = triggers.get(sta)
     if not trig:
         return
+    was, was_peak = (trig.onset, trig.peak_ratio) if trig.triggered else (None, 0)
     try:
         onset = trig.add(trace)
     except Exception:
         log.exception("Error procesando %s", sta)
         return
+    if was and (onset or not trig.triggered):  # el disparo anterior terminó
+        log_pick(sta, was, trig.peak_ratio if trig.onset == was else was_peak)
+    if onset and not trig.triggered:
+        log_pick(sta, onset, trig.peak_ratio)  # empezó y terminó en el mismo paquete
     if onset:
         log.info("Disparo %s %s (STA/LTA %.1f)", sta, onset, trig.peak_ratio)
         assoc.trigger(sta, onset, trig.peak_ratio)
@@ -550,7 +584,7 @@ class Handler(BaseHTTPRequestHandler):
                     "HEL": {"onset": str(t), "ratio": 20.0},
                     "RUS": {"onset": str(t + 20), "ratio": 12.0}},
             }
-            assoc._set_level(det)
+            Associator._set_level(det)
             on_detection(det)
             self._send(200, json.dumps({"ok": True, "id": det["id"]}))
         else:

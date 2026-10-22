@@ -93,5 +93,5 @@ if __name__ == "__main__":
         if time.time() - t0 > 20:
             raise SystemExit(f"paquetes por estación: {n}")
 
-    SeedLinkClient("rtserve.iris.washington.edu:18000",
+    SeedLinkClient("rtserve.earthscope.org:18000",
                    [("CM", "HEL", "00HHZ"), ("CM", "RUS", "00HHZ")], show).run()

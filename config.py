@@ -2,8 +2,8 @@
 
 MEDELLIN = (6.2476, -75.5658)  # lat, lon
 
-# SeedLink público de IRIS/EarthScope
-SEEDLINK_SERVER = "rtserve.iris.washington.edu:18000"
+# SeedLink público de EarthScope (rtserve.iris.washington.edu dejó de existir en oct-2026)
+SEEDLINK_SERVER = "rtserve.earthscope.org:18000"
 # Estación -> (red, ubicación, canal vertical, lat, lon)
 STATIONS = {
     # Red CM del SGC
@@ -54,6 +54,11 @@ MIN_RATIO = 8.0
 ALERT_LOCAL_ONLY = True
 # Relación STA/LTA mínima en HEL para alertar sin confirmación de otras estaciones
 LOCAL_ONLY_MIN_RATIO = 8.0
+
+# Qué asociador junta los disparos en detecciones: "ventana" (detector.Associator, todo lo
+# que cae en ASSOC_WINDOW_S) o "bayesiano" (asociador.py, ver JAPON.md). Se elige por máquina
+# en config_local.py.
+ASOCIADOR = "ventana"
 
 # Ubicador y asociador bayesianos (ubicador.py, asociador.py), adaptados del método IPF de
 # Japón (Tamaribuchi et al., 2014). Valores del artículo entre paréntesis.

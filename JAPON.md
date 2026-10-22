@@ -26,8 +26,15 @@ Fuentes:
 | `tools/evaluar_asociador.py` | Pasa los disparos de un registro por los dos asociadores y los compara contra los catálogos. |
 | `tests/prueba_japon.py` | Pruebas sintéticas (en el CI): ubicación, disparo de ruido, dos sismos simultáneos. |
 
-**Todavía no está conectado al servidor**: las alertas en vivo siguen con el asociador de
-siempre. Los parámetros nuevos están en `config.py` (`UBICADOR_*`, `ASOCIADOR_*`).
+**Cómo activarlo**: en `config_local.py` de la máquina, `ASOCIADOR = "bayesiano"` (por
+omisión es `"ventana"`, el de siempre) y reiniciar el servicio. Cada detección guarda entonces
+su ubicación en `ubicacion`. Con cualquiera de los dos, el servidor anota todos los disparos
+en `datos/disparos.jsonl`, también los que no llegan a detección, para poder volver a pasar un
+periodo por ambos asociadores. Los parámetros nuevos están en `config.py` (`UBICADOR_*`,
+`ASOCIADOR_*`).
+
+`linux/actualizar.sh` sigue la rama en que esté la máquina, así que una VM de prueba puesta en
+`Japon` se actualiza desde `Japon`.
 
 ## Resultados (registro de la VM, 25-sep a 21-oct de 2026)
 
@@ -75,8 +82,8 @@ km. Varios parámetros del artículo no sirven tal cual (medido con nuestros dat
 
 ## Pendiente
 
-1. Conectar `BayesAssociator` al servidor con un interruptor en `config_local.py`, primero en
-   la VM de prueba, comparando en paralelo con el actual.
+1. Correrlo en la VM de prueba (desde el 22-oct-2026) y comparar con `disparos.jsonl` y los
+   catálogos.
 2. Amplitudes en unidades físicas (sensibilidad de cada sensor) para el término de amplitud del
    IPF y una magnitud preliminar: mediana de las 5 más cercanas, sin estaciones a más de
    150 km de la más cercana ni a más de 700 km (lecciones del falso M7,3 de Torishima, 2020).
