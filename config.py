@@ -2,8 +2,8 @@
 
 MEDELLIN = (6.2476, -75.5658)  # lat, lon
 
-# SeedLink público de IRIS/EarthScope
-SEEDLINK_SERVER = "rtserve.iris.washington.edu:18000"
+# SeedLink público de EarthScope (rtserve.iris.washington.edu dejó de existir en oct-2026)
+SEEDLINK_SERVER = "rtserve.earthscope.org:18000"
 # Estación -> (red, ubicación, canal vertical, lat, lon)
 STATIONS = {
     # Red CM del SGC
