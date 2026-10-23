@@ -100,6 +100,45 @@ el mensaje, y se recalcula cada 5 s mientras llega la parte fuerte de la señal.
   (−0,5 a los 30 s): Panamá llega a 6,6 a los 2 min y el Mw7,5 de Venezuela de junio a 6,4.
   Casi no hay sismos menores de M4 en la validación: ahí la magnitud no está comprobada.
 
+## Evaluación por sitio: ¿sirvió la alerta en Medellín? (22-oct-2026)
+
+Meier (2017, *How "good" are real-time ground motion predictions from Earthquake Early
+Warning systems?*, JGR 122:5561, doi:10.1002/2017JB014025) propone juzgar un sistema de alerta
+por lo que le importa a quien la recibe: si avisó antes de que en su sitio se superara una
+intensidad, y si avisó cuando no hacía falta. `tools/evaluar_alertas.py` lo hace para Medellín:
+
+- **La verdad es HEL**: para cada sismo se baja su señal de EarthScope, se pasa a velocidad y
+  aceleración y se calcula la MMI y el instante en que cruza 2, 3 y 4 (Worden et al., 2012;
+  la MMI sale de la PGV, como en ShakeMap 4). `intensidad.py` tiene las ecuaciones.
+- Para cada umbral, cada sismo es acierto (aviso antes del cruce, con su tiempo de aviso),
+  tarde, perdido, falsa (aviso sin que HEL llegara al umbral, o sin sismo) o correcto sin
+  aviso. El aviso sale 15 s después del disparo y no se puede cancelar.
+- **Opción A**, el sistema como está: avisa toda detección de nivel alta o media (o cualquiera).
+- **Opción B**, cota ideal: al detectar se supone conocido el sismo del catálogo, se predice la
+  MMI en Medellín (Allen, Wald y Worden, 2012) y se avisa si P(MMI > umbral) > p*. "Red ideal":
+  la detección llega con la P a la estación más cercana que vota.
+
+Resultados con el registro de la VM (29-sep a 21-oct, 3.421 sismos, MMI medida en HEL para 491):
+
+- Solo **un sismo se sintió en Medellín**: el Mw7,7 de Panamá del 9-oct, MMI 3,0 en HEL.
+  Ningún otro pasó de 1,1 (ni los M4 de Chaparral ni de Istmina).
+- **Panamá fue un acierto**: aviso 56 s antes de MMI 2 y 161 s antes de MMI 3, con los dos
+  asociadores. La red ideal da 54 y 159 s: en este sismo no se perdió tiempo.
+- **Opción A: casi todo es falsa para Medellín.** Con umbral MMI 2: 873 falsas (ventana, alta o
+  media), 517 con el bayesiano (−41 %). El aviso no dice cuánto va a temblar aquí.
+- **Opción B: de cientos a 0-6 falsas.** MMI 2 con p* = 0,3: 3 falsas (réplicas de Panamá) y el
+  mismo acierto; MMI 3 con p* ≥ 0,5: ninguna. Esto es lo que vale la magnitud preliminar.
+- La ecuación de intensidad se pasa en HEL: Panamá prevista 4,3 y medida 3,0; su réplica M6,6,
+  2,6 y 1,1. HEL está en roca a 2.857 m; el valle probablemente sintió más. Un caso no basta
+  para calibrar.
+
+Con un solo sismo sentido esto no es estadística: hace falta pasar años de archivo con sismos
+sentidos en Medellín. Uso:
+
+```
+python tools/evaluar_alertas.py REGISTRO.json.gz --catalogos cat.pickle --obs obs.json --repasos repasos.pickle
+```
+
 ## Pendiente
 
 1. Correrlo en la VM de prueba (desde el 22-oct-2026) y comparar con `disparos.jsonl` y los
