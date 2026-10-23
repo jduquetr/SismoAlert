@@ -105,34 +105,6 @@ check("las estaciones del norte quedan juntas en la de La Guajira",
 dets = replay([(t0, "OTAV", 9.0), (t0 + 57, "PRV", 9.0)])
 check("OTAV y PRV sueltos no dan detección", not dets, f"{len(dets)} detecciones")
 
-# Intensidad (evaluación al estilo de Meier, 2017)
-import intensidad  # noqa: E402
-
-m, s = intensidad.mmi_prevista(7.7, 600)
-check("Mw7,7 a 600 km: MMI prevista ~4", 3.5 < m < 5, f"{m:.2f}")
-check("MMI prevista baja con la distancia",
-      intensidad.mmi_prevista(5, 50)[0] > intensidad.mmi_prevista(5, 300)[0])
-p = intensidad.prob_excedencia(3.0, 0.8, 3.0)
-check("probabilidad de superar la MMI media = 0,5", abs(p - 0.5) < 1e-9, f"{p}")
-# HEL midió PGV 0,30 cm/s en el Mw7,7 de Panamá (9-oct): MMI ~3
-v = float(intensidad.mmi_observada(0.42, 0.30))
-check("PGV 0,30 cm/s es MMI ~3", 2.8 < v < 3.2, f"{v:.2f}")
-check("PGV de 10 cm/s es MMI ~6", 5.5 < float(intensidad.mmi_observada(None, 10)) < 6.5)
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
-from evaluar_alertas import clasificar  # noqa: E402
-
-ev = [{"source": "X", "id": str(i)} for i in range(4)]
-obs = {"X:0": {"ruido_mmi": 1, "cruces": {"3.0": str(t0 + 60)}},   # sentido, aviso a tiempo
-       "X:1": {"ruido_mmi": 1, "cruces": {"3.0": str(t0 + 60)}},   # sentido, aviso tarde
-       "X:2": {"ruido_mmi": 1, "cruces": {"3.0": None}},           # no sentido, con aviso
-       "X:3": {"ruido_mmi": 1, "cruces": {"3.0": str(t0 + 60)}}}   # sentido, sin aviso
-hora = {"0": t0 + 20, "1": t0 + 90, "2": t0 + 10, "3": None}
-k = clasificar(ev, obs, lambda e: hora[e["id"]], 3.0, falsas_sin_sismo=2)
-check("clasificación TP/tarde/FP/FN",
-      (k["TP"], k["tarde"], k["FP"], k["FN"], k["TN"]) == (1, 1, 3, 1, 0), f"{k}")
-check("tiempo de aviso del acierto", k["aviso_s"][0] == 40, f"{k['aviso_s']}")
-
 # Magnitud preliminar, con coeficientes inventados (los reales salen de calibrar):
 # M = log10(A) + 1,5·log10(R) + 6
 K = {"a": 1.0, "b": 1.5, "c": 6.0, "sigma": 0.3, "correccion": {}}

@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 from obspy import UTCDateTime
 
 import config
+import decisiones
 import sources
 import store
 import traveltime
@@ -257,6 +258,7 @@ def search_catalogs(det):
 
 def on_detection(det):
     hub.note(f"DETECCIÓN {det['id']} [{det['level']}]: {det['message']}")
+    decisiones.registrar(det, "nueva")
     hub.upsert_detection(det, "detection")
     threading.Thread(target=search_catalogs, args=(det,), daemon=True).start()
 
@@ -267,6 +269,7 @@ def on_update(det):
     if reason and not det.get("discarded"):
         det["discarded"] = reason
         hub.note(f"{det['id']} descartada: {reason}")
+    decisiones.registrar(det, "actualizacion")
     hub.upsert_detection(det, "update")
 
 

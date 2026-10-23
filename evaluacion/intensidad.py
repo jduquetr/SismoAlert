@@ -1,12 +1,12 @@
 """Intensidad de Mercalli (MMI): la que se predice para un sitio y la que mide una estación.
 
-Sirve para evaluar las alertas por sitio al estilo de Meier (2017), y más adelante para
-predecir la intensidad en Medellín en vivo cuando haya magnitud preliminar.
+La predicción vive aquí, del lado de la evaluación: la alerta todavía no predice intensidades
+(decisión del 22-oct-2026; se incorporará solo si la evaluación muestra que vale la pena).
 
 - Predicción: ecuación de intensidad de Allen, Wald y Worden (2012), versión con distancia
   hipocentral, para regiones tectónicamente activas. Coeficientes copiados de OpenQuake
   (openquake/hazardlib/gsim/allen_2012_ipe.py, clase AllenEtAl2012Rhypo).
-- Observación: conversión de aceleración y velocidad máximas a MMI de Worden et al. (2012),
+- Observación: conversión de velocidad (o aceleración) máxima a MMI de Worden et al. (2012),
   con la extensión de ShakeMap para intensidades 1-2. Coeficientes copiados de
   esi-shakelib 1.2.1 (gmice/wgrw12.py), sin los términos de magnitud y distancia.
 """
@@ -28,14 +28,27 @@ WGRW12 = {
 }
 
 
-def mmi_prevista(mag, rhyp_km):
-    """MMI media prevista y su desviación estándar (Allen, Wald y Worden, 2012)."""
+def _media(mag, rhyp_km):
     c = AWW12
     rm = c["m1"] + c["m2"] * math.exp(mag - 5)
     mmi = c["c0"] + c["c1"] * mag + c["c2"] * math.log(math.sqrt(rhyp_km ** 2 + rm ** 2))
     if rhyp_km > 50:
         mmi += c["c4"] * math.log(rhyp_km / 50)
+    return mmi
+
+
+def mmi_prevista(mag, rhyp_km, sigma_mag=0.0):
+    """MMI media prevista y su desviación estándar (Allen, Wald y Worden, 2012).
+
+    sigma_mag suma la incertidumbre de la magnitud (estimada en vivo) a la de la ecuación,
+    con la pendiente de la MMI frente a la magnitud en ese punto.
+    """
+    c = AWW12
+    mmi = _media(mag, rhyp_km)
     sigma = c["s1"] + c["s2"] / (1 + (rhyp_km / c["s3"]) ** 2)
+    if sigma_mag:
+        pendiente = (_media(mag + 0.05, rhyp_km) - _media(mag - 0.05, rhyp_km)) / 0.1
+        sigma = math.hypot(sigma, pendiente * sigma_mag)
     return mmi, sigma
 
 

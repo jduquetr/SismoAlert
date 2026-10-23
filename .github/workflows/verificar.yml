@@ -24,13 +24,17 @@ jobs:
       - name: El código Python compila y carga
         run: |
           python -m compileall -q -x '(\.venv|docs)/' .
-          python -c "import config, detector, sources, store, traveltime, server, copia_estatica, informe_diario, rectificar, ubicador, asociador, intensidad, magnitud"
+          python -c "import config, detector, sources, store, traveltime, server, copia_estatica, informe_diario, rectificar, ubicador, asociador, magnitud, decisiones"
+          python -c "import evaluacion.evaluar, evaluacion.repaso, evaluacion.lote_historico"
 
       - name: Pruebas rápidas (sin red)
         run: python tests/prueba_rapida.py
 
       - name: Ubicador y asociador bayesianos (sin red)
         run: python tests/prueba_japon.py
+
+      - name: Evaluación de la alerta y su separación (sin red)
+        run: python tests/prueba_evaluacion.py
 
       - name: Los scripts de shell no tienen errores de sintaxis
         run: for f in *.sh linux/*.sh mac/*.sh; do sh -n "$f" && echo "ok $f"; done

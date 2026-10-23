@@ -128,44 +128,44 @@ de calibración los sismos pequeños están cerca y los grandes lejos, así que 
 bien magnitud y distancia (y mezcla ML del SGC con mb/Mw del USGS). Queda apagado
 (`UBICADOR_AMPLITUD = False`); la magnitud no depende de esto.
 
-## Evaluación por sitio: ¿sirvió la alerta en Medellín? (22-oct-2026)
+## Evaluación por sitio: ¿sirvió la alerta en Medellín? (23-oct-2026)
 
-Meier (2017, *How "good" are real-time ground motion predictions from Earthquake Early
-Warning systems?*, JGR 122:5561, doi:10.1002/2017JB014025) propone juzgar un sistema de alerta
-por lo que le importa a quien la recibe: si avisó antes de que en su sitio se superara una
-intensidad, y si avisó cuando no hacía falta. `tools/evaluar_alertas.py` lo hace para Medellín:
+La evaluación está separada de la alerta, en `evaluacion/` (ver su `README.md`): la alerta
+solo escribe sus decisiones en `datos/decisiones.jsonl` (`decisiones.py`) y la evaluación las
+juzga con las métricas de Meier (2017): intensidad real en cada sitio (suma vectorial de las
+horizontales), tiempo de aviso hasta el cruce del umbral, sin cancelación, tolerancia ±0,5,
+pseudo-ROC y CAR en vez de TN, y las detecciones falsas aparte. Medellín es HEL; los otros 10
+sitios son las demás estaciones. La predicción de intensidad vive solo en la evaluación.
 
-- **La verdad es HEL**: para cada sismo se baja su señal de EarthScope, se pasa a velocidad y
-  aceleración y se calcula la MMI y el instante en que cruza 2, 3 y 4 (Worden et al., 2012;
-  la MMI sale de la PGV, como en ShakeMap 4). `intensidad.py` tiene las ecuaciones.
-- Para cada umbral, cada sismo es acierto (aviso antes del cruce, con su tiempo de aviso),
-  tarde, perdido, falsa (aviso sin que HEL llegara al umbral, o sin sismo) o correcto sin
-  aviso. El aviso sale 15 s después del disparo y no se puede cancelar.
-- **Opción A**, el sistema como está: avisa toda detección de nivel alta o media (o cualquiera).
-- **Opción B**, cota ideal: al detectar se supone conocido el sismo del catálogo, se predice la
-  MMI en Medellín (Allen, Wald y Worden, 2012) y se avisa si P(MMI > umbral) > p*. "Red ideal":
-  la detección llega con la P a la estación más cercana que vota.
+**Lote histórico** (113 sismos de 2015 a 2026: los 19 que llegaron a MMI 2 en HEL, 75 no
+sentidos a los que la ecuación daba MMI ≥ 1,5 y 19 al azar; repasados con la señal archivada
+del SGC por el detector, los dos asociadores y la magnitud de hoy). Con 15 s de latencia, en
+Medellín y umbral MMI 2:
 
-Resultados con el registro de la VM (29-sep a 21-oct, 3.421 sismos, MMI medida en HEL para 491):
+| Manera de avisar | TPR | Falsas | CAR | Aviso (mediana) |
+|---|---|---|---|---|
+| Sistema actual (alta o media, bayesiano) | 0,82 | 75 | 0,16 | 28 s |
+| Magnitud del sistema, p* = 0,5 | 0,83 | 32 | 0,32 | 20 s |
+| Magnitud del catálogo (ideal), p* = 0,5 | 0,86-0,88 | 11 | 0,63-0,67 | 25 s |
+| Red ideal, p* = 0,5 | 0,88 | 12 | 0,66 | 26 s |
 
-- Solo **un sismo se sintió en Medellín**: el Mw7,7 de Panamá del 9-oct, MMI 3,0 en HEL.
-  Ningún otro pasó de 1,1 (ni los M4 de Chaparral ni de Istmina).
-- **Panamá fue un acierto**: aviso 56 s antes de MMI 2 y 161 s antes de MMI 3, con los dos
-  asociadores. La red ideal da 54 y 159 s: en este sismo no se perdió tiempo.
-- **Opción A: casi todo es falsa para Medellín.** Con umbral MMI 2: 873 falsas (ventana, alta o
-  media), 517 con el bayesiano (−41 %). El aviso no dice cuánto va a temblar aquí.
-- **Opción B: de cientos a 0-6 falsas.** MMI 2 con p* = 0,3: 3 falsas (réplicas de Panamá) y el
-  mismo acierto; MMI 3 con p* ≥ 0,5: ninguna. Esto es lo que vale la magnitud preliminar.
-- La ecuación de intensidad se pasa en HEL: Panamá prevista 4,3 y medida 3,0; su réplica M6,6,
-  2,6 y 1,1. HEL está en roca a 2.857 m; el valle probablemente sintió más. Un caso no basta
-  para calibrar.
+- Para Medellín, **la detección ya es casi tan rápida como la red ideal**; lo que separa al
+  sistema del ideal es conocer el sismo (magnitud y ubicación). Con la magnitud del sistema
+  las falsas bajan a menos de la mitad sin perder aciertos; con la del catálogo, a un séptimo.
+- En los 11 sitios, la red ideal acierta 0,80-0,85 frente a 0,68-0,77 de la detección real:
+  la demora pesa en los sitios lejanos (Muisne Mw7,8: alerta a +112 s con la ventana, la red ideal +25 s,
+  porque OTAV y PUYO valen por una confirmación).
+- La magnitud del sistema empieza baja en los sismos que más se sienten (ΔMMI +1,0 a +1,6
+  con más de 30 s de aviso en sitios con MMI 3-4) y se corrige al acercarse el cruce.
+- San José del Palmar Mw7,4 (ago-2026, MMI 3,9 en HEL): MMI 2 a los +27 s del origen y la
+  alerta a +26 s; con la latencia real llega tarde a Medellín.
+- La ecuación de intensidad se pasa en HEL (Bello M4,6 de 2024: 4,2 prevista, 2,4 medida).
+- Las falsas del lote dependen de cómo se escogieron los no sentidos: sirven para comparar
+  maneras de avisar, no como tasa absoluta.
 
-Con un solo sismo sentido esto no es estadística: hace falta pasar años de archivo con sismos
-sentidos en Medellín. Uso:
-
-```
-python tools/evaluar_alertas.py REGISTRO.json.gz --catalogos cat.pickle --obs obs.json --repasos repasos.pickle
-```
+**Registro de la VM** (29-sep a 21-oct, repasando los disparos guardados, sin magnitud):
+solo el Mw7,7 de Panamá llegó a MMI 2 en HEL (3,1), con 71 s de aviso. Detecciones sin sismo
+de nivel alta o media: 222 con el bayesiano y 497 con la ventana (10 y 22 por día).
 
 ## Pendiente
 
