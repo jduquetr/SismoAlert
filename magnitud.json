@@ -1,5 +1,5 @@
 {
- "fuente": "USGS M>=3 hasta 2026-10-22; señal de EarthScope",
+ "fuente": "USGS M>=3 y SGC M>=2 cerca de las estaciones, 365 días hasta 2026-10-23; señal de EarthScope",
  "banda_vel_hz": [
   2.0,
   10.0
@@ -24,135 +24,135 @@
  "tipos": {
   "desp": {
    "5": {
-    "medidas": 475,
-    "sismos": 209,
-    "a": 0.887,
-    "b": 1.704,
-    "c": 5.829,
+    "medidas": 606,
+    "sismos": 325,
+    "a": 1.275,
+    "b": 2.374,
+    "c": 6.541,
     "sigma": 0.5,
     "correccion": {
-     "HEL": 0.14,
-     "RUS": -0.03,
-     "OCA": -0.07,
-     "ARGC": -0.4,
-     "SMAR": 0.03,
-     "TUM": -0.52,
-     "CRJC": -0.2,
-     "URI": -0.14,
-     "PRV": -0.13,
-     "PUYO": -0.2
+     "HEL": -0.02,
+     "RUS": -0.15,
+     "OCA": -0.19,
+     "ARGC": -0.67,
+     "SMAR": -0.22,
+     "TUM": -0.76,
+     "CRJC": -0.42,
+     "URI": -0.49,
+     "PRV": -0.26,
+     "PUYO": -0.27
     }
    },
    "30": {
-    "medidas": 766,
-    "sismos": 285,
-    "a": 0.809,
-    "b": 1.824,
-    "c": 4.769,
-    "sigma": 0.35,
+    "medidas": 1318,
+    "sismos": 657,
+    "a": 1.179,
+    "b": 2.289,
+    "c": 5.65,
+    "sigma": 0.36,
     "correccion": {
-     "HEL": 0.17,
-     "RUS": 0.02,
-     "OCA": -0.08,
-     "ARGC": -0.13,
-     "SMAR": 0.19,
-     "TUM": -0.03,
-     "CRJC": 0.07,
-     "URI": -0.02,
-     "PRV": 0.05,
-     "PUYO": -0.1
+     "HEL": 0.29,
+     "RUS": 0.03,
+     "OCA": -0.25,
+     "ARGC": -0.19,
+     "SMAR": 0.04,
+     "TUM": -0.1,
+     "CRJC": -0.12,
+     "URI": -0.01,
+     "PRV": 0.03,
+     "PUYO": -0.07
     }
    }
   },
   "vel": {
    "5": {
-    "medidas": 1374,
-    "sismos": 407,
-    "a": 0.491,
-    "b": 1.575,
-    "c": 3.208,
-    "sigma": 0.47,
+    "medidas": 3751,
+    "sismos": 1218,
+    "a": 1.235,
+    "b": 3.964,
+    "c": 1.291,
+    "sigma": 0.58,
     "correccion": {
-     "HEL": 0.14,
-     "RUS": 0.04,
-     "OCA": -0.24,
-     "ARGC": -0.12,
-     "SMAR": -0.02,
-     "TUM": 0.03,
-     "CRJC": -0.16,
-     "URI": -0.04,
-     "PRV": -0.05,
-     "PUYO": -0.13
+     "HEL": -0.1,
+     "RUS": -0.0,
+     "OCA": -0.76,
+     "ARGC": -0.67,
+     "SMAR": -0.86,
+     "TUM": -0.21,
+     "CRJC": -0.78,
+     "URI": -0.47,
+     "PRV": -0.37,
+     "PUYO": -0.49
     }
    },
    "30": {
-    "medidas": 1781,
-    "sismos": 497,
-    "a": 0.502,
-    "b": 1.528,
-    "c": 3.3,
-    "sigma": 0.46,
+    "medidas": 4656,
+    "sismos": 1344,
+    "a": 1.233,
+    "b": 3.868,
+    "c": 1.174,
+    "sigma": 0.55,
     "correccion": {
-     "HEL": 0.18,
-     "RUS": 0.11,
-     "OCA": -0.27,
-     "ARGC": -0.06,
-     "SMAR": 0.03,
-     "TUM": 0.12,
-     "CRJC": -0.09,
-     "URI": 0.02,
-     "PRV": 0.05,
-     "PUYO": -0.14
+     "HEL": 0.15,
+     "RUS": 0.13,
+     "OCA": -0.78,
+     "ARGC": -0.35,
+     "SMAR": -0.39,
+     "TUM": 0.06,
+     "CRJC": -0.54,
+     "URI": -0.18,
+     "PRV": -0.03,
+     "PUYO": -0.67
     }
    }
   }
  },
  "validacion": {
   "5": {
-   "sismos": 181,
-   "sesgo": -0.1,
-   "desviacion": 0.34,
-   "dentro_05": 0.9,
+   "sismos": 408,
+   "sesgo": -0.26,
+   "desviacion": 0.49,
+   "dentro_05": 0.7,
    "por_magnitud": {
     "M3-4": {
-     "sismos": 3,
-     "sesgo": 0.57
+     "sismos": 81,
+     "sesgo": -0.23
     },
     "M4-5": {
-     "sismos": 160,
-     "sesgo": -0.08
+     "sismos": 151,
+     "sesgo": -0.27
     },
     "M5-6": {
-     "sismos": 14,
-     "sesgo": -0.13
+     "sismos": 15,
+     "sesgo": -0.02
     },
     "M6-10": {
      "sismos": 4,
-     "sesgo": -0.92
+     "sesgo": -0.67
     }
    }
   },
   "30": {
-   "sismos": 195,
-   "sesgo": -0.02,
-   "desviacion": 0.24,
-   "dentro_05": 0.97,
+   "sismos": 436,
+   "sesgo": -0.16,
+   "desviacion": 0.35,
+   "dentro_05": 0.85,
    "por_magnitud": {
     "M3-4": {
-     "sismos": 3,
-     "sesgo": 0.53
+     "sismos": 82,
+     "sesgo": -0.08
     },
     "M4-5": {
-     "sismos": 172,
-     "sesgo": -0.0
+     "sismos": 171,
+     "sesgo": -0.15
     },
     "M5-6": {
-     "sismos": 16,
-     "sesgo": -0.2
+     "sismos": 17,
+     "sesgo": -0.09
     },
     "M6-10": {
      "sismos": 4,
-     "sesgo": -0.5
+     "sesgo": -0.02
     }
    }
   }

@@ -94,11 +94,39 @@ el mensaje, y se recalcula cada 5 s mientras llega la parte fuerte de la señal.
   se satura: daba M5,1 para el Mw7,7 de Panamá del 9-oct. Si el desplazamiento no supera 3
   veces el ruido (sismos pequeños) se usa la velocidad, también como la JMA.
 - **Calibración propia** (`tools/calibrar_magnitud.py`): 1.633 sismos del USGS (M≥3, un año)
-  con la señal de EarthScope de nuestras estaciones y la sensibilidad de cada sensor.
+  y 978 pequeños del SGC (M≥2) cerca de nuestras estaciones, con la señal de EarthScope y la
+  sensibilidad de cada sensor. Cada medio grado de magnitud pesa lo mismo. Una primera
+  versión solo con el USGS (casi todo M4-5) salía chata y daba +1,3 de más en los M<3.
 - **Validación** con el 25 % más reciente de los sismos (no usado para ajustar): a los 30 s,
-  desviación 0,24 y 97 % dentro de ±0,5; a los 5 s, 0,34 y 90 %. Los de M≥6 salen bajos
-  (−0,5 a los 30 s): Panamá llega a 6,6 a los 2 min y el Mw7,5 de Venezuela de junio a 6,4.
-  Casi no hay sismos menores de M4 en la validación: ahí la magnitud no está comprobada.
+  desviación 0,35, 85 % dentro de ±0,5, sin sesgo apreciable de M3 a M7; a los 5 s, 0,49.
+  Con los disparos reales de la VM (25-sep a 21-oct) y la ubicación del catálogo, el error
+  mediano es −0,2 en M<3, 0,0 en M3-4, −0,3 en M4-5 y −0,1 en M≥5.
+- **Con la ubicación del sistema** el error crece (|error| mediano 0,6; M4-5 −0,6, M≥5
+  −1,0), porque un epicentro mal puesto cambia la distancia. Mejorar la ubicación mejora la
+  magnitud.
+- Con señal real, el Mw7,7 de Panamá del 9-oct llega a 7,3 a los 2 min (4,7 con solo HEL).
+
+### Término de amplitud en el ubicador (probado, apagado)
+
+La magnitud de cada estación frente a la del sismo (σ = 0,7) como término más de la
+verosimilitud y de la prueba de "mismo sismo", con un ajuste: mientras no pasan 5 s del
+disparo la amplitud solo es una cota inferior y únicamente castiga si ya es demasiado fuerte.
+`tools/amplitudes_disparos.py` midió los 5.086 disparos de la VM con la señal archivada, y
+`tools/evaluar_asociador.py --amplitudes` los repasa dando en cada instante la amplitud que
+se conocía entonces.
+
+| Registro de la VM | Sin término | Con término |
+|---|---|---|
+| Reales / falsas | 407 / 348 | 403 / 338 |
+| Disparos ajenos en las reales | 7 % | 5 % |
+| Error del epicentro, dentro de la red | 149 km | 203 km |
+| Error del epicentro, fuera de la red | 248 km | 110 km |
+
+Ayuda con los sismos lejanos y empeora los de dentro de la red, que son los que importan para
+Medellín; con señal real llevó el M5,5 del Nido de Bucaramanga al Caribe. La razón: en los datos
+de calibración los sismos pequeños están cerca y los grandes lejos, así que la fórmula no separa
+bien magnitud y distancia (y mezcla ML del SGC con mb/Mw del USGS). Queda apagado
+(`UBICADOR_AMPLITUD = False`); la magnitud no depende de esto.
 
 ## Evaluación por sitio: ¿sirvió la alerta en Medellín? (22-oct-2026)
 
@@ -143,9 +171,9 @@ python tools/evaluar_alertas.py REGISTRO.json.gz --catalogos cat.pickle --obs ob
 
 1. Correrlo en la VM de prueba (desde el 22-oct-2026) y comparar con `disparos.jsonl` y los
    catálogos.
-2. Término de amplitud en la verosimilitud del ubicador (sigma 0,7 en el IPF) y en la prueba
-   de "mismo sismo": ya hay amplitudes en unidades físicas. Evaluarlo con amplitudes medidas
-   desde la señal archivada de los disparos de la VM.
+2. Término de amplitud: probado y apagado (ver arriba). Para retomarlo hace falta una relación
+   de atenuación que separe bien magnitud y distancia (p. ej. ajustada dentro de cada sismo,
+   como la ML) y una sola escala de magnitud.
 3. Nivel "baja" (HEL sola): el bayesiano da más (231 frente a 86) porque ya no esconde disparos
    de HEL dentro de otras detecciones; la mitad son sismos reales. Decidir cómo avisarlos.
 4. PLUM para Medellín: intensidad en tiempo real en HEL (a 8 km) como segundo camino de alerta.

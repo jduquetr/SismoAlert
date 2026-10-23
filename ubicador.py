@@ -131,7 +131,7 @@ def _g0(rank):
 class Ubicacion:
     """Resultado del ubicador: el epicentro más probable y la nube de epicentros posibles."""
 
-    def __init__(self, malla, ref, idx, w, t0, best, residuals):
+    def __init__(self, malla, ref, idx, w, t0, best, residuals, mag=None):
         self.malla = malla
         self.ref = ref            # UTCDateTime de referencia (primer disparo)
         self.idx, self.w, self.t0 = idx, w, t0  # nodos con peso, sus pesos y orígenes (s)
@@ -140,41 +140,83 @@ class Ubicacion:
         self.depth = float(malla.depth[b])
         self.origin = ref + float(t0[np.searchsorted(idx, b)])
         self.residuals = residuals  # estación -> residuo (s) en el mejor epicentro
+        # Término de amplitud: (Magnitud, magnitud del sismo en cada nodo con peso, residuos
+        # de magnitud en el mejor epicentro {estación: (residuo, completa)}), o None
+        self.mag = mag
+        self.magnitude = None
+        if mag:
+            self.magnitude = float(mag[1][np.searchsorted(idx, b)])
         d = _distance_km(malla.lat[idx], malla.lon[idx], self.lat, self.lon)
         self.uncertainty_km = float(np.sqrt(np.sum(w * d ** 2)))
 
-    def explica(self, sta, onset):
+    def explica(self, sta, onset, amps=None, complete=False):
         """Probabilidad de que un disparo en `sta` a la hora `onset` sea de este sismo.
 
         Suma el peso de los epicentros posibles cuya onda P llega a esa estación dentro de
-        ±A·σ del disparo (ec. 17-20 del artículo, solo con tiempos por ahora).
+        ±A·σ del disparo y, si hay amplitudes, cuya magnitud encaja con la del disparo
+        (ec. 17-20 del artículo). Mientras la ventana de amplitud no termina (complete=False)
+        solo cuenta si el disparo ya es demasiado fuerte para el sismo.
         """
         if sta not in self.malla.stations:
             return 0.0
         pred = self.t0 + self.malla.tt(sta)[self.idx]
         ok = np.abs((onset - self.ref) - pred) <= config.UBICADOR_A * config.UBICADOR_SIGMA_S
+        if self.mag and amps:
+            m = _station_magnitude(self.mag[0], self.malla, sta, amps, self.idx)
+            if m is not None:
+                r = m - self.mag[1]
+                ok &= (np.abs(r) if complete else r) <= config.UBICADOR_A * config.UBICADOR_SIGMA_M
         return float(np.sum(self.w[ok]))
 
     def fits(self, stations=None):
-        """Estaciones cuyo disparo encaja (±A·σ) con el mejor epicentro."""
+        """Estaciones cuyo disparo encaja (±A·σ) con el mejor epicentro, en tiempo y, si hay
+        amplitudes, en magnitud."""
         lim = config.UBICADOR_A * config.UBICADOR_SIGMA_S
+        lim_m = config.UBICADOR_A * config.UBICADOR_SIGMA_M
+        mres = self.mag[2] if self.mag else {}
+
+        def mag_ok(s):
+            if s not in mres:
+                return True
+            r, complete = mres[s]
+            return (abs(r) if complete else r) <= lim_m
+
         return [s for s, r in self.residuals.items()
-                if abs(r) <= lim and (stations is None or s in stations)]
+                if abs(r) <= lim and mag_ok(s) and (stations is None or s in stations)]
 
     def to_dict(self):
         return {"lat": round(self.lat, 2), "lon": round(self.lon, 2), "depth": self.depth,
                 "origin": str(self.origin),
                 "incertidumbre_km": round(self.uncertainty_km),
-                "residuos_s": {s: round(r, 1) for s, r in self.residuals.items()}}
+                "residuos_s": {s: round(r, 1) for s, r in self.residuals.items()},
+                **({"residuos_m": {s: round(r, 1) for s, (r, _) in self.mag[2].items()}}
+                   if self.mag else {})}
 
 
-def ubicar(malla, picks, now, alive=None, weak=()):
+def _station_magnitude(mag, malla, sta, amps, idx=None):
+    """Magnitud que da la amplitud de `sta` (ventana de 5 s, la del IPF) para cada nodo."""
+    w = 5
+    tipo = mag.tipo(amps, w)
+    k = mag.coef.get(tipo, {}).get(w)
+    a = amps.get(tipo, {}).get(w, 0)
+    if k is None or sta not in mag.sens or a <= 0:
+        return None
+    d = malla.dist(sta) if idx is None else malla.dist(sta)[idx]
+    z = malla.depth if idx is None else malla.depth[idx]
+    r = np.maximum(np.hypot(d, z), 1.0)
+    return (k["a"] * np.log10(a / mag.sens[sta]) + k["b"] * np.log10(r) + k["c"]
+            + k["correccion"].get(sta, 0.0))
+
+
+def ubicar(malla, picks, now, alive=None, weak=(), amps=None, mag=None):
     """Ubica un sismo a partir de sus disparos.
 
     picks: {estación: UTCDateTime del disparo}. now: hora a la que se evalúa (sirve para
     saber qué estaciones calladas ya debieron disparar). alive: estaciones que están
     enviando datos (por defecto todas las de la malla). weak: estaciones con disparo débil
     (STA/LTA < MIN_RATIO), que suelen ser ruido: casi no mueven la solución.
+    amps: {estación: (amplitudes como magnitud.medir, ventana de 5 s completa)} y mag: un
+    magnitud.Magnitud, para el término de amplitud (config.UBICADOR_AMPLITUD).
     """
     picks = {s: t for s, t in picks.items() if s in malla.stations}
     if not picks:
@@ -226,9 +268,33 @@ def ubicar(malla, picks, now, alive=None, weak=()):
     g = config.UBICADOR_PISO_VORONOI
     lp += np.log((1 - g) * np.exp(-excess / config.UBICADOR_C1_KM) + g)
 
+    # Amplitud (ec. 13-16 del artículo): en cada nodo, la magnitud de cada estación frente a
+    # la mediana de las que ya completaron su ventana. Una ventana incompleta solo da una
+    # cota inferior: castiga solo si ya es demasiado fuerte.
+    mterm = None
+    if mag is not None and mag.ok and amps and config.UBICADOR_AMPLITUD:
+        ms = {s: (_station_magnitude(mag, malla, s, a), c) for s, (a, c) in amps.items()
+              if s in picks}
+        ms = {s: v for s, v in ms.items() if v[0] is not None}
+        full = [m for m, c in ms.values() if c]
+        if len(full) >= 2 or (full and len(ms) >= 2):
+            mm = np.median(np.stack(full), axis=0)
+            sm = config.UBICADOR_SIGMA_M
+            for s, (m, c) in ms.items():
+                r = m - mm if c else np.maximum(m - mm, 0)
+                g0 = _g0(rank[row[s]])
+                if s in weak:
+                    g0 = np.maximum(g0, config.UBICADOR_PISO_DEBIL)
+                lp += _robust_log(r, sm, g0)
+            mterm = (ms, mm)
+
     best = int(np.argmax(lp))
     w = np.exp(lp - lp[best])
     keep = np.flatnonzero(w >= 1e-6)  # el resto no pesa nada (incluye siempre el mejor)
     w = w[keep] / w[keep].sum()
     residuals = {s: float(obs[k, 0] - t0[best] - tt[k][best]) for k, s in enumerate(picks)}
-    return Ubicacion(malla, ref, keep, w, t0[keep], best, residuals)
+    mres = None
+    if mterm:
+        ms, mm = mterm
+        mres = (mag, mm[keep], {s: (float(m[best] - mm[best]), c) for s, (m, c) in ms.items()})
+    return Ubicacion(malla, ref, keep, w, t0[keep], best, residuals, mres)

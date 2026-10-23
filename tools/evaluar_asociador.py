@@ -61,20 +61,44 @@ def load_picks(path):
     return sorted(((UTCDateTime(t), s, r) for (s, t), r in picks.items()), key=lambda x: x[0])
 
 
-def run(assoc_cls, picks, **kw):
-    """Pasa los disparos por un asociador; devuelve sus detecciones (estado final)."""
+def run(assoc_cls, picks, amplitudes=None, **kw):
+    """Pasa los disparos por un asociador; devuelve sus detecciones (estado final).
+
+    amplitudes: las de tools/amplitudes_disparos.py. El asociador recibe en cada instante
+    la amplitud que se conocía entonces (el máximo hasta ese segundo), y cada 5 s simulados
+    se llama a refresh(), como hace el servidor.
+    """
     dets = {}
     clock = {"now": None}
+    last = {}  # estación -> hora de su último disparo
 
     def keep(det):
         dets[det["id"]] = det
 
+    def amps(s):
+        t = last.get(s)
+        a = amplitudes.get(f"{s}|{t}") if t is not None else None
+        if not a:
+            return None
+        k = max(0, min(30, int(clock["now"] - t)))
+        return t, {"ruido": a["ruido"],
+                   **{tipo: {w: a[tipo][min(k, w)] for w in config.MAGNITUD_VENTANAS_S}
+                      for tipo in ("desp", "vel")}}
+
     if assoc_cls is BayesAssociator:
         kw["clock"] = lambda: clock["now"]
+        if amplitudes is not None:
+            kw["amps"] = amps
     a = assoc_cls(on_detection=keep, on_update=keep, **kw)
-    for t, s, r in picks:
+    for i, (t, s, r) in enumerate(picks):
         clock["now"] = t
+        last[s] = t
         a.trigger(s, t, r)
+        if amplitudes is not None:
+            nxt = picks[i + 1][0] if i + 1 < len(picks) else t + 60
+            while a.open and clock["now"] + 5 < nxt and clock["now"] - t < 60:
+                clock["now"] += 5
+                a.refresh()
     return list(dets.values())
 
 
@@ -137,6 +161,7 @@ def summarize(name, dets, cats, rows):
     all_events = [e for evs in cats.values() for e in evs]
     by_level = {}
     errors = {"dentro": [], "fuera": []}
+    mag_err = []
     matched_ids = set()
     n_ok = n_bad = 0
     alta_ok = alta_wrong = 0
@@ -159,6 +184,9 @@ def summarize(name, dets, cats, rows):
                 alta_ok += config.LOCAL_STATION in ok
                 alta_wrong += config.LOCAL_STATION not in ok
         loc = det.get("ubicacion")
+        mag = (det.get("magnitud") or {}).get("valor")
+        if ev and mag is not None and ev.get("mag") is not None:
+            mag_err.append((ev["mag"], mag - ev["mag"]))
         err = None
         if ev and loc:
             err = sources.distance_km(loc["lat"], loc["lon"], ev["lat"], ev["lon"])
@@ -170,7 +198,8 @@ def summarize(name, dets, cats, rows):
                      "sismo": f"M{ev['mag']} {ev['place']} {ev['time']}" if ev else "",
                      "encajan": ",".join(ok), "no_encajan": ",".join(bad),
                      "ubicacion": f"{loc['lat']},{loc['lon']},{loc['depth']}" if loc else "",
-                     "error_km": round(err) if err is not None else ""})
+                     "error_km": round(err) if err is not None else "",
+                     "magnitud": mag if mag is not None else ""})
     print(f"\n== {name}: {len(dets)} detecciones ==")
     print(f"{'nivel':8} {'total':>6} {'real':>6} {'falsa':>6} {'artefacto':>10} {'(regla servidor)':>17}")
     for lv in ("alta", "media", "baja"):
@@ -193,6 +222,15 @@ def summarize(name, dets, cats, rows):
             e = sorted(e)
             print(f"error del epicentro, sismos {where} de la red (estación a <=300 km): "
                   f"mediana {statistics.median(e):.0f} km, p75 {e[int(.75 * (len(e) - 1))]:.0f} km (n={len(e)})")
+    if mag_err:
+        e = [x for _, x in mag_err]
+        print(f"magnitud preliminar frente al catálogo (detecciones reales, n={len(e)}): mediana "
+              f"{statistics.median(e):+.2f}, |error| mediano {statistics.median(map(abs, e)):.2f}, "
+              f"{sum(abs(x) <= 0.5 for x in e) / len(e):.0%} dentro de ±0,5")
+        for lo, hi in ((0, 3), (3, 4), (4, 5), (5, 10)):
+            k = [x for m, x in mag_err if lo <= m < hi]
+            if k:
+                print(f"  catálogo M{lo}-{hi}: n={len(k)}, mediana {statistics.median(k):+.2f}")
     return matched_ids
 
 
@@ -201,6 +239,8 @@ def main():
     ap.add_argument("archivo")
     ap.add_argument("--cache", help="guardar/leer los catálogos del periodo en este archivo")
     ap.add_argument("--csv", help="detalle por detección")
+    ap.add_argument("--amplitudes", help="amplitudes de los disparos (tools/amplitudes_disparos.py): "
+                    "agrega el bayesiano con magnitud y término de amplitud")
     args = ap.parse_args()
 
     picks = load_picks(args.archivo)
@@ -224,6 +264,14 @@ def main():
     b = summarize("bayesiano (IPF adaptado)", new, cats, rows)
     print(f"\nsismos de catálogo detectados: actual {len(a)}, bayesiano {len(b)}, "
           f"ambos {len(a & b)}, solo actual {len(a - b)}, solo bayesiano {len(b - a)}")
+    if args.amplitudes:
+        amps = json.load(open(args.amplitudes))
+        t = time.time()
+        con = run(BayesAssociator, picks, amplitudes=amps, malla=Malla())
+        print(f"bayesiano con amplitudes: {time.time() - t:.1f} s")
+        c = summarize("bayesiano con amplitud (magnitud y término de amplitud)", con, cats, rows)
+        print(f"\nsismos de catálogo detectados: bayesiano {len(b)}, con amplitud {len(c)}, "
+              f"solo bayesiano {len(b - c)}, solo con amplitud {len(c - b)}")
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0]))

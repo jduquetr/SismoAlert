@@ -39,6 +39,7 @@ class _Sismo:
         self.last = onset
         self.loc = None
         self.det = None
+        self.n_complete = 0  # disparos con la ventana de amplitud de 5 s ya terminada
 
     def onsets(self):
         return {s: p["onset"] for s, p in self.picks.items()}
@@ -52,7 +53,7 @@ class BayesAssociator:
         self.malla = malla or Malla()
         self.alive = alive or (lambda: list(self.malla.stations))  # estaciones con datos
         self.clock = clock or UTCDateTime  # en pruebas: la hora simulada
-        # amps(estación) -> (hora del disparo, {ventana: cuentas}) del último disparo
+        # amps(estación) -> (hora del disparo, magnitud.medir(...)) del último disparo
         self.amps = amps
         self.magnitud = magnitud or Magnitud()
         self.lock = threading.Lock()
@@ -62,10 +63,11 @@ class BayesAssociator:
         with self.lock:
             self._expire(onset)
             touched = []
+            amps = self._amp(station, onset)  # recién empieza: solo cota inferior
             for ev in self.open:
                 if station in ev.picks:
                     continue  # la misma estación otra vez (coda): no es un dato nuevo
-                if ev.loc.explica(station, onset) >= config.ASOCIADOR_P_MIN:
+                if ev.loc.explica(station, onset, amps) >= config.ASOCIADOR_P_MIN:
                     ev.picks[station] = {"onset": onset, "ratio": float(ratio)}
                     ev.last = max(ev.last, onset)
                     touched.append(ev)
@@ -74,6 +76,7 @@ class BayesAssociator:
                 self.open.append(ev)
                 touched.append(ev)
             for ev in touched:
+                self._snap(ev)
                 self._locate(ev, onset)
             for ev in dict.fromkeys(touched + self._merge(onset, touched)):
                 if ev in self.open:
@@ -88,19 +91,40 @@ class BayesAssociator:
                     self._decide(ev, quiet=True)
 
     def refresh(self):
-        """Vuelve a calcular la magnitud de las detecciones en curso (cada pocos segundos).
+        """Actualiza amplitudes, ubicación y magnitud de los sismos en curso (cada pocos s).
 
-        La velocidad máxima sigue subiendo después del disparo, cuando ya no llegan disparos
-        nuevos que obliguen a recalcular; se avisa si la magnitud cambió.
+        La amplitud sigue subiendo después del disparo, cuando ya no llegan disparos nuevos
+        que obliguen a recalcular. Cuando la ventana de 5 s de algún disparo termina, el
+        término de amplitud ya puede juzgarlo y el sismo se vuelve a ubicar (y depurar). Se
+        avisa si la magnitud o las estaciones cambiaron.
         """
         with self.lock:
-            for ev in self.open:
+            now = self.clock()
+            for ev in list(self.open):
+                self._snap(ev)
+                n = sum(1 for p in ev.picks.values() if p.get("amps") and now - p["onset"] >= 5)
+                before = set(ev.picks)
+                if n != ev.n_complete:
+                    ev.n_complete = n
+                    self._locate(ev, now)
                 if ev.det is None:
+                    if set(ev.picks) != before:
+                        self._decide(ev)
                     continue
                 mag = self._magnitude(ev)
                 old = (ev.det.get("magnitud") or {}).get("valor")
-                if mag and mag["valor"] != old:
+                if (mag and mag["valor"] != old) or set(ev.picks) != before:
                     self._decide(ev)
+
+    def _amp(self, station, onset):
+        a = self.amps(station) if self.amps else None
+        return dict(a[1]) if a and a[0] == onset else None  # copia: el próximo la reemplaza
+
+    def _snap(self, ev):
+        for s, p in ev.picks.items():
+            a = self._amp(s, p["onset"])
+            if a:
+                p["amps"] = a
 
     def _locate(self, ev, now):
         """Ubica el sismo y saca los disparos que no encajan, si ya hay con qué juzgarlos.
@@ -119,7 +143,9 @@ class BayesAssociator:
 
     def _ubicar(self, picks, now):
         weak = {s for s, p in picks.items() if p["ratio"] < config.MIN_RATIO}
-        return ubicar(self.malla, {s: p["onset"] for s, p in picks.items()}, now, self.alive(), weak)
+        amps = {s: (p["amps"], now - p["onset"] >= 5) for s, p in picks.items() if p.get("amps")}
+        return ubicar(self.malla, {s: p["onset"] for s, p in picks.items()}, now, self.alive(),
+                      weak, amps, self.magnitud)
 
     def _same_quake(self, a, b, now):
         """¿Son a y b el mismo sismo? Devuelve la ubicación conjunta si lo son.
@@ -130,7 +156,8 @@ class BayesAssociator:
         disparos fuertes la ubicación conjunta ya no se acomoda a cualquier cosa.
         """
         shared = sum(1 for s, p in b.picks.items()
-                     if s in a.picks or a.loc.explica(s, p["onset"]) >= config.ASOCIADOR_P_MIN)
+                     if s in a.picks or a.loc.explica(s, p["onset"], p.get("amps"),
+                                                      now - p["onset"] >= 5) >= config.ASOCIADOR_P_MIN)
         union = dict(b.picks, **a.picks)  # si una estación está en ambos, vale el de a
         if shared * 2 > len(b.picks):
             return self._ubicar(union, now)
@@ -182,10 +209,7 @@ class BayesAssociator:
     def _magnitude(self, ev):
         if not self.amps or not self.magnitud.ok:
             return None
-        for s, p in ev.picks.items():
-            a = self.amps(s)
-            if a and a[0] == p["onset"]:
-                p["amps"] = dict(a[1])  # copia: el próximo disparo de la estación la reemplaza
+        self._snap(ev)
         amps = {s: (p["onset"], p["amps"]) for s, p in ev.picks.items() if p.get("amps")}
         return self.magnitud.estimar(amps, ev.loc, self.clock())
 

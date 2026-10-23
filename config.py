@@ -87,6 +87,11 @@ UBICADOR_PISO_DEBIL = 0.5
 # Estaciones calladas: se penalizan si ya pasaron UBICADOR_NYAD_MARGEN_S desde que les debió
 # llegar la P (1 s) y están más cerca que la segunda estación que disparó con fuerza
 UBICADOR_NYAD_MARGEN_S = 3.0
+# Término de amplitud (magnitud.py): magnitud de cada estación frente a la del sismo, con
+# σ = 0,7 como en el artículo. Apagado: en el registro de la VM bajó poco las falsas (348 a
+# 338) y empeoró la ubicación dentro de la red (mediana 149 a 203 km; ver JAPON.md)
+UBICADOR_AMPLITUD = False
+UBICADOR_SIGMA_M = 0.7
 # Un disparo nuevo se suma a un sismo en curso si lo explica al menos esta fracción de los
 # epicentros posibles
 ASOCIADOR_P_MIN = 0.2

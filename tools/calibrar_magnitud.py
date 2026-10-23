@@ -12,11 +12,13 @@ A: amplitud máxima de la componente vertical en los primeros 5 o 30 s desde la 
 (m) en 0,2-5 Hz y velocidad (m/s) en la banda del detector; R: distancia hipocentral (km).
 Cada tipo de señal y cada ventana tiene sus coeficientes.
 
-1. Pide al USGS los sismos de los últimos DIAS días (M>=3) dentro de REGION.
+1. Pide al USGS los sismos de los últimos DIAS días (M>=3) dentro de REGION, y al SGC los
+   pequeños (M>=2) cerca de nuestras estaciones, que el USGS no tiene.
 2. Baja de EarthScope la señal de cada estación alrededor de la onda P teórica (IASP91)
    y la sensibilidad de cada sensor. Todo queda en la carpeta --cache para repetir el
    ajuste sin volver a bajar nada.
-3. Ajusta a, b, c por mínimos cuadrados con las medidas que superan 3 veces el ruido, y
+3. Ajusta a, b, c por mínimos cuadrados (cada medio grado de magnitud con el mismo peso)
+   con las medidas que superan 3 veces el ruido, y
    la corrección de cada estación como la mediana de sus residuos.
 4. Valida: ajusta con el 75 % más antiguo y mide el error de la magnitud del sismo, como
    la calcula el sistema, en el 25 % más reciente.
@@ -25,12 +27,16 @@ Escribe magnitud.json (lo usa magnitud.py). Uso:
     python tools/calibrar_magnitud.py --cache CARPETA [--dias 365] [--solo-ajustar]
 """
 import argparse
+import collections
 import csv
 import io
 import json
 import os
+import random
 import sys
+import threading
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -40,6 +46,7 @@ from obspy.clients.fdsn import Client
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config  # noqa: E402
 import magnitud  # noqa: E402
+import sources  # noqa: E402
 from ubicador import TiemposP, _distance_km  # noqa: E402
 
 USGS = ("https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime={t0}"
@@ -48,16 +55,62 @@ USGS = ("https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime={
 MAX_DIST_KM = 1500
 ANTES_S, DESPUES_S = 40, 40  # ventana que se baja alrededor de la P
 SNR_MIN = 3
+SGC_POR_BIN = 400
 
 
-def eventos(dias):
+def eventos_usgs(dias):
     t1 = UTCDateTime()
     url = USGS.format(t0=(t1 - dias * 86400).date, t1=t1.date, **config.REGION)
     with urllib.request.urlopen(url, timeout=120) as r:
         rows = list(csv.DictReader(io.StringIO(r.read().decode())))
     return [{"id": r["id"], "time": r["time"], "lat": float(r["latitude"]),
              "lon": float(r["longitude"]), "depth": float(r["depth"] or 10),
-             "mag": float(r["mag"]), "magType": r["magType"]} for r in rows]
+             "mag": float(r["mag"]), "magType": r["magType"], "fuente": "USGS"} for r in rows]
+
+
+def eventos_sgc(dias):
+    """Sismos pequeños del SGC que nuestras estaciones alcanzan a registrar: M>=2 a menos de
+    100·(M-1,5) km de alguna (M2 a 50 km, M3 a 150 km), como mucho SGC_POR_BIN por cada
+    medio grado de magnitud (al azar) para no bajar decenas de miles."""
+    t1 = UTCDateTime()
+    t = t1 - dias * 86400
+    evs = []
+    while t < t1:
+        try:
+            evs += sources.sgc_biweekly(t, min(t + 10 * 86400, t1))
+        except Exception as e:
+            print(f"SGC {t.date}: {e}")
+        t += 10 * 86400
+    out = []
+    for e in evs:
+        m = e.get("mag")
+        if m is None or m < 2:
+            continue
+        near = min(_distance_km(e["lat"], e["lon"], *v[3:5]) for v in config.STATIONS.values())
+        if near <= 100 * (m - 1.5):
+            out.append({"id": "SGC" + e["id"], "time": str(e["time"]), "lat": e["lat"],
+                        "lon": e["lon"], "depth": float(e["depth"] or 10), "mag": float(m),
+                        "magType": e.get("magType") or "", "fuente": "SGC"})
+    rng = random.Random(0)
+    rng.shuffle(out)
+    cuenta, elegidos = collections.Counter(), []
+    for e in out:
+        b = int(e["mag"] * 2)
+        if cuenta[b] < SGC_POR_BIN:
+            cuenta[b] += 1
+            elegidos.append(e)
+    print(f"SGC: {len(evs)} sismos, {len(out)} al alcance de las estaciones, {len(elegidos)} elegidos")
+    return elegidos
+
+
+def eventos(dias):
+    """USGS (M>=3, toda la región) y SGC (pequeños, cerca de las estaciones). Un sismo que
+    está en los dos (±10 s y 50 km) queda con la magnitud del SGC."""
+    sgc = eventos_sgc(dias)
+    usgs = [u for u in eventos_usgs(dias)
+            if not any(abs(UTCDateTime(u["time"]) - UTCDateTime(g["time"])) <= 10
+                       and _distance_km(u["lat"], u["lon"], g["lat"], g["lon"]) <= 50 for g in sgc)]
+    return sorted(sgc + usgs, key=lambda e: e["time"])
 
 
 def sensibilidades(client):
@@ -79,10 +132,14 @@ def descargar(cache, dias):
     evs = eventos(dias)
     (cache / "eventos.json").write_text(json.dumps(evs))
     tp = TiemposP()
-    for i, ev in enumerate(evs):
+    local = threading.local()
+
+    def uno(ev):
         path = cache / f"{ev['id']}.mseed"
         if path.exists():
-            continue
+            return
+        if not hasattr(local, "c"):
+            local.c = Client("EARTHSCOPE", timeout=120)
         t0 = UTCDateTime(ev["time"])
         bulk = []
         for sta, (net, loc, cha, lat, lon) in config.STATIONS.items():
@@ -91,16 +148,18 @@ def descargar(cache, dias):
                 p = t0 + float(tp(d, ev["depth"]))
                 bulk.append((net, sta, loc or "--", cha, p - ANTES_S, p + DESPUES_S))
         try:
-            st = client.get_waveforms_bulk(bulk) if bulk else None
-        except Exception as e:  # sin datos para ese sismo
-            print(f"{ev['id']}: {str(e)[:60]}")
+            st = local.c.get_waveforms_bulk(bulk) if bulk else None
+        except Exception:  # sin datos para ese sismo
             st = None
         if st:
             st.write(str(path), format="MSEED")
         else:
             path.write_bytes(b"")
-        if i % 25 == 0:
-            print(f"{i}/{len(evs)} sismos")
+
+    with ThreadPoolExecutor(6) as ex:
+        for i, _ in enumerate(ex.map(uno, evs)):
+            if i % 200 == 0:
+                print(f"{i}/{len(evs)} sismos", flush=True)
 
 
 def medir(cache):
@@ -138,7 +197,11 @@ def ajustar(rows, sens, tipo, w):
     X = np.array([[np.log10(r["amps"][tipo][w] / sens[r["sta"]]), np.log10(r["R"]), 1]
                   for r in ok])
     y = np.array([r["mag"] for r in ok])
-    coef, *_ = np.linalg.lstsq(X, y, rcond=None)
+    # Cada medio grado de magnitud pesa lo mismo: si no, mandan los M4-5 (los más comunes
+    # en el USGS), la pendiente sale chata y los sismos pequeños daban hasta +1,3 de más
+    nbin = collections.Counter(int(m * 2) for m in y)
+    sw = np.sqrt([1 / nbin[int(m * 2)] for m in y])
+    coef, *_ = np.linalg.lstsq(X * sw[:, None], y * sw, rcond=None)
     res = y - X @ coef
     corr = {}
     for sta in config.STATIONS:
@@ -193,7 +256,7 @@ def main():
         descargar(a.cache, a.dias)
     sens = json.loads((a.cache / "sensibilidad.json").read_text())
     rows = medir(a.cache)
-    out = {"fuente": f"USGS M>=3 hasta {UTCDateTime().date}; señal de EarthScope",
+    out = {"fuente": f"USGS M>=3 y SGC M>=2 cerca de las estaciones, {a.dias} días hasta {UTCDateTime().date}; señal de EarthScope",
            "banda_vel_hz": list(config.BANDPASS),
            "banda_desp_hz": list(config.MAGNITUD_BANDA_DESP_HZ)}
     out.update(calibrar(rows, sens))
@@ -209,7 +272,7 @@ def main():
                  f"{errs.mean():+.2f}, desviación {errs.std():.2f}, "
                  f"{(abs(errs) <= 0.5).mean():.0%} dentro de ±0,5")
         por_mag = {}
-        for lo, hi in ((3, 4), (4, 5), (5, 6), (6, 10)):
+        for lo, hi in ((2, 3), (3, 4), (4, 5), (5, 6), (6, 10)):
             k = (mags >= lo) & (mags < hi)
             if k.any():
                 por_mag[f"M{lo}-{hi}"] = {"sismos": int(k.sum()), "sesgo": round(float(errs[k].mean()), 2)}
