@@ -20,12 +20,14 @@ from obspy import UTCDateTime
 
 import config
 import decisiones
+import latencia
 import sources
 import store
 import traveltime
 from detector import LEVEL_LABELS, Associator, StationTrigger, simultaneous_artifact
 from emsc import EmscStream
 from seedlink import SeedLinkClient
+from vigilancia import Vigilancia
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("sismos")
@@ -338,9 +340,10 @@ def log_pick(sta, onset, ratio):
 
 
 def refresh_loop():
-    """La magnitud preliminar sigue subiendo tras los disparos: recalcularla cada 5 s."""
+    """La magnitud y la sacudida siguen subiendo tras los disparos: recalcular la magnitud y
+    la intensidad prevista en Medellín cada REFRESCO_S."""
     while True:
-        time.sleep(5)
+        time.sleep(config.REFRESCO_S)
         try:
             assoc.refresh()
         except Exception:
@@ -348,11 +351,17 @@ def refresh_loop():
 
 
 # ---------------------------------------------------------------------------- SeedLink
+lat = latencia.Latencia()
+
+
 def on_trace(trace):
     sta = trace.stats.station
     trig = triggers.get(sta)
     if not trig:
         return
+    if trace.stats.channel.endswith("Z"):
+        lat.paquete(sta, trace.stats.starttime.timestamp, trace.stats.endtime.timestamp,
+                    time.time())
     was, was_peak = (trig.onset, trig.peak_ratio) if trig.triggered else (None, 0)
     try:
         onset = trig.add(trace)
@@ -372,7 +381,8 @@ def on_trace(trace):
 
 def seedlink_loop():
     delay = 5
-    streams = [(net, sta, loc + cha) for sta, (net, loc, cha, *_) in config.STATIONS.items()]
+    # Las tres componentes: la vertical dispara, las horizontales miden la sacudida
+    streams = [(net, sta, loc + cha[:2] + "?") for sta, (net, loc, cha, *_) in config.STATIONS.items()]
     while True:
         hub.note(f"Conectando a {config.SEEDLINK_SERVER}")
         connected_at = time.time()
@@ -487,13 +497,23 @@ def station_info():
     out = []
     for sta, (net, loc, cha, lat, lon) in config.STATIONS.items():
         out.append(dict(triggers[sta].status(), network=net, channel=f"{loc}.{cha}".lstrip("."),
+                        caida=sta in vigilancia.caidas,
                         lat=lat, lon=lon, group=config.STATION_GROUPS.get(sta)))
     return out
+
+
+vigilancia = Vigilancia()
 
 
 def status_loop():
     while True:
         hub.publish("stations", station_info())
+        for sta, cambio, edad in vigilancia.revisar({s: t.last_packet for s, t in triggers.items()}):
+            if cambio == "caida":
+                hub.note(f"Estación {sta} sin datos hace {edad // 60} min")
+            else:
+                hub.note(f"Estación {sta} volvió a mandar datos")
+            hub.publish("estacion", {"station": sta, "estado": cambio, "edad_s": edad})
         time.sleep(5)
 
 

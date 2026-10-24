@@ -15,6 +15,8 @@ terminan en una misma detección. Aquí, como en Tamaribuchi et al. (2014):
    MIN_STATIONS_REMOTE, HEL sola), pero contando solo sus propios disparos.
 5. Cada detección lleva una magnitud preliminar con la velocidad máxima de sus estaciones
    más cercanas (magnitud.py), si se le pasan las amplitudes (amps).
+6. Y la intensidad prevista en Medellín, con la decisión de alertar (prevision.py): la
+   magnitud, la sacudida que ya miden sus estaciones (PLUM) y el Pd de HEL.
 
 Tiene la misma interfaz que detector.Associator, así que el servidor puede usar uno u otro.
 """
@@ -24,6 +26,7 @@ from itertools import count
 from obspy import UTCDateTime
 
 import config
+import prevision
 from detector import Associator, n_groups
 from magnitud import Magnitud
 from ubicador import Malla, ubicar
@@ -96,7 +99,7 @@ class BayesAssociator:
         La amplitud sigue subiendo después del disparo, cuando ya no llegan disparos nuevos
         que obliguen a recalcular. Cuando la ventana de 5 s de algún disparo termina, el
         término de amplitud ya puede juzgarlo y el sismo se vuelve a ubicar (y depurar). Se
-        avisa si la magnitud o las estaciones cambiaron.
+        avisa si la magnitud, las estaciones o la intensidad prevista en Medellín cambiaron.
         """
         with self.lock:
             now = self.clock()
@@ -113,7 +116,9 @@ class BayesAssociator:
                     continue
                 mag = self._magnitude(ev)
                 old = (ev.det.get("magnitud") or {}).get("valor")
-                if (mag and mag["valor"] != old) or set(ev.picks) != before:
+                prev = prevision.medellin(ev.picks, ev.loc, mag, now, ev.det.get("medellin"))
+                if ((mag and mag["valor"] != old) or set(ev.picks) != before
+                        or prevision.cambio(ev.det.get("medellin"), prev)):
                     self._decide(ev)
 
     def _amp(self, station, onset):
@@ -195,6 +200,9 @@ class BayesAssociator:
                         for s, p in b.picks.items():
                             a.picks.setdefault(s, p)
                         a.first, a.last = min(a.first, b.first), max(a.last, b.last)
+                        if (a.det and b.det and (b.det.get("medellin") or {}).get("alerta")
+                                and not (a.det.get("medellin") or {}).get("alerta")):
+                            a.det["medellin"] = b.det["medellin"]  # la alerta no se retira
                         a.det = a.det or b.det
                         self._locate(a, now)  # con la depuración de disparos ajenos
                         self.open.remove(b)
@@ -239,6 +247,11 @@ class BayesAssociator:
         if mag:
             det["magnitud"] = mag
             det["message"] += f". Magnitud preliminar ≈ {mag['valor']}"
+        antes = det.get("medellin")
+        det["medellin"] = prevision.medellin(ev.picks, ev.loc, mag, self.clock(), antes)
+        quiet = quiet and not prevision.cambio(antes, det["medellin"])
+        if prevision.texto(det["medellin"]):
+            det["message"] += ". " + prevision.texto(det["medellin"])
         if new:
             self.on_detection(det)
         elif not quiet or det["level"] != old_level:

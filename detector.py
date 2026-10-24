@@ -2,11 +2,19 @@
 import threading
 import time
 
+import numpy as np
 from obspy import Stream, UTCDateTime
 from obspy.signal.trigger import classic_sta_lta
 
 import config
 import magnitud
+import sacudida
+
+# Sensibilidad de cada sensor (cuentas por m/s, la de la vertical: las horizontales difieren
+# menos de 8 %), para pasar la señal a velocidad del suelo
+SENS = getattr(magnitud.Magnitud(), "sens", {})
+# Niveles de intensidad cuyo primer cruce se anota (los de la evaluación)
+NIVELES_MMI = [x / 2 for x in range(3, 15)]
 
 
 class StationTrigger:
@@ -23,8 +31,10 @@ class StationTrigger:
         self.last_packet = None   # hora de llegada del último paquete (reloj local)
         self.last_sample = None   # hora del último dato (UTCDateTime)
         # Amplitudes máximas del último disparo (magnitud.medir): con ellas se estima la
-        # magnitud (magnitud.py)
+        # magnitud (magnitud.py), más la sacudida medida (_seguir)
         self.amps = {}
+        self.horiz = {}  # canal horizontal -> Stream
+        self.sacudida = {}
 
     def reset(self):
         """Descarta la señal acumulada; el STA/LTA se vuelve a estabilizar (~35 s)."""
@@ -33,11 +43,19 @@ class StationTrigger:
         self.onset = None
         self.peak_ratio = 0.0
         self.amps = {}
+        self.sacudida = {}
         self.off_since = None
         self.last_checked = None
 
     def add(self, trace):
-        """Agrega un trozo de señal. Devuelve la hora de inicio si hay un disparo nuevo."""
+        """Agrega un trozo de señal. Devuelve la hora de inicio si hay un disparo nuevo.
+
+        Las componentes horizontales no disparan: solo sirven para medir la sacudida.
+        """
+        if trace.stats.channel[-1:] in ("N", "E", "1", "2"):
+            self._add_horiz(trace)
+            self._seguir()
+            return None
         self.last_packet = time.time()
         if len(self.stream):
             gap = trace.stats.starttime - self.stream[0].stats.endtime
@@ -52,7 +70,54 @@ class StationTrigger:
         tr.stats.processing = []
         self.last_sample = tr.stats.endtime
         tr.trim(tr.stats.endtime - config.BUFFER_S)
-        return self._evaluate()
+        onset = self._evaluate()
+        self._seguir()
+        return onset
+
+    def _add_horiz(self, trace):
+        st = self.horiz.setdefault(trace.stats.channel, Stream())
+        if len(st) and trace.stats.starttime - st[0].stats.endtime > config.GAP_RESET_S:
+            st.clear()
+        st += trace
+        st.merge(method=1, fill_value="interpolate")
+        st[0].stats.processing = []
+        st[0].trim(st[0].stats.endtime - config.BUFFER_S)
+
+    def _seguir(self):
+        """Sacudida desde el último disparo (sacudida.py), durante INTENSIDAD_SEGUIR_S.
+
+        Queda en self.amps (así llega al asociador con las amplitudes de la magnitud):
+        "pgv_cms" máxima hasta ahora, "pgv_comp" ("h" con las dos horizontales, "z" con la
+        vertical), "mmi" su intensidad, "cruces" {nivel: hora del primer cruce} y "pd" (Pd y
+        τc de los primeros 3 s, o {} si no se pudo medir).
+        """
+        sens = SENS.get(self.station)
+        if self.onset is None or not len(self.stream) or not sens:
+            return
+        z = self.stream[0]
+        if z.stats.endtime - self.onset > config.INTENSIDAD_SEGUIR_S:
+            return
+        s = self.sacudida
+        h = [st[0] for st in self.horiz.values() if len(st)
+             and st[0].stats.endtime > self.onset - 30]
+        trazas, comp = (h[:2], "h") if len(h) >= 2 else ([z], "z")
+        serie = sacudida.serie(trazas, sens, self.onset,
+                               1.0 if comp == "h" else config.INTENSIDAD_FACTOR_Z)
+        if serie is not None:
+            t0, df, v = serie
+            if comp == "h" or s.get("pgv_comp") != "h":
+                mmi = sacudida.mmi(v)
+                cruces = s.setdefault("cruces", {})
+                for nivel in NIVELES_MMI:
+                    k = f"{nivel:.1f}"
+                    if k not in cruces and mmi.max() >= nivel:
+                        cruces[k] = str(t0 + int(np.argmax(mmi >= nivel)) / df)
+                if v.max() > s.get("pgv_cms", 0):
+                    s.update(pgv_cms=float(v.max()), mmi=round(float(mmi.max()), 2))
+                s["pgv_comp"] = comp
+        if "pd" not in s and z.stats.endtime >= self.onset + 3:
+            s["pd"] = sacudida.pd_tauc(z, self.onset, sens) or {}
+        self.amps.update(s)
 
     def _evaluate(self):
         tr = self.stream[0].copy()
@@ -82,6 +147,7 @@ class StationTrigger:
                     self.triggered = True
                     self.onset = t
                     self.peak_ratio = v
+                    self.sacudida = {}
                     new_onset = t
             else:
                 self.peak_ratio = max(self.peak_ratio, v)
@@ -91,7 +157,7 @@ class StationTrigger:
         # Amplitudes para la magnitud, hasta que se completa la ventana más larga
         if self.onset is not None and (new_onset or tr.stats.endtime - self.onset
                                        <= max(config.MAGNITUD_VENTANAS_S) + 10):
-            self.amps = magnitud.medir(self.stream[0], self.onset)
+            self.amps = dict(magnitud.medir(self.stream[0], self.onset), **self.sacudida)
         return new_onset
 
     def status(self):

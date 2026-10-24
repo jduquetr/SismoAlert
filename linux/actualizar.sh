@@ -87,7 +87,7 @@ if ! git diff --quiet "$OLD" "$NEW" -- requirements.txt; then
 fi
 
 # Que el código cargue antes de reiniciar el servicio
-if ! .venv/bin/python -c "import config, detector, sources, store, traveltime, ubicador, asociador, magnitud, server" >> "$LOG" 2>&1; then
+if ! .venv/bin/python -c "import config, detector, sources, store, traveltime, ubicador, asociador, magnitud, intensidad, sacudida, prevision, latencia, vigilancia, server" >> "$LOG" 2>&1; then
   git reset -q --hard "$OLD"
   fail "el código nuevo no carga (ver $LOG); se volvió a $(git rev-parse --short "$OLD")"
 fi

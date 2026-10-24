@@ -156,6 +156,88 @@ check("velocidad de 5 s: la P; de 30 s: la S", 2000 < v.get(5, 0) < 4000 and v.g
 check("la señal supera bien el ruido de antes del disparo",
       v.get(5, 0) > 20 * trig.amps.get("ruido", {}).get("vel", 1e9), trig.amps)
 
+# Sacudida en vivo: la P en la vertical dispara; la S, en las horizontales, da la PGV.
+# Horizontales en cuadratura de 2 Hz con 1 cm/s de suma vectorial, 10 s después de la P.
+import detector  # noqa: E402
+import prevision  # noqa: E402
+from vigilancia import Vigilancia  # noqa: E402
+
+sens = detector.SENS["HEL"]
+trig = StationTrigger("HEL")
+n = 100 * 120
+z = rng.normal(0, 10, n)
+z[100 * 60:100 * 63] += 3000 * np.sin(2 * np.pi * 5 * np.arange(300) / 100)
+tt = np.arange(500) / 100
+hn, he = rng.normal(0, 10, n), rng.normal(0, 10, n)
+amp = 0.01 * sens  # 1 cm/s en cuentas
+hn[100 * 70:100 * 75] += amp * np.sin(2 * np.pi * 2 * tt)
+he[100 * 70:100 * 75] += amp * np.cos(2 * np.pi * 2 * tt)
+trazas = [Trace(d.astype(np.int32), header={"station": "HEL", "channel": c, "sampling_rate": 100.0,
+                                             "starttime": t0}) for d, c in ((z, "HHZ"), (hn, "HHN"), (he, "HHE"))]
+onsets = []
+for i in range(120):
+    for tr in trazas:
+        onsets.append(trig.add(tr.slice(t0 + i, t0 + i + 1 - 0.01)))
+ons = [o for o in onsets if o]
+check("las horizontales no disparan ni se mezclan con la vertical",
+      len(ons) == 1 and abs(ons[0] - (t0 + 60)) < 1 and trig.stream[0].stats.channel == "HHZ", ons)
+a = trig.amps
+check("PGV horizontal de la S ≈ 1 cm/s", a.get("pgv_comp") == "h" and 0.85 < a.get("pgv_cms", 0) < 1.15, a)
+check("y su intensidad cruza 3,0 cuando llega la S",
+      "3.0" in a.get("cruces", {}) and abs(T(a["cruces"]["3.0"]) - (t0 + 70)) < 1, a.get("cruces"))
+check("Pd y τc de los 3 primeros segundos", a.get("pd", {}).get("pd_cm", 0) > 0 and a["pd"]["snr"] > 10,
+      a.get("pd"))
+
+
+class _Cerca:
+    lat, lon, depth = 6.0, -75.6, 10
+
+
+# Prevision: HEL ya mide intensidad 3 (PLUM) -> alerta, aunque la magnitud diga poco
+picks_hel = {"HEL": {"onset": t0, "amps": {"mmi": 3.0, "cruces": {"2.0": str(t0 + 1)}}}}
+m = prevision.medellin(picks_hel, None, None, t0 + 5)
+check("PLUM en HEL: alerta para Medellín", m["alerta"] and m["fuente"] == "plum-HEL", m)
+check("con la intensidad observada en HEL para la evaluación", m["observada"]["mmi"] == 3.0, m)
+picks_hel["HEL"]["amps"]["mmi"] = 1.0
+m2 = prevision.medellin(picks_hel, None, None, t0 + 10, previo=m)
+check("la alerta no se retira aunque la previsión baje",
+      m2["alerta"] and m2["alerta_desde"] == m["alerta_desde"], m2)
+check("cambio de previsión se nota (para registrarlo)", prevision.cambio(m, m2))
+lejos = prevision.medellin({"PRV": {"onset": t0, "amps": {"mmi": 3.0}}}, None, None, t0 + 5)
+check("la misma intensidad en una estación a 700 km prevé mucho menos en Medellín",
+      lejos["mmi"] < 2 and not lejos["alerta"], lejos)
+mag = {"valor": 4.0, "incertidumbre": 0.2, "estaciones": {"HEL": 4.0}}
+temprano = prevision.medellin({"HEL": {"onset": t0, "amps": {}}}, _Cerca, mag, t0 + 5)
+tarde = prevision.medellin({"HEL": {"onset": t0, "amps": {}}}, _Cerca, mag, t0 + 40)
+check("antes de los 30 s la magnitud lleva el margen y prevé más",
+      temprano["mmi"] > tarde["mmi"], (temprano, tarde))
+
+# Vigilancia de estaciones
+reloj = {"t": 1000.0}
+v = Vigilancia(caida_s=300, clock=lambda: reloj["t"])
+check("al arrancar no hay caídas", v.revisar({"HEL": None, "RUS": 999.0}) == [])
+reloj["t"] = 1400.0
+cambios = v.revisar({"HEL": None, "RUS": 1390.0})
+check("HEL sin datos 5 min: caída (una sola vez)", cambios == [("HEL", "caida", 400)]
+      and v.revisar({"HEL": None, "RUS": 1390.0}) == [], cambios)
+check("y avisa cuando vuelve", v.revisar({"HEL": 1399.0, "RUS": 1390.0})[0][:2] == ("HEL", "vuelve"))
+
+# Latencia: resumen por hora
+import json as _json  # noqa: E402
+import tempfile  # noqa: E402
+
+import latencia  # noqa: E402
+
+with tempfile.TemporaryDirectory() as d:
+    f = Path(d) / "lat.jsonl"
+    reg = latencia.Latencia(archivo=f)
+    for k in range(10):
+        reg.paquete("HEL", 7200 + 10 * k, 7204 + 10 * k, 7216 + 10 * k)
+    reg.paquete("HEL", 10800, 10804, 10805)  # otra hora: guarda la anterior
+    x = _json.loads(f.read_text().splitlines()[0])
+    check("latencia por hora: viaje 12 s, paquete 4 s, retraso 16 s",
+          x["paquetes"] == 10 and x["viaje_s"] == 12 and x["duracion_s"] == 4 and x["retraso_s"] == 16, x)
+
 print()
 if failures:
     print(f"{len(failures)} prueba(s) fallaron: {', '.join(failures)}")

@@ -116,6 +116,37 @@ MAGNITUD_ESTACIONES = 5
 MAGNITUD_MARGEN_KM = 150
 MAGNITUD_MAX_KM = 700
 
+# Sacudida medida en cada estación (sacudida.py): cuánto tiempo tras el disparo se sigue su
+# PGV, y por cuánto se multiplica la vertical cuando la estación no manda las horizontales
+# (en promedio, la PGV horizontal es mayor que la vertical; falta calibrarlo)
+INTENSIDAD_SEGUIR_S = 180
+INTENSIDAD_FACTOR_Z = 1.4
+
+# Alerta para Medellín por la intensidad prevista (prevision.py). Se alerta cuando la
+# probabilidad de superar ALERTA_MMI llega a ALERTA_PROB (con estos valores, en el lote
+# histórico la magnitud del sistema bajó las falsas de 75 a 32 sin perder aciertos; ver
+# evaluacion/README.md). Avisar es barato, así que conviene alertar de más (Meier, 2017).
+ALERTA_MMI = 2.0
+ALERTA_PROB = 0.5
+# Mientras la estación más cercana no completa su ventana de 30 s, la magnitud arranca baja
+# (en el lote, la intensidad real quedó 1 a 1,6 por encima): se le suma al menos esto
+PREVISION_MARGEN_MAG = 0.5
+# PLUM (Kodera et al., 2021): la intensidad medida en una estación vale para los sitios a
+# menos de PLUM_RADIO_KM (Medellín con HEL). Para las demás estaciones se supone el sismo a
+# PLUM_FUENTE_KM de ella y se lleva la intensidad hasta Medellín con la atenuación.
+PLUM_RADIO_KM = 30
+PLUM_FUENTE_KM = 30
+PLUM_SIGMA = 0.5
+# Pd de los primeros 3 s en HEL: cuántas veces debe superar el ruido, y la desviación de la
+# intensidad que se prevé con él
+PD_SNR_MIN = 3
+PD_SIGMA = 0.8
+# Cada cuánto se recalculan magnitud e intensidad prevista de los sismos en curso (s)
+REFRESCO_S = 1
+
+# Una estación se da por caída si no manda datos en tanto tiempo (s)
+ESTACION_CAIDA_S = 300
+
 # Búsqueda en catálogos tras una detección
 SEARCH_INTERVAL_S = 60
 SEARCH_DURATION_S = 30 * 60

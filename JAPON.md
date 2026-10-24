@@ -167,6 +167,72 @@ Medellín y umbral MMI 2:
 solo el Mw7,7 de Panamá llegó a MMI 2 en HEL (3,1), con 71 s de aviso. Detecciones sin sismo
 de nivel alta o media: 222 con el bayesiano y 497 con la ventana (10 y 22 por día).
 
+## Alerta por intensidad prevista en Medellín (23-oct-2026)
+
+Decisión del usuario: la alerta se centra en avisar a Medellín, no en ubicar con precisión.
+Cada detección del asociador bayesiano lleva ahora `det["medellin"]` (`prevision.py`): la
+intensidad (MMI) prevista en Medellín y si se alerta. El asociador por ventana no la calcula.
+
+**De dónde sale la previsión.** Se toma la que más probabilidad da de superar
+`ALERTA_MMI` (2), como la JMA toma la mayor de IPF y PLUM:
+
+| Fuente | Qué es |
+|---|---|
+| `plum-HEL` | La intensidad que ya mide HEL (a 8 km) vale para Medellín: PLUM (Kodera et al., 2021) |
+| `plum-EST` | La que mide otra estación del sismo, llevada a Medellín suponiendo el sismo a 30 km de ella (PLUM extendido: no hay otra estación a menos de 30 km) |
+| `pd-HEL` | Pd de los primeros 3 s de la P en HEL → PGV prevista en HEL (alerta en el sitio; Wu y Kanamori) |
+| `magnitud` | Magnitud preliminar y ubicación con Allen, Wald y Worden (2012); antes de los 30 s, magnitud + 0,5 (arranca baja) |
+
+La alerta salta cuando esa probabilidad llega a `ALERTA_PROB` (0,5) y no se retira aunque la
+previsión baje. El campo trae también `observada` (MMI medida en HEL y hora de cada cruce de
+nivel) y `pd` (Pd, τc y la magnitud de τc), para la evaluación. Se avisa (on_update, y
+queda en `decisiones.jsonl`) cada vez que la previsión cambia 0,5 o más, cambia la fuente,
+salta la alerta o HEL cruza un nivel. Magnitud e intensidad se recalculan cada segundo
+(`REFRESCO_S`).
+
+**La sacudida medida (`sacudida.py`).** El servidor ahora recibe las tres componentes
+(EarthScope entrega las horizontales de todas las estaciones activas). La vertical dispara
+como siempre; con las horizontales se sigue la PGV (suma vectorial) durante 180 s tras cada
+disparo, y de ella la MMI (Worden et al., 2012). Si una estación solo manda la vertical, se usa
+la vertical × 1,4 (falta calibrarlo). Pd y τc se miden en la vertical de los primeros 3 s.
+
+**Repaso con señal real de 2026** (tres componentes, paquetes de 1 s, sin latencia):
+
+| Sismo | Real en HEL | Qué hizo la alerta |
+|---|---|---|
+| 10-ago M7,4, 161 km, 105 km de prof. | MMI 4,0 (cruza 2 a 29 s, 3 a 48 s, 4 a 118 s) | Alerta a 30 s (PLUM en HEL); a 31 s Pd prevé **4,1**; τc da M7,0 |
+| 9-oct Mw7,7 Panamá, 593 km | MMI 3,0 (cruza 2 a 153 s) | Alerta a 82 s (magnitud); Pd prevé 2,3; τc da **M7,7** |
+| 13-feb M4,9, 182 km, 104 km de prof. | MMI 1 | Alerta falsa a 56 s: magnitud 5,2 + margen prevé 2,6 |
+| 17-jun M5,1 Bucaramanga, 268 km | MMI 1 | Alerta falsa a 45 s, por la misma razón |
+
+Pd y τc en HEL funcionan muy bien sin saber dónde está el sismo. Las falsas vienen de la
+magnitud con margen en sismos M5 lejanos e intermedios: hay que ajustar `PREVISION_MARGEN_MAG`,
+`ALERTA_MMI` y `ALERTA_PROB` con el lote histórico (evaluacion/).
+
+## Latencia de los datos (23-oct-2026)
+
+Medido 10 min desde una red doméstica (reloj corregido con NTP), mediana por paquete:
+
+| Estaciones | Llenado del paquete | Viaje | Retraso total |
+|---|---|---|---|
+| HEL | 4,4 s | 11,8 s | **16 s** |
+| RUS, OCA, ARGC, URI, PRV (CM) | 4–6 s | 9–11 s | 13–17 s |
+| SMAR (CM) | 2,9 s | 6,7 s | 9,5 s |
+| PUYO (EC) | 3,3 s | 1,5 s | 4,7 s |
+| OTAV (IU) | 20 s | 6 s | 26 s |
+
+Las de Ecuador viajan en 1,5 s y las del SGC en ~10 s: la demora está entre el SGC y
+EarthScope, no en la VM. Con 16 s de retraso, el M7,4 del 10-ago habría alertado a ~47 s en
+vez de 31 s, apenas antes del cruce de MMI 3 (48 s). Es la mayor pérdida de aviso del sistema
+y no se arregla con software: hace falta recibir HEL directo del SGC (no hay un SeedLink
+público suyo). El servidor ahora lo mide siempre (`latencia.py` → `datos/latencia.jsonl`,
+resumen por estación y hora).
+
+**Estaciones.** TUM y CRJC ya no están en EarthScope (rtserve no las ofrece): por eso nunca
+llegan datos. No hay en rtserve otras estaciones a menos de 450 km de Medellín aparte de HEL,
+RUS, OCA y ARGC. El servidor avisa si una estación pasa 5 min sin datos y cuando vuelve
+(`vigilancia.py`).
+
 ## Pendiente
 
 1. Correrlo en la VM de prueba (desde el 22-oct-2026) y comparar con `disparos.jsonl` y los
@@ -176,6 +242,10 @@ de nivel alta o media: 222 con el bayesiano y 497 con la ventana (10 y 22 por d�
    como la ML) y una sola escala de magnitud.
 3. Nivel "baja" (HEL sola): el bayesiano da más (231 frente a 86) porque ya no esconde disparos
    de HEL dentro de otras detecciones; la mitad son sismos reales. Decidir cómo avisarlos.
-4. PLUM para Medellín: intensidad en tiempo real en HEL (a 8 km) como segundo camino de alerta.
-5. Métricas al estilo JMA en el informe diario (aciertos de ±1 grado de intensidad, tiempo de
+4. PLUM, Pd y alerta por intensidad: hechos (ver arriba). Falta calibrar con HEL los
+   coeficientes de Pd y τc (son los de California del Sur) y el factor de la vertical, y
+   ajustar margen, umbral y probabilidad con el lote histórico.
+5. Latencia: pedir al SGC acceso directo a HEL (y las demás CM) en tiempo real; con 16 s de
+   retraso se pierde la mitad del aviso de un sismo a 100-150 km.
+6. Métricas al estilo JMA en el informe diario (aciertos de ±1 grado de intensidad, tiempo de
    la primera alerta desde el origen).
