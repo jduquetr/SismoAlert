@@ -1,7 +1,7 @@
 """Intensidad de Mercalli (MMI): la que se predice para un sitio y la que mide una estación.
 
-La predicción vive aquí, del lado de la evaluación: la alerta todavía no predice intensidades
-(decisión del 22-oct-2026; se incorporará solo si la evaluación muestra que vale la pena).
+La usan la alerta (MMI prevista en Medellín, decisión del 23-oct-2026) y la evaluación
+(evaluacion/), que la importa desde aquí.
 
 - Predicción: ecuación de intensidad de Allen, Wald y Worden (2012), versión con distancia
   hipocentral, para regiones tectónicamente activas. Coeficientes copiados de OpenQuake

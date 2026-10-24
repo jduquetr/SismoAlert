@@ -2,8 +2,11 @@
 
 Cruza las detecciones guardadas en datos/sismos-detectados.geojson con los catálogos del
 SGC, USGS y EMSC de las últimas 24 h y, para cada sismo registrado, calcula cuánto antes
-(o después) de la llegada de la onda S a Medellín salió la alerta. Añade las detecciones
-sin sismo en catálogo (posibles falsas alarmas) y el estado del servicio.
+(o después) de la llegada de la onda S a Medellín salió la alerta. Con el registro de
+decisiones (datos/decisiones.jsonl) añade la alerta por intensidad en Medellín: segundos de
+aviso hasta que HEL superó el umbral (o hasta la S, si no lo superó) y ΔMMI, la prevista al
+alertar menos la que midió HEL. Añade las detecciones sin sismo en catálogo (posibles falsas
+alarmas) y el estado del servicio.
 
 Uso:
   .venv/bin/python informe_diario.py             enviar el informe de las últimas 24 h
@@ -31,6 +34,7 @@ from traveltime import p_time, s_time
 
 DIR = Path(__file__).parent
 GEOJSON = DIR / "datos" / "sismos-detectados.geojson"
+DECISIONES = DIR / "datos" / "decisiones.jsonl"
 BOGOTA_OFFSET_S = -5 * 3600
 # Sismos del catálogo que entran en el informe: los cercanos a Medellín o los grandes
 NEAR_KM, NEAR_MIN_MAG, FAR_MIN_MAG = 300, 2.5, 4.0
@@ -89,6 +93,39 @@ def detections(start, end):
         p = f["properties"]
         if p.get("alerta") and start <= UTCDateTime(p["alerta"]) <= end + 600:
             out.append(p)
+    return out
+
+
+def medellin_lines(start, end):
+    """{id de detección: [campo "medellin" de cada decisión en vivo, en orden]}."""
+    out = {}
+    if not DECISIONES.exists():
+        return out
+    for line in open(DECISIONES, encoding="utf-8"):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if (d.get("origen") == "vivo" and d.get("medellin")
+                and start - 3600 <= UTCDateTime(d["emitida"]) <= end + 600):
+            out.setdefault(d["id"], []).append(dict(d["medellin"], emitida=d["emitida"]))
+    return out
+
+
+def medellin_summary(ms):
+    """Alerta por intensidad de una detección: hora, MMI prevista al alertar y lo medido en HEL."""
+    first = next((m for m in ms if m.get("alerta")), None)
+    obs = [m["observada"] for m in ms if (m.get("observada") or {}).get("mmi") is not None]
+    out = {"max": max(m["mmi"] for m in ms if m.get("mmi") is not None) if any(
+        m.get("mmi") is not None for m in ms) else None,
+        "observada": max((o["mmi"] for o in obs), default=None)}
+    if first:
+        out["alerta"] = UTCDateTime(first.get("alerta_desde") or first["emitida"])
+        out["prevista"], out["fuente"] = first.get("mmi"), first.get("fuente")
+        umbral = first.get("umbral")
+        cruces = [o.get("cruces", {}).get(f"{umbral:.1f}") for o in obs] if umbral else []
+        cruces = [UTCDateTime(c) for c in cruces if c]
+        out["cruce"] = min(cruces) if cruces else None
     return out
 
 
@@ -155,6 +192,23 @@ def journal(since_h):
     }
 
 
+def fmt_medellin(m, ev):
+    """Una línea: alerta por intensidad, segundos de aviso y ΔMMI (prevista al alertar − medida en HEL)."""
+    obs = f"HEL midió MMI {m['observada']:.1f}" if m["observada"] is not None else "sin medida de HEL"
+    if not m.get("alerta"):
+        prev = f"MMI prevista máx. {m['max']:.1f}" if m["max"] is not None else "sin MMI prevista"
+        return f"Medellín: sin alerta por intensidad ({prev}; {obs})"
+    if m["cruce"]:
+        aviso = f"{m['cruce'] - m['alerta']:+.0f} s de aviso antes de superar el umbral"
+    else:
+        aviso = f"{ev['s_medellin'] - m['alerta']:+.0f} s antes de la S (HEL no superó el umbral)"
+    delta = (f" · ΔMMI {m['prevista'] - m['observada']:+.1f}"
+             if m["prevista"] is not None and m["observada"] is not None else "")
+    prev = f"MMI {m['prevista']:.1f}" if m["prevista"] is not None else "MMI ?"
+    return (f"Medellín: alerta {bogota(m['alerta'])} ({prev}, {html.escape(m.get('fuente') or '')}); "
+            f"<b>{aviso}</b>; {obs}{delta}")
+
+
 def fmt_lag(s):
     return f"{abs(s):.1f} s {'antes' if s < 0 else 'después'} de la S"
 
@@ -165,6 +219,7 @@ def build(hours):
     events, total, failed = catalog(start, end)
     dets = detections(start, end)
     unmatched = cross(events, dets)
+    mlines = medellin_lines(start, end)
     j = journal(hours)
     e = html.escape
 
@@ -176,7 +231,7 @@ def build(hours):
                  f"≤{NEAR_KM} km con M≥{NEAR_MIN_MAG} o M≥{FAR_MIN_MAG})")
     if not events:
         lines.append("Ninguno.")
-    detected = 0
+    detected, warnings = 0, []
     for ev in events:
         src = ev["source"] + (f"+{'+'.join(ev['also'])}" if ev.get("also") else "")
         lines.append(f"• {bogota(ev['time'])} <b>M{ev['mag']:.1f}</b> {e(ev['place'] or '')} · "
@@ -192,7 +247,25 @@ def build(hours):
             mark = "✅" if lag < 0 else "⚠️"
             lines.append(f"   {mark} Alerta {bogota(alert)} ({e(LEVEL_LABELS.get(d.get('nivel'), d.get('nivel') or ''))}; {how}): "
                          f"<b>{fmt_lag(lag)}</b>")
+        ms = next((mlines[d["deteccion_id"]] for _, d, _ in ev["alerts"]
+                   if d.get("deteccion_id") in mlines), None)
+        if ms:
+            m = medellin_summary(ms)
+            lines.append("   " + fmt_medellin(m, ev))
+            if m.get("alerta"):
+                warnings.append((m["cruce"] or ev["s_medellin"]) - m["alerta"])
     lines.append("")
+
+    if warnings:
+        warnings.sort()
+        lines.append(f"<b>Aviso en Medellín</b> (alerta por intensidad): {len(warnings)} sismos, "
+                     f"mediana {warnings[len(warnings) // 2]:+.0f} s")
+    false_mmi = sum(1 for d in unmatched if any(
+        m.get("alerta") for m in mlines.get(d.get("deteccion_id"), [])))
+    if false_mmi:
+        lines.append(f"Alertas por intensidad en Medellín sin sismo en catálogo: {false_mmi}")
+    if warnings or false_mmi:
+        lines.append("")
 
     station_dets = [d for d in dets if d.get("nivel") != "catálogo"]
     lines.append(f"<b>Detecciones de las estaciones:</b> {len(station_dets)}")

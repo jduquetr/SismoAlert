@@ -8,9 +8,12 @@ en vivo de la VM y para el archivo.
 
 Dos formas:
 
-- senal: para cada sismo se baja la señal vertical de las estaciones que votan (fuentes.py:
-  SGC y EarthScope) y se pasa en trozos de PASO_S segundos; la magnitud se recalcula cada
-  5 s como en el servidor. Las estaciones sin datos en esa fecha simplemente no participan.
+- senal: para cada sismo se bajan las tres componentes de las estaciones que votan
+  (fuentes.py: SGC y EarthScope) y se pasan en trozos de PASO_S segundos: la vertical dispara
+  y las horizontales miden la sacudida (PLUM), como en el servidor. La magnitud y la
+  intensidad prevista en Medellín se recalculan cada config.REFRESCO_S. Las estaciones sin
+  datos en esa fecha simplemente no participan; sin horizontales, la sacudida sale de la
+  vertical.
 - disparos: se vuelven a pasar los disparos ya guardados (el resumen del registro de la VM o
   datos/disparos.jsonl). No hay señal, así que no hay magnitud.
 
@@ -27,7 +30,7 @@ import sys
 import time
 from multiprocessing import Pool
 
-from obspy import UTCDateTime
+from obspy import Stream, UTCDateTime
 
 import config
 import decisiones
@@ -39,7 +42,7 @@ from .catalogo import clave, tiempo_p
 from .fuentes import ClienteMixto
 
 PASO_S = 2.0       # trozos de señal, como los paquetes de SeedLink
-REFRESCO_S = 5.0   # el servidor recalcula la magnitud cada 5 s (server.refresh_loop)
+REFRESCO_S = config.REFRESCO_S  # como server.refresh_loop
 ANTES_S = 90       # el STA/LTA necesita ~35 s para estabilizarse
 
 
@@ -85,10 +88,12 @@ def con_senal(ev, client, malla):
     """Decisiones de la alerta para un sismo, pasando su señal archivada."""
     t0 = ev["time"]
     ini, fin = t0 - ANTES_S, t0 + duracion(ev)
-    bulk = [(n, s, loc or "--", ch, ini, fin) for s, (n, loc, ch, *_) in config.STATIONS.items()]
+    bulk = [(n, s, loc or "--", ch[:2] + "?", ini, fin)
+            for s, (n, loc, ch, *_) in config.STATIONS.items()]
     st = client.get_waveforms_bulk(bulk)
     st.merge(method=1, fill_value="interpolate")
-    con_datos = sorted({tr.stats.station for tr in st})
+    con_datos = sorted({tr.stats.station for tr in st if tr.stats.channel.endswith("Z")})
+    st = Stream([tr for tr in st if tr.stats.station in con_datos])
     trig = {s: StationTrigger(s) for s in con_datos}
 
     def amps(s):

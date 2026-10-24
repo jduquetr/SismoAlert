@@ -25,9 +25,10 @@ import sys
 from obspy import UTCDateTime
 
 import config
+import intensidad
 import sources
 
-from . import catalogo, intensidad, observado
+from . import catalogo, observado
 
 DESDE = UTCDateTime("2011-06-18")  # inicio de CM.HEL
 USGS_MAG, USGS_RADIO_KM = 3.5, 1000

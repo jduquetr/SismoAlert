@@ -46,7 +46,7 @@ de la magnitud o del epicentro. Lo que adoptamos (decisiones del 22-oct-2026):
   normalizado por TP + FN (TPR = TP/(TP+FN), FPR = FP/(TP+FN)) y la tasa de alertas correctas
   CAR = TP/(TP+FP).
 - **Las detecciones falsas (sin sismo) van aparte**, no dentro de la clasificación por sitio.
-- **Latencia**: el artículo la ignora. Aquí se evalúa sin latencia y con la medida (15 s por
+- **Latencia**: el artículo la ignora. Aquí se evalúa sin latencia y con la medida (16 s por
   omisión) para los repasos; el registro en vivo ya la trae.
 - **ΔMMI frente al tiempo de aviso** (su figura 3): qué tan buena era la predicción mientras
   todavía servía.
@@ -60,9 +60,9 @@ Cuatro maneras de decidir la alerta para un sitio:
 | catálogo | En la primera decisión se supone conocido el sismo del catálogo | IFS (cota ideal) |
 | red ideal | Como catálogo, pero la detección llega con la P a la estación más cercana | máximo tiempo de aviso |
 
-La predicción de intensidad (`intensidad.py`, Allen, Wald y Worden, 2012) vive aquí: la
-alerta todavía no predice intensidades. Se incorporará a la alerta solo si la evaluación
-muestra que vale la pena (decisión del 22-oct-2026).
+La predicción de intensidad (`intensidad.py`, Allen, Wald y Worden, 2012) está en la raíz:
+desde el 23-oct-2026 la alerta también predice la MMI en Medellín, y la evaluación usa la
+misma ecuación. La dependencia sigue en un solo sentido: la raíz no importa `evaluacion`.
 
 ## Uso
 
@@ -87,7 +87,6 @@ python -m evaluacion.evaluar --decisiones lote/decisiones.jsonl --catalogos lote
 | `evaluar.py` | Lee decisiones, catálogos e intensidades y saca el informe y el CSV |
 | `metricas.py` | Clasificación con tolerancia, pseudo-ROC, CAR, tabla de ΔMMI |
 | `observado.py` | Intensidad y cruces de umbral en cada sitio, con caché |
-| `intensidad.py` | Ecuaciones de intensidad prevista y observada |
 | `catalogo.py` | Sismos únicos y qué sismo explica cada decisión |
 | `repaso.py` | La alerta en pseudo-tiempo-real con señal archivada o con disparos |
 | `lote_historico.py` | Catálogo desde 2011 y selección de sismos para el repaso |

@@ -15,8 +15,9 @@ from obspy import UTCDateTime as T  # noqa: E402
 
 import config  # noqa: E402
 import decisiones  # noqa: E402
+import intensidad  # noqa: E402
 import sources  # noqa: E402
-from evaluacion import intensidad, metricas  # noqa: E402
+from evaluacion import metricas  # noqa: E402
 from evaluacion.catalogo import emparejar  # noqa: E402
 from evaluacion.repaso import con_disparos  # noqa: E402
 from ubicador import Malla, TiemposP  # noqa: E402
@@ -101,11 +102,24 @@ check("la decisión se empareja con su sismo", emparejar(lineas[-1], [ev]) is ev
 with tempfile.TemporaryDirectory() as d:
     f = Path(d) / "decisiones.jsonl"
     det = {"id": "DET1", "level": "alta", "first_onset": t0, "stations": {},
-           "magnitud": {"valor": 4.2, "n": 3}}
+           "magnitud": {"valor": 4.2, "n": 3},
+           "medellin": {"mmi": 3.4, "sigma": 0.8, "prob": 0.6, "fuente": "magnitud",
+                        "alerta": True, "alerta_desde": str(t0 + 30)}}
     decisiones.registrar(det, "nueva", t0 + 30, archivo=f)
     linea = json.loads(f.read_text(encoding="utf-8"))
     check("el servidor escribe una línea legible", linea["emitida"] == str(t0 + 30)
-          and linea["magnitud"]["valor"] == 4.2 and linea["origen"] == "vivo", f"{linea}")
+          and linea["magnitud"]["valor"] == 4.2 and linea["origen"] == "vivo"
+          and linea["medellin"]["fuente"] == "magnitud", f"{linea}")
+
+# Informe diario: aviso en Medellín y ΔMMI con el campo "medellin" del registro
+import informe_diario  # noqa: E402
+ms = [{"mmi": 2.5, "fuente": "magnitud", "alerta": False, "emitida": str(t0 + 20)},
+      {"mmi": 3.4, "fuente": "plum-HEL", "alerta": True, "alerta_desde": str(t0 + 25),
+       "umbral": 3.0, "emitida": str(t0 + 40),
+       "observada": {"mmi": 3.2, "cruces": {"3.0": str(t0 + 38)}}}]
+m = informe_diario.medellin_summary(ms)
+check("el informe mide el aviso hasta el cruce del umbral en HEL",
+      m["cruce"] - m["alerta"] == 13 and round(m["prevista"] - m["observada"], 1) == 0.2, f"{m}")
 
 print()
 if failures:

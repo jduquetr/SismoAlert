@@ -17,8 +17,8 @@ import numpy as np
 from obspy import UTCDateTime
 
 import config
+import intensidad
 
-from . import intensidad
 from .catalogo import clave, tiempo_p
 from .fuentes import ClienteMixto
 

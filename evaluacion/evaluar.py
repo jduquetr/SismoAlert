@@ -18,12 +18,13 @@ maneras:
   cercana que vota: lo máximo que daría esta red.
 
 Las decisiones de origen "repaso" no traen latencia: se evalúan sin latencia y con
---latencia (15 s por omisión, lo medido con SeedLink). Las de origen "vivo" ya la traen.
+--latencia (16 s por omisión: la mediana medida en HEL, 4 s de llenado del paquete y 12 de
+viaje). Las de origen "vivo" ya la traen.
 Las detecciones sin sismo de catálogo se cuentan aparte, como en el artículo.
 
 Uso:
   python -m evaluacion.evaluar --decisiones D.jsonl [D2.jsonl ...] --catalogos cat.pickle
-      [--universo sismos.pickle] [--obs obs.json] [--latencia 15] [--csv salida.csv]
+      [--universo sismos.pickle] [--obs obs.json] [--latencia 16] [--csv salida.csv]
 """
 import argparse
 import csv
@@ -34,9 +35,10 @@ import pickle
 from obspy import UTCDateTime
 
 import config
+import intensidad
 import sources
 
-from . import catalogo, intensidad, metricas, observado
+from . import catalogo, metricas, observado
 from .catalogo import clave
 
 UMBRALES = (2.0, 3.0, 4.0)
@@ -238,7 +240,7 @@ def main():
     ap.add_argument("--universo", help="pickle con la lista de sismos a clasificar (por omisión "
                                        "todos los del periodo de las decisiones)")
     ap.add_argument("--obs", help="caché de intensidades observadas (json)")
-    ap.add_argument("--latencia", type=float, default=15.0)
+    ap.add_argument("--latencia", type=float, default=16.0)
     ap.add_argument("--sin-medir", action="store_true", help="no bajar señal nueva")
     ap.add_argument("--csv")
     args = ap.parse_args()

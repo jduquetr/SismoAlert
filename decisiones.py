@@ -14,7 +14,12 @@ Formato (versión 1), una línea JSON por decisión:
 - emitida: hora en que salió la decisión (ISO, UTC); evento: "nueva" o "actualizacion";
 - id, nivel (alta, media, baja, catálogo), primer_disparo, estaciones ({estación: {onset,
   ratio}}), ubicacion y magnitud (null si el asociador no las da), descartada (motivo o null),
-  asociador ("ventana" o "bayesiano").
+  asociador ("ventana" o "bayesiano");
+- medellin: la intensidad prevista en Medellín y si hay alerta por ella, o null si la alerta no
+  la calcula: {mmi, sigma, prob, fuente ("plum-HEL", "plum-<EST>", "pd-HEL", "magnitud"),
+  alerta (bool), alerta_desde (ISO o null)} y, cuando la haya, observada ({mmi, cruces:
+  {umbral: hora ISO}}, lo que ya midió HEL en tiempo real) y umbral (MMI de la alerta).
+  Campo agregado el 23-oct-2026; las líneas anteriores no lo traen.
 """
 import json
 import logging
@@ -41,7 +46,7 @@ def linea(det, evento, hora, origen="vivo", asociador=None):
             "primer_disparo": str(det.get("first_onset")),
             "estaciones": det.get("stations", {}), "ubicacion": det.get("ubicacion"),
             "magnitud": det.get("magnitud"), "descartada": det.get("discarded"),
-            "asociador": asociador or config.ASOCIADOR}
+            "asociador": asociador or config.ASOCIADOR, "medellin": det.get("medellin")}
 
 
 def registrar(det, evento, hora=None, archivo=ARCHIVO):
