@@ -175,9 +175,10 @@ class StationTrigger:
 # Lo que ve la gente en la página, las notificaciones y Telegram. El nivel interno (alta,
 # media, baja, catálogo) no cambia para no romper los registros guardados. El nivel dice qué
 # tan seguro está el sistema de que hay un sismo y si se registró en Medellín; no dice qué
-# tan fuerte es (eso es la prioridad, que llega con la confirmación de un catálogo).
+# tan fuerte es ni si se siente: eso lo dice la intensidad prevista (prevision.py) o, sin
+# ella, la prioridad que llega con la confirmación de un catálogo.
 LEVEL_LABELS = {
-    "alta": "Probablemente sentido en Medellín",
+    "alta": "Registrado en Medellín",
     "media": "Sismo lejos de Medellín",
     "baja": "Posible sismo, sin confirmar",
     "catálogo": "Reportado por un catálogo",
@@ -292,7 +293,7 @@ class Associator:
         if n_groups(sts) >= config.MIN_STATIONS and config.LOCAL_STATION in sts:
             det["level"] = "alta"
             det["message"] = (f"{LEVEL_LABELS['alta']}: la estación de Medellín (HEL) y {n - 1} "
-                              f"{'estación' if n - 1 == 1 else 'estaciones'} más registraron una sacudida fuerte")
+                              f"{'estación' if n - 1 == 1 else 'estaciones'} más lo registraron")
         elif n_groups(sts) >= config.MIN_STATIONS_REMOTE:
             det["level"] = "media"
             det["message"] = (f"{LEVEL_LABELS['media']}: {n} estaciones lo registraron, "

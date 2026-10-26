@@ -250,8 +250,11 @@ class BayesAssociator:
         antes = det.get("medellin")
         det["medellin"] = prevision.medellin(ev.picks, ev.loc, mag, self.clock(), antes)
         quiet = quiet and not prevision.cambio(antes, det["medellin"])
-        if prevision.texto(det["medellin"]):
-            det["message"] += ". " + prevision.texto(det["medellin"])
+        texto = prevision.texto(det["medellin"])
+        if det["medellin"].get("alerta"):
+            det["message"] = f"{texto}. {det['message']}"
+        elif texto:
+            det["message"] += f". {texto}"
         if new:
             self.on_detection(det)
         elif not quiet or det["level"] != old_level:

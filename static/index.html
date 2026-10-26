@@ -57,11 +57,13 @@
   .st small { color: var(--muted); display: block; }
   .det { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--off);
          border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
-  .det.alta { border-left-color: var(--alta); } .det.media { border-left-color: var(--media); }
+  .det.alerta { border-left-color: var(--alta); } .det.alta { border-left-color: var(--media); }
+  .det.media { border-left-color: var(--media); }
   .det.baja { border-left-color: var(--baja); } .det.catálogo { border-left-color: var(--informativa); }
   .det .top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; color: #fff; background: var(--off); }
-  .tag.alta, .tag.crítica { background: var(--alta); } .tag.media, .tag.informativa { background: var(--media); }
+  .tag.alerta, .tag.crítica { background: var(--alta); }
+  .tag.alta, .tag.media, .tag.informativa { background: var(--media); }
   .tag.baja { background: var(--baja); } .tag.catálogo { background: var(--informativa); } .tag.silenciosa { background: var(--silenciosa); }
   .muted { color: var(--muted); font-size: 13px; }
   table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -176,12 +178,13 @@
   <details class="levels-guide">
     <summary>¿Qué significa cada tipo de alerta?</summary>
     <ul>
-      <li><span class="tag alta">Probablemente sentido en Medellín</span> La estación de Medellín (HEL) y al menos otra registraron una sacudida fuerte. Es la más confiable.</li>
+      <li><span class="tag alerta">Alerta para Medellín</span> La intensidad prevista en Medellín supera el umbral: probablemente se sienta. Sale de lo que ya mide HEL, de los primeros segundos de la onda en HEL o de la magnitud y la ubicación.</li>
+      <li><span class="tag alta">Registrado en Medellín</span> La estación de Medellín (HEL) y al menos otra lo registraron. Dice que hay un sismo, no que se sienta: eso lo dice la intensidad prevista.</li>
       <li><span class="tag media">Sismo lejos de Medellín</span> Tres o más estaciones lejanas lo registraron, pero no la de Medellín.</li>
       <li><span class="tag baja">Posible sismo, sin confirmar</span> Solo la estación de Medellín registró algo. Puede ser ruido local (tráfico, obras).</li>
       <li><span class="tag catálogo">Reportado por un catálogo</span> Las estaciones no lo detectaron, pero el EMSC lo publicó. Llega minutos después.</li>
     </ul>
-    <p class="muted">El tipo de alerta no dice qué tan fuerte es el sismo. Eso lo dice la <b>prioridad</b>
+    <p class="muted">Salvo la alerta para Medellín, el tipo no dice qué tan fuerte es el sismo. Eso lo dice la <b>prioridad</b>
       (crítica, informativa o silenciosa), que aparece cuando el SGC, el USGS o el EMSC confirman el sismo,
       según su magnitud y su distancia a Medellín. Mientras no haya confirmación, puede ser una falsa alarma.</p>
   </details>
@@ -212,10 +215,10 @@ function beep(level) {
   if (!audio || volume === 0) return;
   // Escala cuadrática: el oído percibe mejor los cambios en la parte baja del control
   const peak = 0.6 * (volume / 100) ** 2;
-  const pattern = level === "alta" || level === "crítica" ? [0, .35, .7] : [0];
+  const pattern = level === "alerta" || level === "crítica" ? [0, .35, .7] : [0];
   pattern.forEach((t) => {
     const o = audio.createOscillator(), g = audio.createGain();
-    o.frequency.value = level === "alta" || level === "crítica" ? 880 : 660;
+    o.frequency.value = level === "alerta" || level === "crítica" ? 880 : 660;
     g.gain.setValueAtTime(peak, audio.currentTime + t);
     g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + t + .3);
     o.connect(g).connect(audio.destination);
@@ -229,7 +232,7 @@ function notify(key, title, body, level) {
   beep(level);
   document.title = "⚠ " + title;
   if ("Notification" in window && Notification.permission === "granted") {
-    const n = new Notification(title, { body, tag: key, requireInteraction: level === "alta" || level === "crítica" });
+    const n = new Notification(title, { body, tag: key, requireInteraction: level === "alerta" || level === "crítica" });
     n.onclick = () => { window.focus(); n.close(); };
   }
 }
@@ -582,7 +585,7 @@ function initGdacsLayer() {
 // Aviso nuevo empujado por el servidor (alerta naranja/roja en el mundo o sismo en la región)
 function handleGdacs(e) {
   notify(`gdacs:${e.id}:${e.alert}`, `GDACS: alerta ${GDACS_NAMES[e.alert] || e.alert} · M${e.mag}`,
-    `${e.name} · ${fmtTime(e.time)}`, e.alert === "Red" || e.alert === "Orange" ? "alta" : "media");
+    `${e.name} · ${fmtTime(e.time)}`, e.alert === "Red" || e.alert === "Orange" ? "crítica" : "media");
   loadGdacs();
 }
 
@@ -890,18 +893,28 @@ function renderStations(list) {
 // Nivel de alerta en palabras (las mismas que detector.LEVEL_LABELS). El nivel dice qué tan
 // seguro está el sistema de que hay un sismo y si se registró en Medellín, no qué tan fuerte es.
 const LEVEL_LABELS = {
-  "alta": "Probablemente sentido en Medellín",
+  "alerta": "Alerta para Medellín",
+  "alta": "Registrado en Medellín",
   "media": "Sismo lejos de Medellín",
   "baja": "Posible sismo, sin confirmar",
   "catálogo": "Reportado por un catálogo",
 };
 const LEVEL_HELP = {
-  "alta": "La estación de Medellín (HEL) y al menos otra estación registraron una sacudida fuerte casi al mismo tiempo. Es el nivel más confiable.",
+  "alerta": "La intensidad prevista en Medellín supera el umbral: probablemente se sienta.",
+  "alta": "La estación de Medellín (HEL) y al menos otra estación lo registraron casi al mismo tiempo. Dice que hay un sismo, no que se sienta en Medellín.",
   "media": "Tres o más estaciones lejanas registraron una sacudida fuerte, pero no la de Medellín: un sismo en otra parte de Colombia o un país vecino.",
   "baja": "Solo la estación de Medellín registró una sacudida; ninguna otra lo confirma. Puede ser ruido local (tráfico, obras).",
   "catálogo": "Ninguna estación lo detectó, pero un catálogo (EMSC) publicó un sismo relevante cerca. Llega minutos después.",
 };
 const levelLabel = (level) => LEVEL_LABELS[level] || level;
+// Lo que se muestra: "alerta" (rojo) solo cuando la intensidad prevista en Medellín supera el
+// umbral (det.medellin, desde el 23-oct-2026); si no, el nivel de siempre.
+const shownLevel = (d) => (d.medellin && d.medellin.alerta ? "alerta" : d.level);
+// Las detecciones guardadas antes del 26-oct-2026 traen el texto viejo del nivel alta, que
+// prometía que se había sentido sin saberlo
+const shownMessage = (d) => (d.message || "")
+  .replace(/^Probablemente sentido en Medellín:/, "Registrado en Medellín:")
+  .replace("registraron una sacudida fuerte", "lo registraron");
 
 // Estado de la búsqueda en catálogos de una detección sin coincidencias. Las detecciones
 // guardadas antes de que existiera el campo "search" se dan por terminadas tras 35 min.
@@ -924,8 +937,9 @@ function renderDets() {
         <td>${esc(e.place)}<br><span class="muted">${fmtTime(e.time)} · prof. ${Math.round(e.depth ?? 0)} km · ${esc(e.status || "")}${e.felt_reports ? ` · <b>${e.felt_reports} lo sintieron</b>` : ""}</span></td>
         <td>${e.distance_km} km</td>
         <td><span class="tag ${esc(e.priority)}">${esc(e.priority)}</span></td></tr>`).join("");
-    return `<div class="det ${d.level}${d.id === selectedId ? " selected" : ""}${d.discarded ? " discarded" : ""}" data-id="${esc(d.id)}" title="Ver en el mapa">
-      <div class="top"><b>${esc(d.message)}</b><span class="tag ${d.level}" title="${esc(LEVEL_HELP[d.level] || "")}">${d.test ? "prueba · " : ""}${esc(levelLabel(d.level))}</span></div>
+    const lv = shownLevel(d);
+    return `<div class="det ${lv}${d.id === selectedId ? " selected" : ""}${d.discarded ? " discarded" : ""}" data-id="${esc(d.id)}" title="Ver en el mapa">
+      <div class="top"><b>${esc(shownMessage(d))}</b><span class="tag ${lv}" title="${esc(LEVEL_HELP[lv] || "")}">${d.test ? "prueba · " : ""}${esc(levelLabel(lv))}</span></div>
       <div class="muted">Primer disparo: ${fmtTime(d.first_onset)} · Estaciones: ${esc(sts)}</div>
       ${d.discarded ? `<div class="muted" style="margin-top:8px"><b>Descartada:</b> ${esc(d.discarded)}</div>` : ""}
       ${cat.length ? `<div class="table-wrap"><table><tr><th>Fuente</th><th>Mag.</th><th>Lugar</th><th>Distancia</th><th>Prioridad</th></tr>${rows}</table></div>`
@@ -968,7 +982,8 @@ function handleDet(d, kind) {
   const pre = d.test ? "[Prueba] " : "";
   autoSimulate(d, kind);
   if (kind === "detection" || kind === "update") {
-    notify(`${d.id}:${d.level}`, `${pre}${levelLabel(d.level)}`, d.message, d.level);
+    const lv = shownLevel(d);
+    notify(`${d.id}:${lv}`, `${pre}${levelLabel(lv)}`, shownMessage(d), lv);
   }
   if (kind === "catalog") {
     for (const [src, e] of Object.entries(d.catalog || {})) {
@@ -991,7 +1006,7 @@ function addLog(e) {
 async function load() {
   const s = await (await fetch("/state")).json();
   renderStations(s.stations);
-  s.detections.forEach((d) => { dets.set(d.id, d); notified.add(`${d.id}:${d.level}`); });
+  s.detections.forEach((d) => { dets.set(d.id, d); notified.add(`${d.id}:${shownLevel(d)}`); });
   renderDets();
   $("#log").textContent = "";
   s.log.forEach(addLog);

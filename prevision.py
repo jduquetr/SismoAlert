@@ -115,6 +115,13 @@ def cambio(a, b):
 def texto(prev):
     if not prev or prev.get("mmi") is None:
         return ""
-    fuente = {"magnitud": "magnitud y ubicación"}.get(prev["fuente"], prev["fuente"])
-    t = f"Medellín: intensidad prevista {prev['mmi']:.1f} ({fuente})"
-    return ("ALERTA PARA MEDELLÍN. " if prev.get("alerta") else "") + t
+    f = prev["fuente"]
+    fuente = ("por magnitud y ubicación" if f == "magnitud"
+              else f"por los primeros segundos en {f[3:]}" if f.startswith("pd-")
+              else f"por lo que ya mide {f[5:]}")
+    if prev.get("alerta"):
+        return f"ALERTA PARA MEDELLÍN: intensidad prevista {prev['mmi']:.1f} ({fuente})"
+    if prev["mmi"] < config.ALERTA_MMI:
+        return (f"No se espera que se sienta en Medellín (intensidad prevista {prev['mmi']:.1f}, "
+                f"{fuente})")
+    return f"Medellín: intensidad prevista {prev['mmi']:.1f} ({fuente})"
