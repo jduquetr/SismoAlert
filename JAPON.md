@@ -73,9 +73,21 @@ km. Varios parámetros del artículo no sirven tal cual (medido con nuestros dat
   Panamá, porque Panamá tiene mucha sismicidad y los desajustes de las demás estaciones
   costaban casi nada.
 - **Estaciones calladas**: el original castiga a las 5 más cercanas; aquí esas pueden estar a
-  500 km. Se castiga la callada que esté más cerca que la segunda estación que sí disparó.
+  500 km. Se castiga la callada que esté más cerca que la segunda estación que sí disparó,
+  con un piso por estación (`UBICADOR_PISO_CALLADA`): la fracción de veces que, en el registro
+  de la VM (25-sep a 21-oct, 764 casos), se quedó callada estando así de cerca. HEL calla el
+  15 % y RUS el 13 %, pero OCA el 62 % y ARGC, SMAR y URI más del 80 %. Sin el piso, que OCA
+  callara sacaba del Nido de Bucaramanga los sismos que solo registraron RUS y HEL (los ponía
+  a 5 km de profundidad en el Meta, a 270 km).
 - **Zona de Voronoi** más ancha (100 km) y con piso, porque el primer disparo a veces es
-  ruido (HEL disparó 11 s antes del M4,0 de Istmina del 26-sep).
+  ruido (HEL disparó 11 s antes del M4,0 de Istmina del 26-sep). Se toma la zona de la
+  primera estación que disparó **fuerte**: un disparo débil que llega antes suele ser ruido
+  (SMAR 48 s antes de un sismo del nido).
+  Con los dos cambios, en el registro de la VM: error mediano del epicentro 149 → 147 km
+  dentro de la red y 248 → 89 km fuera de ella; |error| mediano de la magnitud 0,6 → 0,5;
+  detecciones reales 407 → 401 y falsas 348 → 357. En 8 sismos del nido de oct, el error
+  pasó de [11, 33, 273, 11, 174, 273, 55, 312] km a [11, 33, 25, 11, 291, 25, 55, 25]; el
+  que sigue mal tuvo un disparo de ruido en OCA 23 s antes.
 - **Tiempos IASP91**: `traveltime.py` daba 5 s para la P de un sismo a 150 km bajo la estación
   (el modelo real da 20 s). Afecta al Nido de Bucaramanga. `traveltime.py` no se cambió.
 - **Fusión por ubicación conjunta**: con pocas estaciones cada mitad de un sismo partido se

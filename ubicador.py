@@ -258,13 +258,17 @@ def ubicar(malla, picks, now, alive=None, weak=(), amps=None, mag=None):
         rk = rank[row[s]]
         late = tnow - (t0 + malla.tt(s))
         bad = (D[row[s]] < reach) & (late >= config.UBICADOR_NYAD_MARGEN_S)
-        lp += np.where(bad, _robust_log(late, sigma, _g0(rk)), 0.0)
+        g0 = np.maximum(_g0(rk), config.UBICADOR_PISO_CALLADA.get(
+            s, config.UBICADOR_PISO_CALLADA_OTRA))
+        lp += np.where(bad, _robust_log(late, sigma, g0), 0.0)
 
     # Zona de Voronoi ampliada: penaliza epicentros más cerca de otra estación que de la
     # primera en disparar (suavemente: con ruido alto la más cercana a veces no dispara).
     # Con piso, porque el primer disparo a veces es ruido (HEL 11 s antes del M4.0 de
     # Istmina del 26-sep): con varios disparos mandan los tiempos, no la primera estación.
-    excess = np.maximum(0, D[row[first]] - D.min(axis=0))
+    # La primera fuerte: un disparo débil que llegó antes suele ser ruido
+    first_strong = min(strong, key=picks.get)
+    excess = np.maximum(0, D[row[first_strong]] - D.min(axis=0))
     g = config.UBICADOR_PISO_VORONOI
     lp += np.log((1 - g) * np.exp(-excess / config.UBICADOR_C1_KM) + g)
 

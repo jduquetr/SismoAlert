@@ -87,6 +87,14 @@ UBICADOR_PISO_DEBIL = 0.5
 # Estaciones calladas: se penalizan si ya pasaron UBICADOR_NYAD_MARGEN_S desde que les debió
 # llegar la P (1 s) y están más cerca que la segunda estación que disparó con fuerza
 UBICADOR_NYAD_MARGEN_S = 3.0
+# Piso de ese castigo, por estación: qué fracción de las veces se quedó callada estando más
+# cerca del sismo que la segunda que disparó fuerte (registro de la VM, 25-sep a 21-oct, 764
+# casos con sismos del SGC y el USGS). Solo HEL y RUS casi nunca fallan; OCA calla el 62 %.
+# Sin piso, OCA callada sacaba del nido de Bucaramanga los sismos que solo vieron RUS y HEL.
+UBICADOR_PISO_CALLADA = {"HEL": 0.15, "RUS": 0.13, "OCA": 0.62, "ARGC": 0.81, "SMAR": 0.80,
+                         "URI": 0.85, "PRV": 0.38, "TUM": 0.9, "CRJC": 0.42, "OTAV": 0.9,
+                         "PUYO": 0.9}
+UBICADOR_PISO_CALLADA_OTRA = 0.5
 # Término de amplitud (magnitud.py): magnitud de cada estación frente a la del sismo, con
 # σ = 0,7 como en el artículo. Apagado: en el registro de la VM bajó poco las falsas (348 a
 # 338) y empeoró la ubicación dentro de la red (mediana 149 a 203 km; ver JAPON.md)
