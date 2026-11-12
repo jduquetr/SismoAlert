@@ -89,7 +89,8 @@ km. Varios parámetros del artículo no sirven tal cual (medido con nuestros dat
   pasó de [11, 33, 273, 11, 174, 273, 55, 312] km a [11, 33, 25, 11, 291, 25, 55, 25]; el
   que sigue mal tuvo un disparo de ruido en OCA 23 s antes.
 - **Tiempos IASP91**: `traveltime.py` daba 5 s para la P de un sismo a 150 km bajo la estación
-  (el modelo real da 20 s). Afecta al Nido de Bucaramanga. `traveltime.py` no se cambió.
+  (el modelo real da 20 s). Afecta al Nido de Bucaramanga. Corregido en nov-2026:
+  `traveltime.py` usa ahora las tablas IASP91 de P y S (ver README).
 - **Fusión por ubicación conjunta**: con pocas estaciones cada mitad de un sismo partido se
   ubica mal y ninguna explica a la otra; juntas sí encajan.
 - **Depuración**: con 3 o más disparos fuertes que encajan, los que no encajan salen del sismo.
@@ -193,7 +194,7 @@ intensidad (MMI) prevista en Medellín y si se alerta. El asociador por ventana 
 | `plum-HEL` | La intensidad que ya mide HEL (a 8 km) vale para Medellín: PLUM (Kodera et al., 2021) |
 | `plum-EST` | La que mide otra estación del sismo, llevada a Medellín suponiendo el sismo a 30 km de ella (PLUM extendido: no hay otra estación a menos de 30 km) |
 | `pd-HEL` | Pd de los primeros 3 s de la P en HEL → PGV prevista en HEL (alerta en el sitio; Wu y Kanamori) |
-| `magnitud` | Magnitud preliminar y ubicación con Allen, Wald y Worden (2012); antes de los 30 s, magnitud + 0,5 (arranca baja) |
+| `magnitud` | Magnitud preliminar y ubicación con Allen, Wald y Worden (2012) corregida en HEL según la profundidad (ver "Revisión de modelos"); antes de los 30 s, magnitud + 0,5 (arranca baja) |
 
 La alerta salta cuando esa probabilidad llega a `ALERTA_PROB` (0,5) y no se retira aunque la
 previsión baje. El campo trae también `observada` (MMI medida en HEL y hora de cada cruce de
@@ -244,6 +245,55 @@ resumen por estación y hora).
 llegan datos. No hay en rtserve otras estaciones a menos de 450 km de Medellín aparte de HEL,
 RUS, OCA y ARGC. El servidor avisa si una estación pasa 5 min sin datos y cuando vuelve
 (`vigilancia.py`).
+
+## Revisión de modelos (12-nov-2026)
+
+Tres correcciones (rama `modelos-medellin`):
+
+**1. Intensidad en Medellín calibrada en HEL** (`intensidad.mmi_medellin`,
+`intensidad_medellin.json`, `tools/calibrar_intensidad.py`). Se midió la MMI en HEL (suma
+vectorial de las horizontales) de los sismos del USGS M ≥ 3,5 a menos de 1.000 km desde 2011
+que la ecuación, con 2 grados de holgura, dejaba en MMI ≥ 1,5: 2.159 sismos, 1.363 con señal
+(el archivo del SGC no tiene HEL antes de mediados de 2014 ni en algunos tramos). Solo 39
+superan el ruido de HEL; los demás dicen que la intensidad quedó por debajo del ruido y entran
+al ajuste censurado (Tobit). Corrección `MMI = AWW12 + a + b·ln(R/100)`:
+
+| Zona | a | b | Sesgo de AWW12 sin corregir (medidos) |
+|---|---|---|---|
+| Somera (< 70 km) | −0,84 | −0,07 | −0,62 (se pasa) |
+| Intermedia (≥ 70 km) | −0,96 | +0,58 | 0,00 |
+
+σ = 0,45. Lo que se suponía (que AWW12 se quedaba corta con el nido) **no se cumple en HEL**:
+con los intermedios acierta en promedio y con los someros se pasa ~0,6 (Bello M4,6: 4,7 prevista,
+2,4 medida; Palmar M7,4: 5,8 y 3,9). La subestimación de los sentidos que mostró el lote venía
+de la magnitud temprana, no de la ecuación. `INTENSIDAD_SITIO_MEDELLIN` (ciudad frente a HEL,
+roca) queda en 0 hasta tener medidas en la ciudad.
+
+**2. La incertidumbre de la magnitud ya no se cuenta dos veces** (`prevision.py`): solo va en
+la sigma; a la magnitud solo se le suma el sesgo temprano `PREVISION_MARGEN_MAG` antes de los
+30 s. Con la probabilidad ya calibrada, la previsión por magnitud tiene su propio umbral,
+`ALERTA_PROB_MAGNITUD = 0,15` (las demás fuentes siguen con `ALERTA_PROB = 0,5`; bajarlo para
+PLUM o Pd haría alertar con el ruido de HEL). Con magnitud y ubicación del catálogo más un error
+de magnitud simulado de 0,35 (`calibrar_intensidad.py umbral`), en Medellín:
+
+| Regla | Sentidos avisados (de 20) | Perdidos con MMI ≥ 2,5 (de 7) | Falsas | CAR |
+|---|---|---|---|---|
+| Antes (AWW12, incertidumbre dos veces, p 0,5) | 19,1 | 0,2 | 117 | 0,14 |
+| Ahora, p 0,10 | 17,9 | 0,5 | 62 | 0,22 |
+| Ahora, p 0,15 | 16,9 | 0,8 | 41 | 0,29 |
+| Ahora, p 0,20 | 15,6 | 1,1 | 28 | 0,36 |
+
+No es el sistema completo (usa la ubicación del catálogo y no repasa la señal): falta confirmarlo
+con el lote histórico (`evaluacion/`). Las dos falsas del repaso de 2026 (13-feb M4,9 y 17-jun
+M5,1) seguirían saltando en los primeros 30 s por el sesgo temprano de +0,5 (p 0,68 y 0,43); a
+los 30 s ya no (0,27 y 0,11). Hay que medir ese sesgo temprano en el lote antes de tocarlo.
+
+**3. Tiempos de viaje IASP91 en todo el sistema** (`traveltime.py`, `static/tiempos.js`): P y S
+interpoladas según distancia y profundidad, hasta 4.000 km. Contra 96 disparos fuertes con sismo
+de catálogo (registro de sep-oct): en los 5 intermedios la mediana del residuo pasa de −7,1 s a
+−4,1 s; en los someros queda igual de dispersa (desviación absoluta mediana 2,7 s frente a 2,4 s
+con el modelo de dos capas; engrosar la corteza a 42-55 km no la reduce: la dispersión es de los
+disparos y de las ubicaciones del catálogo).
 
 ## Pendiente
 

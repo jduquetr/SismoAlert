@@ -10,9 +10,13 @@ La usan la alerta (MMI prevista en Medellín, decisión del 23-oct-2026) y la ev
   con la extensión de ShakeMap para intensidades 1-2. Coeficientes copiados de
   esi-shakelib 1.2.1 (gmice/wgrw12.py), sin los términos de magnitud y distancia.
 """
+import json
 import math
+from pathlib import Path
 
 import numpy as np
+
+import config
 
 # Allen, Wald y Worden (2012), distancia hipocentral
 AWW12 = dict(c0=2.085, c1=1.428, c2=-1.402, c4=0.078, m1=-0.209, m2=2.042,
@@ -28,7 +32,8 @@ WGRW12 = {
 }
 
 
-def _media(mag, rhyp_km):
+def mmi_aww12(mag, rhyp_km):
+    """MMI media de Allen, Wald y Worden (2012), sin ninguna corrección."""
     c = AWW12
     rm = c["m1"] + c["m2"] * math.exp(mag - 5)
     mmi = c["c0"] + c["c1"] * mag + c["c2"] * math.log(math.sqrt(rhyp_km ** 2 + rm ** 2))
@@ -37,19 +42,60 @@ def _media(mag, rhyp_km):
     return mmi
 
 
+def _con_magnitud(f, mag, rhyp_km, sigma, sigma_mag):
+    """Suma a sigma la incertidumbre de la magnitud, con la pendiente de f frente a M."""
+    if not sigma_mag:
+        return sigma
+    pendiente = (f(mag + 0.05, rhyp_km) - f(mag - 0.05, rhyp_km)) / 0.1
+    return math.hypot(sigma, pendiente * sigma_mag)
+
+
 def mmi_prevista(mag, rhyp_km, sigma_mag=0.0):
-    """MMI media prevista y su desviación estándar (Allen, Wald y Worden, 2012).
+    """MMI media prevista y su desviación estándar (Allen, Wald y Worden, 2012), para un sitio
+    cualquiera. Para Medellín, mmi_medellin.
 
     sigma_mag suma la incertidumbre de la magnitud (estimada en vivo) a la de la ecuación,
     con la pendiente de la MMI frente a la magnitud en ese punto.
     """
     c = AWW12
-    mmi = _media(mag, rhyp_km)
     sigma = c["s1"] + c["s2"] / (1 + (rhyp_km / c["s3"]) ** 2)
-    if sigma_mag:
-        pendiente = (_media(mag + 0.05, rhyp_km) - _media(mag - 0.05, rhyp_km)) / 0.1
-        sigma = math.hypot(sigma, pendiente * sigma_mag)
-    return mmi, sigma
+    return mmi_aww12(mag, rhyp_km), _con_magnitud(mmi_aww12, mag, rhyp_km, sigma, sigma_mag)
+
+
+def _correccion():
+    path = Path(__file__).parent / "intensidad_medellin.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+# Corrección de AWW12 para Medellín, calibrada con la MMI medida en HEL
+# (tools/calibrar_intensidad.py -> intensidad_medellin.json): MMI = AWW12 + a + b·ln(R/100),
+# con a y b distintos para los sismos someros y los de profundidad intermedia. Sin el archivo,
+# mmi_medellin es AWW12 sin corregir.
+CORRECCION_MEDELLIN = _correccion()
+
+
+def _mmi_medellin_media(mag, rhyp_km, prof_km):
+    mmi = mmi_aww12(mag, rhyp_km)
+    c = CORRECCION_MEDELLIN
+    if c:
+        zona = c["intermedio" if prof_km >= config.INTENSIDAD_PROF_INTERMEDIA_KM else "somero"]
+        mmi += zona["a"] + zona["b"] * math.log(max(rhyp_km, 1.0) / 100)
+    return mmi + config.INTENSIDAD_SITIO_MEDELLIN
+
+
+def mmi_medellin(mag, rhyp_km, prof_km, sigma_mag=0.0):
+    """MMI media prevista en Medellín y su desviación: AWW12 con la corrección calibrada en HEL
+    (CORRECCION_MEDELLIN, que depende de la profundidad) y el término de sitio de la ciudad
+    frente a HEL (config.INTENSIDAD_SITIO_MEDELLIN)."""
+    if not CORRECCION_MEDELLIN:
+        mmi, sigma = mmi_prevista(mag, rhyp_km, sigma_mag)
+        return mmi + config.INTENSIDAD_SITIO_MEDELLIN, sigma
+
+    def f(m, r):
+        return _mmi_medellin_media(m, r, prof_km)
+    return f(mag, rhyp_km), _con_magnitud(f, mag, rhyp_km, CORRECCION_MEDELLIN["sigma"], sigma_mag)
 
 
 def prob_excedencia(mmi, sigma, umbral):
@@ -73,3 +119,13 @@ def mmi_observada(pga, pgv=None):
     if pgv is not None:
         return mmi_de_movimiento(pgv, "pgv")
     return mmi_de_movimiento(pga, "pga")
+
+
+def mmi_sitio(sitio, mag, rhyp_km, prof_km, sigma_mag=0.0):
+    """MMI prevista en una estación de la red: la de Medellín (HEL) con la corrección calibrada
+    (mmi_medellin, sin el término de sitio de la ciudad, que no aplica a HEL) y las demás con
+    AWW12 sin corregir."""
+    if sitio == config.LOCAL_STATION:
+        mmi, sigma = mmi_medellin(mag, rhyp_km, prof_km, sigma_mag)
+        return mmi - config.INTENSIDAD_SITIO_MEDELLIN, sigma
+    return mmi_prevista(mag, rhyp_km, sigma_mag)

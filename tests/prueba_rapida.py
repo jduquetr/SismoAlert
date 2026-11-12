@@ -28,11 +28,17 @@ def check(name, cond, detail=""):
         failures.append(name)
 
 
-# Tiempos de viaje: M4.3 de Istmina (27-sep), observados HEL +35 s, RUS +62 s, OCA +77 s
+# Tiempos de viaje: M4.3 de Istmina (27-sep), observados HEL +35 s, RUS +62 s, OCA +77 s. Los
+# disparos STA/LTA llegan ~3 s tarde frente a IASP91 (registro de la VM): se admite de -1 a +7 s
 for sta, dist, obs in (("HEL", 232, 35.0), ("RUS", 431, 62.0), ("OCA", 562, 77.0)):
     tp = traveltime.p_time(dist, 43)
-    check(f"P a {sta} cerca de lo observado", abs(obs - tp) <= 4, f"esperada {tp:.1f} s, observada {obs} s")
+    check(f"P a {sta} cerca de lo observado", -1 <= obs - tp <= 7, f"esperada {tp:.1f} s, observada {obs} s")
 check("S llega después de P", traveltime.s_time(235, 43) > traveltime.p_time(235, 43))
+# Sismo del nido de Bucaramanga (150 km): la P tarda ~20 s en subir al epicentro (el modelo de
+# dos capas de antes daba 5 s)
+check("P de un sismo profundo depende de la profundidad", 19 <= traveltime.p_time(0, 150) <= 21,
+      f"{traveltime.p_time(0, 150):.1f} s")
+check("tiempos más allá de la tabla crecen", traveltime.p_time(5000, 10) > traveltime.p_time(4000, 10))
 
 # Artefacto: 9 estaciones en 11 s, de Providencia a Ecuador (detección del 29-sep 13:07)
 t0 = T("2026-09-29T13:07:47")
@@ -75,6 +81,43 @@ with tempfile.TemporaryDirectory() as tmp:
     check("guardar, recargar y volver a guardar", fc["metadata"]["count"] == 1 and fc["features"][0]["geometry"])
 
 check("config.USE_SGC existe", isinstance(config.USE_SGC, bool))
+
+# Intensidad en Medellín: corrección calibrada en HEL (intensidad_medellin.json), distinta para
+# sismos someros e intermedios, y más baja que AWW12 sin corregir para el M4,6 de Bello de 2024
+# (AWW12 daba 4,7; HEL midió 2,4)
+import intensidad  # noqa: E402
+import prevision  # noqa: E402
+
+check("hay corrección de intensidad para Medellín", intensidad.CORRECCION_MEDELLIN is not None)
+bello = intensidad.mmi_medellin(4.6, 24, 18)[0]
+check("la corrección baja el sismo de Bello", bello < intensidad.mmi_aww12(4.6, 24), f"{bello:.1f}")
+check("la corrección depende de la profundidad",
+      intensidad.mmi_medellin(5.5, 300, 150)[0] != intensidad.mmi_medellin(5.5, 300, 20)[0])
+check("la incertidumbre de la magnitud solo agranda la sigma",
+      intensidad.mmi_medellin(5, 200, 30, 0.4)[0] == intensidad.mmi_medellin(5, 200, 30)[0]
+      and intensidad.mmi_medellin(5, 200, 30, 0.4)[1] > intensidad.mmi_medellin(5, 200, 30)[1])
+check("HEL en la evaluación no lleva el término de sitio de la ciudad",
+      intensidad.mmi_sitio(config.LOCAL_STATION, 5, 200, 30)[0]
+      == intensidad.mmi_medellin(5, 200, 30)[0] - config.INTENSIDAD_SITIO_MEDELLIN)
+
+
+# Umbral por fuente: la magnitud alerta con su probabilidad calibrada; PLUM no se rebaja
+class _Loc:
+    lat, lon, depth = 6.8, -73.1, 150  # nido de Bucaramanga
+
+
+ahora = T("2026-11-12T00:01:00")
+picks = {"RUS": {"onset": T("2026-11-12T00:00:00"), "amps": {}}}
+r = (prevision._km_a_medellin(_Loc.lat, _Loc.lon) ** 2 + _Loc.depth ** 2) ** 0.5
+m_lim = next(m / 10 for m in range(30, 80) if intensidad.prob_excedencia(
+    *intensidad.mmi_medellin(m / 10, r, _Loc.depth, 0.3), config.ALERTA_MMI)
+    >= config.ALERTA_PROB_MAGNITUD)
+mag = {"valor": m_lim, "incertidumbre": 0.3, "estaciones": {"RUS": m_lim}, "n": 1}
+check("la magnitud alerta al llegar a ALERTA_PROB_MAGNITUD",
+      prevision.medellin(picks, _Loc, mag, ahora)["alerta"], f"M{m_lim}")
+mag["valor"] = mag["estaciones"]["RUS"] = round(m_lim - 0.3, 1)
+check("y no por debajo", not prevision.medellin(picks, _Loc, mag, ahora)["alerta"])
+check("PLUM mantiene ALERTA_PROB", prevision.prob_minima("plum-HEL") == config.ALERTA_PROB)
 
 print()
 if failures:

@@ -129,6 +129,14 @@ MAGNITUD_MAX_KM = 700
 # (en promedio, la PGV horizontal es mayor que la vertical; falta calibrarlo)
 INTENSIDAD_SEGUIR_S = 180
 INTENSIDAD_FACTOR_Z = 1.4
+# Intensidad prevista en Medellín (intensidad.mmi_medellin): desde qué profundidad un sismo es
+# "intermedio" (el nido de Bucaramanga, la placa bajo el Eje Cafetero), que atenúa distinto
+# que uno somero de corteza y tiene su propia corrección calibrada en HEL
+INTENSIDAD_PROF_INTERMEDIA_KM = 70
+# Cuánto más se siente en la ciudad que en HEL (roca, Santa Elena). Los suelos del valle
+# amplifican, pero no hay todavía medidas en la ciudad para calibrarlo: se deja en 0 hasta
+# tenerlas (acelerógrafos del SIATA, sensores propios o reportes "¿lo sintió?" de Medellín)
+INTENSIDAD_SITIO_MEDELLIN = 0.0
 
 # Alerta para Medellín por la intensidad prevista (prevision.py). Se alerta cuando la
 # probabilidad de superar ALERTA_MMI llega a ALERTA_PROB (con estos valores, en el lote
@@ -136,6 +144,12 @@ INTENSIDAD_FACTOR_Z = 1.4
 # evaluacion/README.md). Avisar es barato, así que conviene alertar de más (Meier, 2017).
 ALERTA_MMI = 2.0
 ALERTA_PROB = 0.5
+# Para la previsión por magnitud y ubicación (intensidad.mmi_medellin), la probabilidad está
+# calibrada con 1.363 sismos medidos en HEL (tools/calibrar_intensidad.py umbral, nov-2026):
+# con 0,15 se avisan 17 de los 20 sentidos (y casi todos los de MMI >= 2,5) con 41 falsas,
+# frente a 19 y 117 con la regla anterior. Las demás fuentes (PLUM, Pd) siguen con
+# ALERTA_PROB: bajarla para ellas haría alertar con el ruido de HEL.
+ALERTA_PROB_MAGNITUD = 0.15
 # Mientras la estación más cercana no completa su ventana de 30 s, la magnitud arranca baja
 # (en el lote, la intensidad real quedó 1 a 1,6 por encima): se le suma al menos esto
 PREVISION_MARGEN_MAG = 0.5

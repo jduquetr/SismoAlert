@@ -564,6 +564,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps(data, default=to_json, ensure_ascii=False))
         elif path == "/fallas-gem.json":
             self._send(200, (STATIC / "fallas-gem.json").read_bytes(), "application/json; charset=utf-8")
+        elif path == "/tiempos.js":
+            self._send(200, (STATIC / "tiempos.js").read_bytes(), "text/javascript; charset=utf-8")
         elif path == "/sgc-sismos":
             days = parse_qs(urlparse(self.path).query).get("dias", ["30"])[0]
             if not config.USE_SGC:

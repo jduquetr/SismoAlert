@@ -6,6 +6,7 @@
 <title>Alertas de sismos</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/tiempos.js"></script>
 <style>
   :root {
     --bg: #f6f5f2; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
@@ -619,16 +620,38 @@ function initMap() {
   initGdacsLayer();
 }
 
-// Modelo regional de tiempos de viaje (mismas constantes que traveltime.py): la primera
-// onda es la más rápida entre la que va por la corteza (Pg/Sg) y la que viaja por el techo
-// del manto (Pn/Sn, ~8 y ~4.6 km/s), que gana a más de ~150-200 km del epicentro.
-const VP_CRUST = 6.1, VP_MANTLE = 8.0, TAU_P = 5.0;
-const VS_CRUST = 3.5, VS_MANTLE = 4.6, TAU_S = 9.0;
-const pTime = (d, h) => Math.min(Math.hypot(d, h) / VP_CRUST, d / VP_MANTLE + TAU_P);
-const sTime = (d, h) => Math.min(Math.hypot(d, h) / VS_CRUST, d / VS_MANTLE + TAU_S);
-// Distancia en superficie alcanzada por el frente de onda en el instante t (inversa de lo anterior)
-const pFront = (t, h) => Math.max(Math.sqrt(Math.max(0, (VP_CRUST * t) ** 2 - h * h)), VP_MANTLE * (t - TAU_P));
-const sFront = (t, h) => Math.max(Math.sqrt(Math.max(0, (VS_CRUST * t) ** 2 - h * h)), VS_MANTLE * (t - TAU_S));
+// Tiempos de viaje de la primera P y S: las mismas tablas IASP91 que traveltime.py
+// (static/tiempos.js, de tools/tabla_tiempos.py), interpoladas en distancia y profundidad.
+// Antes era un modelo de dos capas que no distinguía la profundidad de las ondas por el
+// manto: a un sismo del nido de Bucaramanga le daba la P en el epicentro a los 5 s, no a los 20.
+function tiempoTabla(fila, d, h) {
+  const D = TIEMPOS.distancias_km, Z = TIEMPOS.profundidades_km;
+  const z = Math.min(Math.max(h || 0, Z[0]), Z[Z.length - 1]);
+  let i = 0; while (i < Z.length - 2 && Z[i + 1] < z) i++;
+  const fz = (z - Z[i]) / (Z[i + 1] - Z[i]);
+  const paso = D[1] - D[0], last = D.length - 1;
+  const en = (r, x) => {
+    if (x >= D[last]) return r[last] + (x - D[last]) * (r[last] - r[last - 1]) / paso;
+    const j = Math.max(0, Math.floor(x / paso)), f = (x - D[j]) / paso;
+    return r[j] + f * (r[j + 1] - r[j]);
+  };
+  const x = Math.max(0, d);
+  return (1 - fz) * en(fila[i], x) + fz * en(fila[i + 1], x);
+}
+const pTime = (d, h) => tiempoTabla(TIEMPOS.p, d, h);
+const sTime = (d, h) => tiempoTabla(TIEMPOS.s, d, h);
+// Distancia en superficie alcanzada por el frente de onda en el instante t (inversa de lo
+// anterior, por bisección: el tiempo crece con la distancia)
+function frente(tiempo, t, h) {
+  if (t <= tiempo(0, h)) return 0;
+  let lo = 0, hi = 500;
+  while (tiempo(hi, h) < t && hi < 20000) hi *= 2;
+  for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (tiempo(m, h) < t) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
+const pFront = (t, h) => frente(pTime, t, h);
+const sFront = (t, h) => frente(sTime, t, h);
+const VP_MANTLE = 8.0;  // km/s, para pasar el error de la ubicación de la página a km
 const ANIM_SPEED = 10;
 const TYPICAL_LATENCY_S = 12;  // retraso típico de SeedLink, para las detecciones de prueba
 let anim = null;  // animación en curso
@@ -771,8 +794,8 @@ function renderInfo(d, z) {
     <div class="table-wrap"><table>
       <tr><th>#</th><th>Estación</th><th>Disparo (desde el origen)</th><th>P esperada</th><th>Diferencia</th><th>Después de la 1.ª</th><th>Dist. al epicentro</th><th>STA/LTA</th></tr>${rows}
     </table></div>
-    <div class="muted" style="margin-top:6px">Modelo regional: P por la corteza ${VP_CRUST} km/s o por el manto (Pn) ${VP_MANTLE} km/s + ${TAU_P} s;
-      S ${VS_CRUST} km/s o Sn ${VS_MANTLE} km/s + ${TAU_S} s. Diferencia = disparo observado − P esperada (el detector suele marcar 0,5–3 s tarde).
+    <div class="muted" style="margin-top:6px">Tiempos de la primera P y S con el modelo IASP91 (la profundidad cuenta).
+      Diferencia = disparo observado − P esperada (el detector suele marcar 0,5–3 s tarde).
       La animación va ${ANIM_SPEED} veces más rápido que la realidad.
       <button id="replay" style="margin-left:8px;padding:3px 10px">▶ Repetir</button></div>`;
   document.getElementById("replay").onclick = () => startAnimation(d);

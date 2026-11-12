@@ -35,9 +35,12 @@ IRIS ya no tiene servicio de eventos (fue retirado), así que se usa EMSC en su 
 
 **Emparejamiento con catálogos.** Un evento de catálogo solo se asocia a una detección si
 sus ondas pudieron llegar a la primera estación fuerte entre la onda P y la S, con 15 s de
-margen. Para eso se usa el modelo de `traveltime.py`: P por la corteza (6,1 km/s) o por el
-manto (Pn, 8,0 km/s + 5 s); S por la corteza (3,5 km/s) o Sn (4,6 km/s + 9 s). La página
-usa el mismo modelo en la animación.
+margen. Los tiempos de la primera P y S salen de `traveltime.py`, que interpola tablas del
+modelo IASP91 (`tiempos_p.json`, `tiempos_s.json`, generadas con `tools/tabla_tiempos.py`)
+según la distancia y la profundidad. La página usa las mismas tablas (`static/tiempos.js`)
+en la animación y en el tiempo de aviso. Hasta nov-2026 era un modelo de dos capas que no
+distinguía la profundidad de las ondas por el manto (a un sismo del nido de Bucaramanga le
+daba la P en el epicentro a 5 s, no a 20 s).
 
 ## Datos guardados (`datos/`)
 

@@ -1,0 +1,14 @@
+{
+ "somero": {
+  "a": -0.84,
+  "b": -0.07
+ },
+ "intermedio": {
+  "a": -0.96,
+  "b": 0.58
+ },
+ "sigma": 0.45,
+ "sismos": 1363,
+ "sobre_ruido": 39,
+ "fuente": "USGS M>=3.5 a <1000 km, MMI medida en HEL, 2011-06-18 a 2026-11-12"
+}
