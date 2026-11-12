@@ -145,14 +145,17 @@ INTENSIDAD_SITIO_MEDELLIN = 0.0
 ALERTA_MMI = 2.0
 ALERTA_PROB = 0.5
 # Para la previsión por magnitud y ubicación (intensidad.mmi_medellin), la probabilidad está
-# calibrada con 1.363 sismos medidos en HEL (tools/calibrar_intensidad.py umbral, nov-2026):
-# con 0,15 se avisan 17 de los 20 sentidos (y casi todos los de MMI >= 2,5) con 41 falsas,
-# frente a 19 y 117 con la regla anterior. Las demás fuentes (PLUM, Pd) siguen con
-# ALERTA_PROB: bajarla para ellas haría alertar con el ruido de HEL.
-ALERTA_PROB_MAGNITUD = 0.15
-# Mientras la estación más cercana no completa su ventana de 30 s, la magnitud arranca baja
-# (en el lote, la intensidad real quedó 1 a 1,6 por encima): se le suma al menos esto
-PREVISION_MARGEN_MAG = 0.5
+# calibrada con 1.363 sismos medidos en HEL (tools/calibrar_intensidad.py). En el lote histórico
+# repasado con señal (tools/umbral_repaso.py, nov-2026), con 0,30 y sin sesgo temprano se avisan
+# 18 de los 19 sentidos con 21 s de mediana antes de MMI 2 en HEL, igual que la regla anterior,
+# con 26 falsas en vez de 59. Con ubicación y magnitud del catálogo parecía bastar 0,15, pero
+# en vivo la ubicación de 1-3 estaciones yerra cientos de km. Las demás fuentes (PLUM, Pd)
+# siguen con ALERTA_PROB: bajarla para ellas haría alertar con el ruido de HEL.
+ALERTA_PROB_MAGNITUD = 0.30
+# Sesgo que se suma a la magnitud mientras ninguna estación completa su ventana de 30 s. Era
+# 0,5 (la magnitud temprana arranca baja), pero en el lote repasado no adelantó ni ganó ningún
+# aviso y sumó 7 falsas (tools/umbral_repaso.py, nov-2026)
+PREVISION_MARGEN_MAG = 0.0
 # PLUM (Kodera et al., 2021): la intensidad medida en una estación vale para los sitios a
 # menos de PLUM_RADIO_KM (Medellín con HEL). Para las demás estaciones se supone el sismo a
 # PLUM_FUENTE_KM de ella y se lleva la intensidad hasta Medellín con la atenuación.

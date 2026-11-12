@@ -6,7 +6,7 @@ que más probabilidad da de superar config.ALERTA_MMI:
 - "magnitud": la magnitud preliminar y la ubicación, con la ecuación de intensidad de Allen,
   Wald y Worden (2012) corregida para Medellín según la profundidad (intensidad.mmi_medellin).
   Mientras la estación más cercana no completa su ventana de 30 s se usa la magnitud más
-  PREVISION_MARGEN_MAG (arranca baja). La incertidumbre de la magnitud entra en la sigma.
+  PREVISION_MARGEN_MAG (hoy 0). La incertidumbre de la magnitud entra en la sigma.
 - "plum-HEL": la intensidad que ya mide HEL, a 8 km, vale para Medellín (PLUM).
 - "plum-EST": la que mide otra estación del sismo, llevada hasta Medellín suponiendo el sismo
   a PLUM_FUENTE_KM de ella (sin ubicarlo). Con la red tan rala, no hay otra estación a menos

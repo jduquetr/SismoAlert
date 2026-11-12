@@ -194,7 +194,7 @@ intensidad (MMI) prevista en Medellín y si se alerta. El asociador por ventana 
 | `plum-HEL` | La intensidad que ya mide HEL (a 8 km) vale para Medellín: PLUM (Kodera et al., 2021) |
 | `plum-EST` | La que mide otra estación del sismo, llevada a Medellín suponiendo el sismo a 30 km de ella (PLUM extendido: no hay otra estación a menos de 30 km) |
 | `pd-HEL` | Pd de los primeros 3 s de la P en HEL → PGV prevista en HEL (alerta en el sitio; Wu y Kanamori) |
-| `magnitud` | Magnitud preliminar y ubicación con Allen, Wald y Worden (2012) corregida en HEL según la profundidad (ver "Revisión de modelos"); antes de los 30 s, magnitud + 0,5 (arranca baja) |
+| `magnitud` | Magnitud preliminar y ubicación con Allen, Wald y Worden (2012) corregida en HEL según la profundidad (ver "Revisión de modelos"); alerta con p ≥ 0,30 |
 
 La alerta salta cuando esa probabilidad llega a `ALERTA_PROB` (0,5) y no se retira aunque la
 previsión baje. El campo trae también `observada` (MMI medida en HEL y hora de cada cruce de
@@ -283,10 +283,30 @@ de magnitud simulado de 0,35 (`calibrar_intensidad.py umbral`), en Medellín:
 | Ahora, p 0,15 | 16,9 | 0,8 | 41 | 0,29 |
 | Ahora, p 0,20 | 15,6 | 1,1 | 28 | 0,36 |
 
-No es el sistema completo (usa la ubicación del catálogo y no repasa la señal): falta confirmarlo
-con el lote histórico (`evaluacion/`). Las dos falsas del repaso de 2026 (13-feb M4,9 y 17-jun
-M5,1) seguirían saltando en los primeros 30 s por el sesgo temprano de +0,5 (p 0,68 y 0,43); a
-los 30 s ya no (0,27 y 0,11). Hay que medir ese sesgo temprano en el lote antes de tocarlo.
+Eso no es el sistema completo (usa la ubicación del catálogo). **Con el lote histórico repasado
+con señal** (114 sismos de 2015 a 2026, 19 sentidos en HEL; `tools/umbral_repaso.py` sobre las
+decisiones de `evaluacion.repaso`), en Medellín:
+
+| Regla | Sentidos avisados (de 19) | Falsas (de 95) | Aviso mediano antes de MMI 2 en HEL |
+|---|---|---|---|
+| Antes (p 0,5) | 18 | 59 | 21 s |
+| Ahora, p 0,15, sesgo +0,5 | 18 | 48 | 21 s |
+| Ahora, p 0,30, sesgo +0,5 | 18 | 33 | 21 s |
+| **Ahora, p 0,30, sin sesgo** | **18** | **26** | **21 s** |
+| Ahora, p 0,40, sin sesgo | 18 | 18 | 16 s |
+| Ahora, p 0,50, sin sesgo | 17 | 18 | 14 s |
+
+El perdido (MMI 2,3) se pierde con todas las reglas. Quedó `ALERTA_PROB_MAGNITUD = 0,30` y
+`PREVISION_MARGEN_MAG = 0`: el +0,5 temprano no adelantó ni ganó ningún aviso y sumó 7 falsas.
+Con el sistema completo el umbral tiene que subir frente al cálculo con catálogo porque la
+ubicación temprana es mala: de las 26 falsas que quedan, la mayoría saltan con 1-3 estaciones y
+una incertidumbre de ubicación de 500-1.300 km (con una sola estación el sismo cae a ~180 km de
+Medellín, a 5 km de profundidad), o con la magnitud muy alta en sismos grandes y lejanos (M8,1
+para un M6,7 a 800 km). Exigir más estaciones o menos incertidumbre baja las falsas pero se come
+el aviso (con incertidumbre ≤ 300 km el aviso mediano queda en −1 s), así que lo que falta es
+llevar la incertidumbre de la ubicación a la sigma de la previsión, no ponerle una compuerta. El
+universo del lote no es una muestra al azar (entran todos los no sentidos con MMI prevista ≥ 1,5),
+así que las falsas son una cota alta para un año cualquiera.
 
 **3. Tiempos de viaje IASP91 en todo el sistema** (`traveltime.py`, `static/tiempos.js`): P y S
 interpoladas según distancia y profundidad, hasta 4.000 km. Contra 96 disparos fuertes con sismo
@@ -305,8 +325,9 @@ disparos y de las ubicaciones del catálogo).
 3. Nivel "baja" (HEL sola): el bayesiano da más (231 frente a 86) porque ya no esconde disparos
    de HEL dentro de otras detecciones; la mitad son sismos reales. Decidir cómo avisarlos.
 4. PLUM, Pd y alerta por intensidad: hechos (ver arriba). Falta calibrar con HEL los
-   coeficientes de Pd y τc (son los de California del Sur) y el factor de la vertical, y
-   ajustar margen, umbral y probabilidad con el lote histórico.
+   coeficientes de Pd y τc (son los de California del Sur) y el factor de la vertical. Margen,
+   umbral y probabilidad de la magnitud ya ajustados con el lote (ver "Revisión de modelos");
+   falta llevar la incertidumbre de la ubicación a la sigma de la previsión.
 5. Latencia: pedir al SGC acceso directo a HEL (y las demás CM) en tiempo real; con 16 s de
    retraso se pierde la mitad del aviso de un sismo a 100-150 km.
 6. Métricas al estilo JMA en el informe diario (aciertos de ±1 grado de intensidad, tiempo de
