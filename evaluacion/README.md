@@ -60,7 +60,7 @@ Cuatro maneras de decidir la alerta para un sitio:
 | catálogo | En la primera decisión se supone conocido el sismo del catálogo | IFS (cota ideal) |
 | red ideal | Como catálogo, pero la detección llega con la P a la estación más cercana | máximo tiempo de aviso |
 
-La predicción de intensidad (`intensidad.py`, Allen, Wald y Worden, 2012) está en la raíz:
+La predicción de intensidad (`intensidad.py`, Allen, Wald y Worden, 2012; en HEL, con la corrección calibrada para Medellín, `intensidad.mmi_sitio`) está en la raíz:
 desde el 23-oct-2026 la alerta también predice la MMI en Medellín, y la evaluación usa la
 misma ecuación. La dependencia sigue en un solo sentido: la raíz no importa `evaluacion`.
 

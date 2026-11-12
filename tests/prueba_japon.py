@@ -206,9 +206,12 @@ check("cambio de previsión se nota (para registrarlo)", prevision.cambio(m, m2)
 lejos = prevision.medellin({"PRV": {"onset": t0, "amps": {"mmi": 3.0}}}, None, None, t0 + 5)
 check("la misma intensidad en una estación a 700 km prevé mucho menos en Medellín",
       lejos["mmi"] < 2 and not lejos["alerta"], lejos)
+# El sesgo temprano está en 0 desde nov-2026 (lote repasado); se prueba el mecanismo con 0,5
 mag = {"valor": 4.0, "incertidumbre": 0.2, "estaciones": {"HEL": 4.0}}
+_margen, config.PREVISION_MARGEN_MAG = config.PREVISION_MARGEN_MAG, 0.5
 temprano = prevision.medellin({"HEL": {"onset": t0, "amps": {}}}, _Cerca, mag, t0 + 5)
 tarde = prevision.medellin({"HEL": {"onset": t0, "amps": {}}}, _Cerca, mag, t0 + 40)
+config.PREVISION_MARGEN_MAG = _margen
 check("antes de los 30 s la magnitud lleva el margen y prevé más",
       temprano["mmi"] > tarde["mmi"], (temprano, tarde))
 

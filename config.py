@@ -129,6 +129,14 @@ MAGNITUD_MAX_KM = 700
 # (en promedio, la PGV horizontal es mayor que la vertical; falta calibrarlo)
 INTENSIDAD_SEGUIR_S = 180
 INTENSIDAD_FACTOR_Z = 1.4
+# Intensidad prevista en Medellín (intensidad.mmi_medellin): desde qué profundidad un sismo es
+# "intermedio" (el nido de Bucaramanga, la placa bajo el Eje Cafetero), que atenúa distinto
+# que uno somero de corteza y tiene su propia corrección calibrada en HEL
+INTENSIDAD_PROF_INTERMEDIA_KM = 70
+# Cuánto más se siente en la ciudad que en HEL (roca, Santa Elena). Los suelos del valle
+# amplifican, pero no hay todavía medidas en la ciudad para calibrarlo: se deja en 0 hasta
+# tenerlas (acelerógrafos del SIATA, sensores propios o reportes "¿lo sintió?" de Medellín)
+INTENSIDAD_SITIO_MEDELLIN = 0.0
 
 # Alerta para Medellín por la intensidad prevista (prevision.py). Se alerta cuando la
 # probabilidad de superar ALERTA_MMI llega a ALERTA_PROB (con estos valores, en el lote
@@ -136,9 +144,26 @@ INTENSIDAD_FACTOR_Z = 1.4
 # evaluacion/README.md). Avisar es barato, así que conviene alertar de más (Meier, 2017).
 ALERTA_MMI = 2.0
 ALERTA_PROB = 0.5
-# Mientras la estación más cercana no completa su ventana de 30 s, la magnitud arranca baja
-# (en el lote, la intensidad real quedó 1 a 1,6 por encima): se le suma al menos esto
-PREVISION_MARGEN_MAG = 0.5
+# Para la previsión por magnitud y ubicación (intensidad.mmi_medellin), la probabilidad está
+# calibrada con 1.363 sismos medidos en HEL (tools/calibrar_intensidad.py). En el lote histórico
+# repasado con señal (tools/umbral_repaso.py, nov-2026), con 0,30 y sin sesgo temprano se avisan
+# 18 de los 19 sentidos con 21 s de mediana antes de MMI 2 en HEL, igual que la regla anterior,
+# con 26 falsas en vez de 59. Con ubicación y magnitud del catálogo parecía bastar 0,15, pero
+# en vivo la ubicación de 1-3 estaciones yerra cientos de km. Las demás fuentes (PLUM, Pd)
+# siguen con ALERTA_PROB: bajarla para ellas haría alertar con el ruido de HEL.
+ALERTA_PROB_MAGNITUD = 0.30
+# Sesgo que se suma a la magnitud mientras ninguna estación completa su ventana de 30 s. Era
+# 0,5 (la magnitud temprana arranca baja), pero en el lote repasado no adelantó ni ganó ningún
+# aviso y sumó 7 falsas (tools/umbral_repaso.py, nov-2026)
+PREVISION_MARGEN_MAG = 0.0
+# Incertidumbre de la ubicación en la previsión por magnitud: mezcla de los epicentros posibles
+# del ubicador que suman PREVISION_NUBE_PESO del peso (como mucho PREVISION_NUBE_MAX), cada uno
+# con su magnitud (prevision._nube). Apagada: en el lote repasado (nov-2026), con p 0,30 dio
+# 28 falsas en vez de 26 y el aviso mediano bajó de 21 a 16 s. Agrandar la sigma sube la
+# probabilidad de los sismos que quedan justo por debajo del umbral (ver JAPON.md)
+PREVISION_NUBE = False
+PREVISION_NUBE_PESO = 0.99
+PREVISION_NUBE_MAX = 400
 # PLUM (Kodera et al., 2021): la intensidad medida en una estación vale para los sitios a
 # menos de PLUM_RADIO_KM (Medellín con HEL). Para las demás estaciones se supone el sismo a
 # PLUM_FUENTE_KM de ella y se lleva la intensidad hasta Medellín con la atenuación.

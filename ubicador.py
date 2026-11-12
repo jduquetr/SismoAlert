@@ -29,6 +29,7 @@ from pathlib import Path
 import numpy as np
 
 import config
+from traveltime import Tabla
 
 HERE = Path(__file__).parent
 KM_PER_DEG = 111.195
@@ -43,25 +44,11 @@ def _distance_km(lat, lon, lat0, lon0):
     return 2 * 6371.0 * np.arcsin(np.sqrt(np.clip(a, 0, 1)))
 
 
-class TiemposP:
+class TiemposP(Tabla):
     """Tiempo de la primera onda P (IASP91), interpolado en distancia y profundidad."""
 
     def __init__(self, path=HERE / "tiempos_p.json"):
-        t = json.loads(Path(path).read_text(encoding="utf-8"))
-        self.dist = np.array(t["distancias_km"], dtype=float)
-        self.depth = np.array(t["profundidades_km"], dtype=float)
-        self.table = np.array(t["tiempos_s"], dtype=float)
-
-    def __call__(self, dist_km, depth_km):
-        d = np.clip(dist_km, self.dist[0], self.dist[-1])
-        z = np.clip(depth_km, self.depth[0], self.depth[-1])
-        i = np.clip(np.searchsorted(self.depth, z) - 1, 0, len(self.depth) - 2)
-        j = np.clip(np.searchsorted(self.dist, d) - 1, 0, len(self.dist) - 2)
-        fz = (z - self.depth[i]) / (self.depth[i + 1] - self.depth[i])
-        fd = (d - self.dist[j]) / (self.dist[j + 1] - self.dist[j])
-        t = self.table
-        return ((1 - fz) * ((1 - fd) * t[i, j] + fd * t[i, j + 1])
-                + fz * ((1 - fd) * t[i + 1, j] + fd * t[i + 1, j + 1]))
+        super().__init__(path)
 
 
 class Malla:

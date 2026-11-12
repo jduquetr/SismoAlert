@@ -82,6 +82,10 @@ def build(state, sgc=None, gdacs=None):
     taken = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     html = replace(html, "<title>Alertas de sismos</title>", "<title>Alertas Sísmicas Medellín</title>")
+    # Tablas de tiempos de viaje incluidas: la copia no tiene servidor que las sirva
+    html = replace(html, '<script src="/tiempos.js"></script>',
+                   "<script>\n" + (ROOT / "static" / "tiempos.js").read_text(encoding="utf-8")
+                   + "</script>")
     # Estilos de Leaflet incluidos: algunos visores solo permiten hojas de estilo propias
     html = replace(html, f'<link rel="stylesheet" href="{LEAFLET_CSS}">',
                    "<style>" + cached("leaflet.min.css", LEAFLET_CSS) + "</style>")

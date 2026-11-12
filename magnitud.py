@@ -116,7 +116,7 @@ class Magnitud:
         nearest = min(dist.values())
         cerca = sorted((d, s) for s, d in dist.items()
                        if d <= min(nearest + config.MAGNITUD_MARGEN_KM, config.MAGNITUD_MAX_KM))
-        ms, sig = {}, []
+        ms, sig, usadas = {}, [], []
         for d, sta in cerca[:config.MAGNITUD_ESTACIONES]:
             onset, a = amps[sta]
             ventanas = sorted(a.get("vel", {}))
@@ -128,9 +128,30 @@ class Magnitud:
             if r is not None:
                 ms[sta] = round(r[0], 1)
                 sig.append(r[1])
+                usadas.append((sta, w))
         if not ms:
             return None
+        self._usadas = usadas
         # Desviación de una estación (de la calibración) reducida por el número de estaciones
         return {"valor": round(float(np.median(list(ms.values()))), 1), "n": len(ms),
                 "incertidumbre": round(float(np.mean(sig) / np.sqrt(len(ms))), 2),
                 "estaciones": ms}
+
+    def nodos(self, amps, loc, now):
+        """Magnitud del sismo en cada epicentro posible de la ubicación (loc.idx, con pesos
+        loc.w): las mismas estaciones y ventanas que estimar, con la distancia de cada nodo.
+        Un epicentro más cerca de las estaciones da una magnitud menor. None si no hay
+        magnitud o la ubicación no trae su nube de epicentros."""
+        if getattr(loc, "idx", None) is None or self.estimar(amps, loc, now) is None:
+            return None
+        malla, idx = loc.malla, loc.idx
+        z = malla.depth[idx]
+        ms = []
+        for sta, w in self._usadas:
+            a = amps[sta][1]
+            tipo = self.tipo(a, w)
+            k = self.coef[tipo][w]
+            r = np.maximum(np.hypot(malla.dist(sta)[idx], z), 1.0)
+            ms.append(k["a"] * np.log10(a[tipo][w] / self.sens[sta]) + k["b"] * np.log10(r)
+                      + k["c"] + k["correccion"].get(sta, 0.0))
+        return np.median(np.array(ms), axis=0)

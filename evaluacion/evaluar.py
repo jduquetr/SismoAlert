@@ -112,7 +112,8 @@ class Evaluacion:
             return None
         lat, lon = self.sitios[sitio][3:5]
         r = math.hypot(sources.distance_km(lat, lon, loc["lat"], loc["lon"]), loc.get("depth") or 10)
-        return intensidad.mmi_prevista(mag["valor"], r, mag.get("incertidumbre") or SIGMA_MAG_DEFECTO)
+        return intensidad.mmi_sitio(sitio, mag["valor"], r, loc.get("depth") or 10,
+                                    mag.get("incertidumbre") or SIGMA_MAG_DEFECTO)
 
     def t_magnitud(self, asoc, ev, sitio, umbral, p, lat):
         for d in self.por_evento.get(asoc, {}).get(clave(ev), []):
@@ -124,8 +125,9 @@ class Evaluacion:
     def prediccion_catalogo(self, ev, sitio):
         k = (clave(ev), sitio)
         if k not in self._cache:
-            self._cache[k] = intensidad.mmi_prevista(ev["mag"],
-                                                     catalogo.rhyp(ev, *self.sitios[sitio][3:5]))
+            self._cache[k] = intensidad.mmi_sitio(sitio, ev["mag"],
+                                                  catalogo.rhyp(ev, *self.sitios[sitio][3:5]),
+                                                  ev.get("depth") or 10)
         return self._cache[k]
 
     def t_catalogo(self, asoc, ev, sitio, umbral, p, lat):
