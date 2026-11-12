@@ -6,6 +6,10 @@ con la actual para varios umbrales, con y sin el sesgo temprano PREVISION_MARGEN
 alertas de PLUM y Pd se toman como quedaron en el repaso. Un sismo es sentido si HEL midió
 MMI >= ALERTA_MMI; el aviso es el tiempo entre la alerta y el cruce de MMI 2 en HEL.
 
+Si el repaso registró la probabilidad de la magnitud (medellin.prob_magnitud, desde que la
+previsión mezcla la nube de epicentros del ubicador), se barre también esa ("registrada"),
+que no se puede recalcular desde el registro.
+
   python tools/umbral_repaso.py lote/decisiones.jsonl lote/obs.json
 """
 import collections
@@ -26,6 +30,8 @@ U = config.ALERTA_MMI
 
 
 def p_magnitud(d, regla, sesgo):
+    if regla == "registrada":
+        return (d.get("medellin") or {}).get("prob_magnitud")
     loc, mag = d.get("ubicacion"), d.get("magnitud")
     if not loc or not mag:
         return None
@@ -81,6 +87,9 @@ def main():
     filas = [("anterior, p 0,5", "anterior", 0.5, 0.5)]
     filas += [(f"actual, p {p:.2f}, sesgo {s}", "actual", p, s)
               for p in (0.15, 0.2, 0.3, 0.4, 0.5) for s in (0.5, 0.0)]
+    if any("prob_magnitud" in (d.get("medellin") or {}) for ds in ev.values() for d in ds):
+        filas += [(f"registrada, p {p:.2f}", "registrada", p, 0)
+                  for p in (0.15, 0.2, 0.3, 0.4, 0.5)]
     for nombre, regla, pstar, sesgo in filas:
         tp, fn, fp, med, per = evaluar(ev, obs, regla, pstar, sesgo)
         print(f"{nombre:28} {tp:6} {fn:8} {fp:7}  {med:12.0f}       {per}")

@@ -156,6 +156,14 @@ ALERTA_PROB_MAGNITUD = 0.30
 # 0,5 (la magnitud temprana arranca baja), pero en el lote repasado no adelantó ni ganó ningún
 # aviso y sumó 7 falsas (tools/umbral_repaso.py, nov-2026)
 PREVISION_MARGEN_MAG = 0.0
+# Incertidumbre de la ubicación en la previsión por magnitud: mezcla de los epicentros posibles
+# del ubicador que suman PREVISION_NUBE_PESO del peso (como mucho PREVISION_NUBE_MAX), cada uno
+# con su magnitud (prevision._nube). Apagada: en el lote repasado (nov-2026), con p 0,30 dio
+# 28 falsas en vez de 26 y el aviso mediano bajó de 21 a 16 s. Agrandar la sigma sube la
+# probabilidad de los sismos que quedan justo por debajo del umbral (ver JAPON.md)
+PREVISION_NUBE = False
+PREVISION_NUBE_PESO = 0.99
+PREVISION_NUBE_MAX = 400
 # PLUM (Kodera et al., 2021): la intensidad medida en una estación vale para los sitios a
 # menos de PLUM_RADIO_KM (Medellín con HEL). Para las demás estaciones se supone el sismo a
 # PLUM_FUENTE_KM de ella y se lleva la intensidad hasta Medellín con la atenuación.

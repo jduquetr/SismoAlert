@@ -304,9 +304,28 @@ una incertidumbre de ubicación de 500-1.300 km (con una sola estación el sismo
 Medellín, a 5 km de profundidad), o con la magnitud muy alta en sismos grandes y lejanos (M8,1
 para un M6,7 a 800 km). Exigir más estaciones o menos incertidumbre baja las falsas pero se come
 el aviso (con incertidumbre ≤ 300 km el aviso mediano queda en −1 s), así que lo que falta es
-llevar la incertidumbre de la ubicación a la sigma de la previsión, no ponerle una compuerta. El
-universo del lote no es una muestra al azar (entran todos los no sentidos con MMI prevista ≥ 1,5),
-así que las falsas son una cota alta para un año cualquiera.
+llevar la incertidumbre de la ubicación a la previsión, no ponerle una compuerta. El universo
+del lote no es una muestra al azar (entran todos los no sentidos con MMI prevista ≥ 1,5), así
+que las falsas son una cota alta para un año cualquiera.
+
+**Incertidumbre de la ubicación en la previsión (probada y apagada).** `prevision._nube` mezcla
+los epicentros posibles del ubicador con sus pesos, cada uno con la magnitud recalculada a su
+distancia (`magnitud.Magnitud.nodos`; un epicentro más cerca da menos magnitud), y la dispersión
+va a la sigma (con una estación pasa de 0,45 a ~0,85). Repasando el lote otra vez con la mezcla
+(probabilidad registrada en `medellin.prob_magnitud`):
+
+| p | Sentidos avisados | Falsas | Aviso mediano |
+|---|---|---|---|
+| 0,30 sin mezcla (lo que queda) | 18 | 26 | 21 s |
+| 0,30 con mezcla | 18 | 28 | 16 s |
+| 0,40 con mezcla | 17 | 25 | 18 s |
+| 0,50 con mezcla | 16 | 18 | 18 s |
+
+Es peor en todo: con el umbral por debajo de 0,5, agrandar la sigma sube la probabilidad de los
+sismos que quedan justo por debajo, y el intercambio entre magnitud y distancia hace que la nube
+no baje la media. Queda con `PREVISION_NUBE = False`. Lo que sí atacaría esas falsas es una
+ubicación temprana mejor (más estaciones de la red del SGC, ver la rama SismoAlertMODEL) o una
+magnitud que no se dispare en sismos grandes y lejanos.
 
 **3. Tiempos de viaje IASP91 en todo el sistema** (`traveltime.py`, `static/tiempos.js`): P y S
 interpoladas según distancia y profundidad, hasta 4.000 km. Contra 96 disparos fuertes con sismo
@@ -327,7 +346,8 @@ disparos y de las ubicaciones del catálogo).
 4. PLUM, Pd y alerta por intensidad: hechos (ver arriba). Falta calibrar con HEL los
    coeficientes de Pd y τc (son los de California del Sur) y el factor de la vertical. Margen,
    umbral y probabilidad de la magnitud ya ajustados con el lote (ver "Revisión de modelos");
-   falta llevar la incertidumbre de la ubicación a la sigma de la previsión.
+   la incertidumbre de la ubicación en la sigma se probó y no ayuda (ver ahí); las falsas que
+   quedan son de la ubicación temprana con 1-3 estaciones.
 5. Latencia: pedir al SGC acceso directo a HEL (y las demás CM) en tiempo real; con 16 s de
    retraso se pierde la mitad del aviso de un sismo a 100-150 km.
 6. Métricas al estilo JMA en el informe diario (aciertos de ±1 grado de intensidad, tiempo de

@@ -6,7 +6,10 @@ que más probabilidad da de superar config.ALERTA_MMI:
 - "magnitud": la magnitud preliminar y la ubicación, con la ecuación de intensidad de Allen,
   Wald y Worden (2012) corregida para Medellín según la profundidad (intensidad.mmi_medellin).
   Mientras la estación más cercana no completa su ventana de 30 s se usa la magnitud más
-  PREVISION_MARGEN_MAG (hoy 0). La incertidumbre de la magnitud entra en la sigma.
+  PREVISION_MARGEN_MAG (hoy 0). La incertidumbre de la magnitud entra en la sigma, y también
+  la de la ubicación: con la nube de epicentros del ubicador y la magnitud recalculada en cada
+  uno (magnitud.Magnitud.nodos), la previsión es la mezcla pesada de todos (PREVISION_NUBE,
+  hoy apagada: en el lote dio más falsas y menos aviso).
 - "plum-HEL": la intensidad que ya mide HEL, a 8 km, vale para Medellín (PLUM).
 - "plum-EST": la que mide otra estación del sismo, llevada hasta Medellín suponiendo el sismo
   a PLUM_FUENTE_KM de ella (sin ubicarlo). Con la red tan rala, no hay otra estación a menos
@@ -15,6 +18,8 @@ que más probabilidad da de superar config.ALERTA_MMI:
 
 Una alerta dada no se retira: "alerta" y "alerta_desde" quedan aunque la previsión baje.
 """
+import numpy as np
+
 import config
 import intensidad
 import sacudida
@@ -37,8 +42,29 @@ def _m_de_intensidad(mmi, r_km):
     return (lo + hi) / 2
 
 
-def candidatos(picks, loc, mag, now):
-    """[(fuente, mmi, sigma)] para Medellín. picks: {estación: {"onset", "amps"}}."""
+def _nube(loc, m_nodos, sesgo, sigma_mag):
+    """(mmi, sigma) en Medellín mezclando los epicentros posibles con sus pesos: cada nodo con
+    su magnitud (m_nodos, alineada con loc.idx). Media y varianza de la mezcla."""
+    w = np.asarray(loc.w, dtype=float)
+    orden = np.argsort(w)[::-1]
+    n = int(np.searchsorted(np.cumsum(w[orden]), config.PREVISION_NUBE_PESO * w.sum())) + 1
+    orden = orden[:min(n, config.PREVISION_NUBE_MAX)]
+    nodos = np.asarray(loc.idx)[orden]
+    z = loc.malla.depth[nodos]
+    r = np.maximum(np.hypot(_distance_km(loc.malla.lat[nodos], loc.malla.lon[nodos],
+                                         *config.MEDELLIN), z), 1.0)
+    mu, s = np.array([intensidad.mmi_medellin(float(m) + sesgo, float(ri), float(zi), sigma_mag)
+                      for m, ri, zi in zip(np.asarray(m_nodos)[orden], r, z)]).T
+    w = w[orden] / w[orden].sum()
+    media = float(np.sum(w * mu))
+    return media, float(np.sqrt(np.sum(w * (s ** 2 + (mu - media) ** 2))))
+
+
+def candidatos(picks, loc, mag, now, m_nodos=None):
+    """[(fuente, mmi, sigma)] para Medellín. picks: {estación: {"onset", "amps"}}.
+
+    m_nodos: la magnitud en cada epicentro posible de loc (magnitud.Magnitud.nodos), para
+    llevar la incertidumbre de la ubicación a la previsión por magnitud."""
     out = []
     if mag and loc is not None:
         r = float(max(1.0, (_km_a_medellin(loc.lat, loc.lon) ** 2 + loc.depth ** 2) ** 0.5))
@@ -50,8 +76,11 @@ def candidatos(picks, loc, mag, now):
         if not any(now - picks[s]["onset"] >= max(config.MAGNITUD_VENTANAS_S)
                    for s in mag.get("estaciones", {}) if s in picks):
             sesgo = config.PREVISION_MARGEN_MAG
-        mmi, sigma = intensidad.mmi_medellin(mag["valor"] + sesgo, r, loc.depth,
-                                             mag.get("incertidumbre") or 0)
+        unc = mag.get("incertidumbre") or 0
+        if config.PREVISION_NUBE and m_nodos is not None and getattr(loc, "w", None) is not None:
+            mmi, sigma = _nube(loc, m_nodos, sesgo, unc)
+        else:
+            mmi, sigma = intensidad.mmi_medellin(mag["valor"] + sesgo, r, loc.depth, unc)
         out.append(("magnitud", mmi, sigma))
     for sta, p in picks.items():
         a = p.get("amps") or {}
@@ -79,17 +108,20 @@ def prob_minima(fuente):
     return config.ALERTA_PROB_MAGNITUD if fuente == "magnitud" else config.ALERTA_PROB
 
 
-def medellin(picks, loc, mag, now, previo=None):
+def medellin(picks, loc, mag, now, previo=None, m_nodos=None):
     """El campo det["medellin"]: la previsión de más probabilidad y si se alerta.
 
-    previo: el valor anterior del mismo sismo (la alerta no se retira).
+    previo: el valor anterior del mismo sismo (la alerta no se retira). m_nodos: ver
+    candidatos.
     """
     previo = previo or {}
     umbral = config.ALERTA_MMI
-    mejor = None
-    cands = candidatos(picks, loc, mag, now)
+    mejor = p_mag = None
+    cands = candidatos(picks, loc, mag, now, m_nodos)
     for fuente, mmi, sigma in cands:
         p = intensidad.prob_excedencia(mmi, sigma, umbral)
+        if fuente == "magnitud":
+            p_mag = p
         if mejor is None or (p, mmi) > (mejor[0], mejor[2]):
             mejor = (p, fuente, mmi, sigma)
     out = {"umbral": umbral, "alerta": bool(previo.get("alerta")),
@@ -98,6 +130,8 @@ def medellin(picks, loc, mag, now, previo=None):
         p, fuente, mmi, sigma = mejor
         out.update(mmi=round(min(max(float(mmi), 1.0), 10.0), 1), sigma=round(float(sigma), 2),
                    prob=round(float(p), 2), fuente=fuente)
+    if p_mag is not None:
+        out["prob_magnitud"] = round(float(p_mag), 3)  # para recalibrar el umbral de la magnitud
     if not out["alerta"]:
         # Cada fuente con su umbral: la de magnitud tiene el suyo, calibrado (ver config)
         for fuente, mmi, sigma in cands:

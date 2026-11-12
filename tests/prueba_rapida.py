@@ -119,6 +119,22 @@ mag["valor"] = mag["estaciones"]["RUS"] = round(m_lim - 0.3, 1)
 check("y no por debajo", not prevision.medellin(picks, _Loc, mag, ahora)["alerta"])
 check("PLUM mantiene ALERTA_PROB", prevision.prob_minima("plum-HEL") == config.ALERTA_PROB)
 
+
+# Nube de epicentros (apagada en config, se prueba el cálculo): dos nodos, la media queda entre
+# los dos y la sigma crece
+class _Malla:
+    import numpy as _np
+    lat, lon, depth = _np.array([6.25, 6.8]), _np.array([-75.0, -73.1]), _np.array([30.0, 150.0])
+
+
+class _Nube:
+    malla, idx, w = _Malla, [0, 1], [0.5, 0.5]
+
+
+mmi_n, sig_n = prevision._nube(_Nube, [5.0, 5.0], 0.0, 0.3)
+a0 = intensidad.mmi_medellin(5.0, (prevision._km_a_medellin(6.25, -75.0) ** 2 + 900) ** 0.5, 30, 0.3)
+check("la nube de epicentros agranda la sigma", sig_n > a0[1], f"{sig_n:.2f}")
+
 print()
 if failures:
     print(f"{len(failures)} prueba(s) fallaron: {', '.join(failures)}")

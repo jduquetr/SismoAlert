@@ -116,7 +116,8 @@ class BayesAssociator:
                     continue
                 mag = self._magnitude(ev)
                 old = (ev.det.get("magnitud") or {}).get("valor")
-                prev = prevision.medellin(ev.picks, ev.loc, mag, now, ev.det.get("medellin"))
+                prev = prevision.medellin(ev.picks, ev.loc, mag, now, ev.det.get("medellin"),
+                                         self._magnitude_nodos(ev))
                 if ((mag and mag["valor"] != old) or set(ev.picks) != before
                         or prevision.cambio(ev.det.get("medellin"), prev)):
                     self._decide(ev)
@@ -221,6 +222,13 @@ class BayesAssociator:
         amps = {s: (p["onset"], p["amps"]) for s, p in ev.picks.items() if p.get("amps")}
         return self.magnitud.estimar(amps, ev.loc, self.clock())
 
+    def _magnitude_nodos(self, ev):
+        """Magnitud en cada epicentro posible de ev.loc (para la previsión en Medellín)."""
+        if not self.amps or not self.magnitud.ok or not config.PREVISION_NUBE:
+            return None
+        amps = {s: (p["onset"], p["amps"]) for s, p in ev.picks.items() if p.get("amps")}
+        return self.magnitud.nodos(amps, ev.loc, self.clock())
+
     def _decide(self, ev, quiet=False):
         """Declara la detección cuando sus disparos propios cumplen las reglas de siempre."""
         strong = [s for s, p in ev.picks.items() if p["ratio"] >= config.MIN_RATIO]
@@ -248,7 +256,8 @@ class BayesAssociator:
             det["magnitud"] = mag
             det["message"] += f". Magnitud preliminar ≈ {mag['valor']}"
         antes = det.get("medellin")
-        det["medellin"] = prevision.medellin(ev.picks, ev.loc, mag, self.clock(), antes)
+        det["medellin"] = prevision.medellin(ev.picks, ev.loc, mag, self.clock(), antes,
+                                             self._magnitude_nodos(ev))
         quiet = quiet and not prevision.cambio(antes, det["medellin"])
         texto = prevision.texto(det["medellin"])
         if det["medellin"].get("alerta"):
